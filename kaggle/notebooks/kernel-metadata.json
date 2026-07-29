@@ -1,0 +1,16 @@
+{
+  "id": "yuvineappadu/lamer-konekte-e2b-qlora-router",
+  "title": "Lamer Konekte E2B QLoRA Router",
+  "code_file": "train_lamer_konekte_e2b_qlora.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_internet": true,
+  "dataset_sources": [
+    "yuvineappadu/lamer-konekte-ai-training-v1"
+  ],
+  "competition_sources": [],
+  "kernel_sources": [],
+  "machine_shape": "gpu-t4x2"
+}
