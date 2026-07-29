@@ -1,0 +1,24 @@
+{
+  "register_version": "1.0.0",
+  "generated": "2026-07-29",
+  "sources": {
+    "S1": {
+      "title": "Fisheries and Marine Resources (Fishing of Octopus) Regulations 2016",
+      "publisher": "Government of Mauritius (hosted by FAO FAOLEX)",
+      "url": "https://faolex.fao.org/docs/pdf/mat161116.pdf",
+      "publication_date": "2016",
+      "access_date": "2026-07-29",
+      "verification_status": "source_document_located",
+      "note": "Establishes the 15 August - 15 October octopus closure pattern. Current-year (2026) applicability NOT confirmed; possible supersession by later legislation."
+    },
+    "S2": {
+      "title": "Ministry of Agro-Industry, Food Security, Blue Economy and Fisheries portal",
+      "publisher": "Government of Mauritius",
+      "url": "https://blueconomy.govmu.org",
+      "publication_date": null,
+      "access_date": "2026-07-29",
+      "verification_status": "checked_no_rule_text_found",
+      "note": "Index page checked on access date; no closure notice text retrieved."
+    }
+  }
+}

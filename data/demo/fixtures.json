@@ -1,0 +1,54 @@
+{
+  "note": "Hero demo cases for the 5-minute jury flow. Image paths are CC0/CC-BY hero images with attribution in data/manifests/species_images.csv.",
+  "cases": [
+    {
+      "id": "hero_octopus",
+      "title": "Octopus catch + simulated closure date",
+      "language": "mfe",
+      "note": "Mo'nn gagn enn ourite dan lagon, ki mo bizin fer?",
+      "image_hint": "data/demo/octopus_cyanea_151112387.jpg",
+      "steps": ["set demo date 2026-09-01 (badge visible)", "analyse", "confirm octopus_cyanea",
+                "measured 45 cm", "rule shows closed_season (provisional) + official-notice warning"]
+    },
+    {
+      "id": "hero_normal_fish",
+      "title": "Normal fish catch (unicornfish)",
+      "language": "en",
+      "note": "Caught this near the reef channel this morning",
+      "image_hint": "data/demo/naso_unicornis_182912005.jpg",
+      "steps": ["analyse", "confirm naso_unicornis", "measured 42 cm", "rule returns unknown (no verified rule) — honest"]
+    },
+    {
+      "id": "hero_blurry",
+      "title": "Blurry photo rejected before any token spend",
+      "language": "en",
+      "note": "",
+      "image_hint": "data/demo/synthetic/blurry.jpg",
+      "steps": ["analyse", "quality gate warns/blocks", "retake guidance shown"]
+    },
+    {
+      "id": "hero_weather_morisyen",
+      "title": "Morisyen weather question -> function call",
+      "language": "mfe",
+      "note": "Ki kalite lamer ena dan Grand Baie zordi? Eski vag gro?",
+      "image_hint": null,
+      "steps": ["analyse (no image)", "get_marine_conditions in function trace", "disclaimer visible"]
+    },
+    {
+      "id": "hero_offline_queue",
+      "title": "Offline catch queued then synced",
+      "language": "mfe",
+      "note": null,
+      "image_hint": null,
+      "steps": ["airplane mode", "manual species + measured length", "queued", "reconnect", "sync processes"]
+    },
+    {
+      "id": "hero_declaration",
+      "title": "Declaration draft -> MOCK ministry receipt",
+      "language": "en",
+      "note": null,
+      "image_hint": null,
+      "steps": ["prepare declaration for July period", "review draft + MOCK label", "mock-submit", "receipt MOCK-..."]
+    }
+  ]
+}

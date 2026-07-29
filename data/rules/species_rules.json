@@ -1,0 +1,71 @@
+{
+  "rules_version": "1.0.0",
+  "generated": "2026-07-29",
+  "disclaimer": "Deterministic, source-attributed rules. Any rule not marked verified is provisional. Always verify against the latest official fisheries notice.",
+  "rules": [
+    {
+      "rule_id": "R-OCT-CLOSE-2016",
+      "species_id": "octopus_cyanea",
+      "rule_type": "seasonal_closure",
+      "closed_from": "08-15",
+      "closed_to": "10-15",
+      "source_id": "S1",
+      "source_title": "Fisheries and Marine Resources (Fishing of Octopus) Regulations 2016",
+      "source_url": "https://faolex.fao.org/docs/pdf/mat161116.pdf",
+      "effective_date": "2016-08-15",
+      "verification_date": "2026-07-29",
+      "verification_status": "provisional",
+      "note": "Closure window recorded from the 2016 regulations. Current-year confirmation pending; verify against the latest official fisheries notice."
+    },
+    {
+      "rule_id": "R-OCT-CLOSE-JAN-HIST",
+      "species_id": "octopus_cyanea",
+      "rule_type": "historical_note",
+      "closed_from": "01-15",
+      "closed_to": "03-15",
+      "source_id": "S1",
+      "source_title": "Historical closure-programme narrative (not a current legal instrument)",
+      "source_url": "https://sdgs.un.org/partnerships/promoting-sustainable-fisheries-national-awareness-programme-support-first-temporary",
+      "effective_date": null,
+      "verification_date": "2026-07-29",
+      "verification_status": "historical_note",
+      "note": "NOT evaluated by the rule engine. Retained for transparency only."
+    },
+    {
+      "rule_id": "R-MINSIZE-LETHRINUS",
+      "species_id": "lethrinus_nebulosus",
+      "rule_type": "minimum_size",
+      "minimum_length_cm": null,
+      "source_id": null,
+      "verification_status": "unavailable",
+      "note": "No official minimum size verified during the sprint. Engine returns unknown."
+    },
+    {
+      "rule_id": "R-MINSIZE-SIGANUS",
+      "species_id": "siganus_sutor",
+      "rule_type": "minimum_size",
+      "minimum_length_cm": null,
+      "source_id": null,
+      "verification_status": "unavailable",
+      "note": "No official minimum size verified during the sprint. Engine returns unknown."
+    },
+    {
+      "rule_id": "R-MINSIZE-EPINEPHELUS",
+      "species_id": "epinephelus_merra",
+      "rule_type": "minimum_size",
+      "minimum_length_cm": null,
+      "source_id": null,
+      "verification_status": "unavailable",
+      "note": "No official minimum size verified during the sprint. Engine returns unknown."
+    },
+    {
+      "rule_id": "R-MINSIZE-NASO",
+      "species_id": "naso_unicornis",
+      "rule_type": "minimum_size",
+      "minimum_length_cm": null,
+      "source_id": null,
+      "verification_status": "unavailable",
+      "note": "No official minimum size verified during the sprint. Engine returns unknown."
+    }
+  ]
+}

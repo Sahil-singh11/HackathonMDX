@@ -1,0 +1,67 @@
+{
+  "catalogue_version": "1.0.0",
+  "generated": "2026-07-29",
+  "note": "Morisyen names are provisional until human-verified (see research/SPECIES_NAME_REGISTER.md). The UI always shows English + scientific names alongside.",
+  "species": [
+    {
+      "species_id": "octopus_cyanea",
+      "scientific": "Octopus cyanea",
+      "authority": "Gray, 1849",
+      "english": "Day octopus",
+      "morisyen": "ourite",
+      "morisyen_status": "provisional",
+      "taxon_refs": {"gbif": 2289535, "inaturalist": 49056},
+      "habitat": "lagoon and reef flats",
+      "keywords": ["octopus", "ourite", "tentacle", "eight arms", "lagoon", "reef flat", "poulpe"],
+      "visible_characteristics": ["eight arms with suckers", "no fins or scales", "colour-changing mottled skin", "bulbous mantle"]
+    },
+    {
+      "species_id": "lethrinus_nebulosus",
+      "scientific": "Lethrinus nebulosus",
+      "authority": "(Forsskål, 1775)",
+      "english": "Spangled emperor",
+      "morisyen": "kapitenn",
+      "morisyen_status": "provisional",
+      "taxon_refs": {"gbif": null, "inaturalist": null},
+      "habitat": "lagoon, seagrass, outer reef",
+      "keywords": ["emperor", "capitaine", "kapitenn", "silver", "blue spots", "cheek stripes"],
+      "visible_characteristics": ["silvery-bronze body with blue spots on scales", "blue streaks below the eye", "steep snout profile", "emperor-like body shape"]
+    },
+    {
+      "species_id": "siganus_sutor",
+      "scientific": "Siganus sutor",
+      "authority": "(Valenciennes, 1835)",
+      "english": "Shoemaker spinefoot (cordonnier)",
+      "morisyen": "kordonye",
+      "morisyen_status": "provisional",
+      "taxon_refs": {"gbif": null, "inaturalist": null},
+      "habitat": "lagoon, seagrass beds",
+      "keywords": ["rabbitfish", "cordonnier", "kordonye", "spinefoot", "mottled", "schooling"],
+      "visible_characteristics": ["oval compressed body", "small rabbit-like mouth", "mottled olive/grey pattern", "venomous dorsal spines (visible spiny dorsal fin)"]
+    },
+    {
+      "species_id": "epinephelus_merra",
+      "scientific": "Epinephelus merra",
+      "authority": "Bloch, 1793",
+      "english": "Honeycomb grouper",
+      "morisyen": "vye",
+      "morisyen_status": "provisional",
+      "taxon_refs": {"gbif": null, "inaturalist": null},
+      "habitat": "shallow reef and lagoon coral",
+      "keywords": ["grouper", "vielle", "vye", "honeycomb", "spots", "reef"],
+      "visible_characteristics": ["dense honeycomb-like hexagonal brown spots", "stout grouper body", "large mouth", "rounded tail"]
+    },
+    {
+      "species_id": "naso_unicornis",
+      "scientific": "Naso unicornis",
+      "authority": "(Forsskål, 1775)",
+      "english": "Bluespine unicornfish",
+      "morisyen": "likorn",
+      "morisyen_status": "provisional",
+      "taxon_refs": {"gbif": null, "inaturalist": null},
+      "habitat": "reef slopes and channels",
+      "keywords": ["unicornfish", "licorne", "likorn", "horn", "blue spines", "surgeonfish"],
+      "visible_characteristics": ["frontal horn on adults", "two bright blue spines on the tail base", "olive-grey body", "streamer tail tips on large adults"]
+    }
+  ]
+}

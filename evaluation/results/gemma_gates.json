@@ -1,0 +1,13 @@
+{
+  "run_at": "2026-07-29T10:46:36.396954+00:00",
+  "blocked": true,
+  "model": "gemma-4-26b-a4b-it",
+  "results": [
+    {
+      "gate": "all",
+      "status": "BLOCKED",
+      "detail": "GEMINI_API_KEY not configured \u2014 no hosted gate can run. Insert the key into .env and re-run.",
+      "latency_ms": null
+    }
+  ]
+}
