@@ -29,6 +29,9 @@ from typing import get_args
 import pytest
 from pydantic import ValidationError
 
+from sqlmodel import Session
+
+from app.db.session import get_engine
 from app.inference.registry import CANONICAL
 from app.pillars.base import PillarResult
 from app.pillars.provenance import DataKind, DataProvenance
@@ -88,8 +91,15 @@ def test_pillar_provenance_contract(pillar_id):
         assert descriptor.enabled is False
         return
 
-    bundle = _run(module.fetch(params={}))
-    result = _run(module.analyse(bundle))
+    # A generic params baseline, not an empty dict: real finding from adding
+    # tourism/energy to the registry — their fetch() requires params["session"]
+    # (documented in their own docstrings), which an empty dict can't supply.
+    # session/allow_network are extra, unused keys for pillars that don't need
+    # them (finance, transport) — every fetch() observed so far tolerates
+    # unrecognised params rather than requiring an exact key set.
+    with Session(get_engine()) as session:
+        bundle = _run(module.fetch(params={"session": session, "allow_network": False}))
+        result = _run(module.analyse(bundle))
 
     assert isinstance(result, PillarResult), f"{pillar_id}: analyse() did not return a PillarResult"
     prov = result.provenance
