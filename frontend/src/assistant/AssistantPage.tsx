@@ -16,19 +16,24 @@ import { Badge, Tabs } from '../components/ui'
 import { useT } from '../i18n'
 import { useAnnounce } from '../lib/announce'
 import { useOffline } from '../lib/offline'
+import AssistantChat from './AssistantChat'
+import ModelGate from './ModelGate'
 import './assistant.css'
 import DeclarationGuide from './DeclarationGuide'
 import RulesBrowser from './RulesBrowser'
 import { RULES_DISCLAIMER, RULES_VERSION, sources } from './rulesData'
 
-type TabId = 'rules' | 'declaration' | 'sources'
+type TabId = 'ask' | 'rules' | 'declaration' | 'sources'
 
 export default function AssistantPage() {
   const t = useT()
   const announce = useAnnounce()
   const { online } = useOffline()
+  // Rules is the landing tab, not Ask: the offline-safe reference is the
+  // default experience, and the model is opt-in behind a 2 GB download.
   const [tab, setTab] = useState<TabId>('rules')
   const [serverVersion, setServerVersion] = useState<string | null>(null)
+  const [model, setModel] = useState<File | null>(null)
 
   // Revalidate bundled data when online. Failure is fine — offline is expected.
   useEffect(() => {
@@ -47,6 +52,7 @@ export default function AssistantPage() {
   }, [versionMismatch, announce, t])
 
   const tabs = [
+    { id: 'ask', label: t('assistant.tab.ask') },
     { id: 'rules', label: t('assistant.tab.rules') },
     { id: 'declaration', label: t('assistant.tab.declaration') },
     { id: 'sources', label: t('assistant.tab.sources') },
@@ -78,6 +84,11 @@ export default function AssistantPage() {
       )}
 
       <Tabs tabs={tabs} active={tab} onChange={(id) => setTab(id as TabId)}>
+        {tab === 'ask' && (
+          model
+            ? <AssistantChat model={model} onUseRules={() => setTab('rules')} />
+            : <ModelGate onReady={setModel} onDecline={() => setTab('rules')} />
+        )}
         {tab === 'rules' && <RulesBrowser />}
         {tab === 'declaration' && <DeclarationGuide />}
         {tab === 'sources' && (

@@ -146,3 +146,86 @@
   color: var(--text-muted);
   font-size: var(--fs-sm);
 }
+
+/* --- model gate (Task 2b) ---------------------------------------------- */
+.asst-model-facts {
+  margin: var(--sp-3) 0;
+  padding-left: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  color: var(--text-muted);
+}
+.asst-model-facts strong { color: var(--text); font-family: var(--font-data); }
+
+.asst-storage-warning {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: var(--sp-3) 0;
+  padding: var(--sp-3);
+  border: 1px solid var(--warning);
+  border-radius: var(--r-card);
+  background: var(--warning-quiet);
+}
+
+.asst-gate-actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-3); }
+
+.asst-progress { width: 100%; height: 12px; margin: var(--sp-2) 0; }
+
+.asst-error-detail {
+  padding: var(--sp-2);
+  border-radius: var(--r-input);
+  background: var(--surface-sunken);
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+}
+
+/* --- chat (Task 2b) ----------------------------------------------------- */
+.asst-ungrounded-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-3);
+  padding: var(--sp-3);
+  border: 2px solid var(--warning);
+  border-radius: var(--r-card);
+  background: var(--warning-quiet);
+  font-weight: 600;
+}
+
+.asst-turns {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-height: 8rem;
+  max-height: 26rem;
+  overflow-y: auto;
+  padding: var(--sp-2) 0;
+}
+.asst-turn { display: flex; flex-direction: column; gap: 2px; }
+.asst-turn__role {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+.asst-turn p { margin: 0; white-space: pre-wrap; }
+.asst-turn--user p {
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-card);
+  background: var(--surface-sunken);
+}
+
+.asst-composer { display: flex; gap: var(--sp-2); margin-top: var(--sp-3); }
+.asst-composer input {
+  flex: 1;
+  min-height: var(--touch-min);
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-input);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
