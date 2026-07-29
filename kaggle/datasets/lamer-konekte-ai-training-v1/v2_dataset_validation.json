@@ -1,0 +1,24 @@
+{
+  "total_records": 338,
+  "challenge_records": 24,
+  "semantic_families": 164,
+  "by_split": {
+    "train": 248,
+    "validation": 42,
+    "test": 48
+  },
+  "by_intent": {
+    "identify_catch": 67,
+    "weather_query": 60,
+    "log_catch": 69,
+    "make_declaration": 79,
+    "other": 63
+  },
+  "by_provenance": {
+    "AI_generated_review_required": 308,
+    "AI_generated_human_reviewed": 30
+  },
+  "unique_ids": 362,
+  "failures": [],
+  "passed": true
+}
