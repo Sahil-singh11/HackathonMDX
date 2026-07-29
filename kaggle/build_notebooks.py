@@ -234,15 +234,75 @@ DEMO_OUTRO = """## What this proved
 - Legality is decided ONLY by the deterministic, source-attributed rule engine on a **confirmed** species with a
   **measured** length — 29 July shows no closure; the simulated 1 September date shows the provisional 2016
   closure with its source and the official-verification notice.
+- Structured output: every analysis is validated against the frozen Pydantic contract
+  (`intent`, `species_suggestion`, `confidence_label`, `species_confirmation_required`,
+  `measured_size_required`, `recommended_next_step`) — 100% validity on all three evaluated sets.
+- Real QLoRA training on a Kaggle Tesla T4 produced a 48 MB adapter that improved compact-prompt
+  intent accuracy from 73.5% to 85.3% and fixed declaration routing (45.5% -> 100% recall).
+  **Training succeeded, but the adapter did not pass the production acceptance gate**
+  (tool selection 58.8% against a pre-registered 70% bar), so it is REJECTED and disabled —
+  hosted Gemma 4 26B remains production. Thresholds were committed before training and not moved.
 - Without a key the notebook stays fully functional in a **clearly disclosed mock** mode.
 
 Full application (FastAPI + React PWA, offline queue, Morisyen UI): see the public repository linked in the writeup.
 """
 
+# ------------------------------------------------------------------ training evidence (Steps 3-4)
+DEMO_TRAINING = '''# Real QLoRA training evidence — and the honest outcome.
+#
+# Beyond prompting the hosted model, we fine-tuned Gemma 4 E2B and evaluated it against
+# pre-registered acceptance gates. Every number below comes from committed artifacts in the
+# public repository (training/results/, training/archive/v1/).
+EVIDENCE = {
+    "production_model":  "gemma-4-26b-a4b-it (hosted, official google-genai SDK)",
+    "fine_tuning_base":  "google/gemma-4-E2B-it",
+    "method":            "QLoRA, 4-bit NF4 + double quant, LoRA r=8 alpha=16",
+    "lora_targets":      "205 LANGUAGE-MODEL projections (vision/audio towers excluded)",
+    "accelerator":       "Kaggle Tesla T4 (sm_75)",
+    "trainable_params":  "12,079,104 of 3.95B (0.31%)",
+    "training_duration": "552 s (9.2 min)",
+    "peak_vram":         "9.21 GiB",
+    "best_val_loss":     0.0577,
+    "adapter_size":      "48.4 MB",
+    "dataset":           "338 records / 164 semantic families (train 248, val 42)",
+    "test_sets":         "internal 34 | immutable external 32 | frozen challenge 24 (never merged)",
+}
+for k, v in EVIDENCE.items():
+    print(f"{k:18} {v}")
+
+print(chr(10) + "--- v1 -> v2, identical scoring code ---")
+COMPARISON = [
+    ("internal intent accuracy (34)", "73.5%", "85.3%", "hosted 26B: 70.6%"),
+    ("external intent accuracy (32)", "75.0%", "78.1%", "-"),
+    ("challenge intent accuracy (24)", "-",    "70.8%", "-"),
+    ("tool-selection accuracy",       "58.8%", "58.8%", "hosted 26B: 50.0%"),
+    ("make_declaration recall",       "45.5%", "100%",  "challenge: 72.7%"),
+    ("structured validity",           "100%",  "100%",  "hosted 26B: 97.1%"),
+    ("safety pass",                   "100%",  "100%",  "hosted 26B: 100%"),
+    ("median routing latency",        "4.4 s", "4.6 s", "hosted 26B: 18.5 s"),
+]
+print(f"{'metric':32} {'v1':>8} {'v2':>8}   reference")
+for m, a, b, ref in COMPARISON:
+    print(f"{m:32} {a:>8} {b:>8}   {ref}")
+
+print(chr(10) + "--- pre-registered acceptance gates (committed BEFORE training) ---")
+print("GATE A (full router)  FAILED: external 78.1% < 80% | tool 58.8% < 80% | min recall 66.7% < 75%")
+print("GATE B (hybrid)       FAILED: tool 58.8% < 70%")
+print("DECISION              REJECTED")
+print()
+print("Training succeeded, but the adapter did not pass the production acceptance gate.")
+print("We did not lower the threshold. The adapter ships DISABLED and hosted Gemma 4 26B")
+print("remains the production model for text, function calling and image analysis.")
+print()
+print("The targeted result worth noting: v1's worst intent (make_declaration, 45.5% recall,")
+print("leaking into log_catch) was fixed to 100% on the internal AND external sets by adding")
+print("54 declaration-focused records - and 72.7% on challenge families never seen in training.")
+'''
+
 write("lamer_konekte_demo.ipynb", [
     ("markdown", DEMO_INTRO), ("code", DEMO_SETUP), ("code", DEMO_DATA),
     ("code", DEMO_HERO), ("code", DEMO_QUALITY), ("code", DEMO_ANALYSE),
-    ("code", DEMO_CONFIRM), ("markdown", DEMO_OUTRO),
+    ("code", DEMO_CONFIRM), ("code", DEMO_TRAINING), ("markdown", DEMO_OUTRO),
 ])
 
 # ------------------------------------------------------------------ hardware gate cell (shared)

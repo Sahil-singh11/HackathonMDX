@@ -1,0 +1,82 @@
+{
+  "run_at": "2026-07-29T23:23:16.381219+00:00",
+  "mode": "live",
+  "api_key_available": true,
+  "checks_total": 10,
+  "required_passed": 9,
+  "required_failed": 0,
+  "optional_failed": 0,
+  "passed": true,
+  "results": [
+    {
+      "check": "backend unit + AI + safety tests",
+      "ok": true,
+      "required": true,
+      "seconds": 18.8,
+      "detail": "343 passed, 8 deselected, 3 warnings in 17.40s"
+    },
+    {
+      "check": "final acceptance regression tests",
+      "ok": true,
+      "required": true,
+      "seconds": 3.6,
+      "detail": "25 passed, 3 warnings in 2.49s"
+    },
+    {
+      "check": "dataset + leakage + family + args + safety validators",
+      "ok": true,
+      "required": true,
+      "seconds": 7.9,
+      "detail": "ALL PASS"
+    },
+    {
+      "check": "function-calling audit",
+      "ok": true,
+      "required": true,
+      "seconds": 1.9,
+      "detail": "PASS"
+    },
+    {
+      "check": "training-evidence audit",
+      "ok": true,
+      "required": true,
+      "seconds": 0.1,
+      "detail": "36/36 claims supported"
+    },
+    {
+      "check": "frontend production build",
+      "ok": true,
+      "required": true,
+      "seconds": 15.5,
+      "detail": "\u001b[32m✓ built in 6.26s\u001b[39m"
+    },
+    {
+      "check": "release gate (13 checks)",
+      "ok": true,
+      "required": true,
+      "seconds": 63.3,
+      "detail": "RELEASE GATE: ALL CHECKS PASSED — safe to make the repository public."
+    },
+    {
+      "check": "hosted Gemma live gates (10, real inference)",
+      "ok": true,
+      "required": true,
+      "seconds": 112.2,
+      "detail": "10/10 gates passed — artifacts written"
+    },
+    {
+      "check": "hosted integration tests (live tier)",
+      "ok": true,
+      "required": true,
+      "seconds": 83.5,
+      "detail": "8 passed, 3 warnings in 81.50s (0:01:21)"
+    },
+    {
+      "check": "deployed Render checks",
+      "ok": true,
+      "required": false,
+      "seconds": 28.9,
+      "detail": "24 passed / 0 failed / 0 skipped — artifacts written"
+    }
+  ]
+}
