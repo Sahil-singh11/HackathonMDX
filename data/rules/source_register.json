@@ -1,15 +1,16 @@
 {
-  "register_version": "1.0.0",
+  "register_version": "1.1.0",
   "generated": "2026-07-29",
   "sources": {
     "S1": {
       "title": "Fisheries and Marine Resources (Fishing of Octopus) Regulations 2016",
       "publisher": "Government of Mauritius (hosted by FAO FAOLEX)",
       "url": "https://faolex.fao.org/docs/pdf/mat161116.pdf",
-      "publication_date": "2016",
+      "publication_date": "2016-08-06",
       "access_date": "2026-07-29",
-      "verification_status": "source_document_located",
-      "note": "Establishes the 15 August - 15 October octopus closure pattern. Current-year (2026) applicability NOT confirmed; possible supersession by later legislation."
+      "verification_status": "text_verified",
+      "note": "Full regulation text read and verified from the FAOLEX PDF on 2026-07-29: closed season 15 Aug-15 Oct; undersized octopus = mantle size under 7 cm; not applicable to Rodrigues; research exemption (reg. 5); penalty <= Rs 50,000. Whether the instrument remains in force in 2026 is pending confirmation.",
+      "citation": "GN No. 167 of 2016, Government Gazette of Mauritius No. 69, 6 August 2016"
     },
     "S2": {
       "title": "Ministry of Agro-Industry, Food Security, Blue Economy and Fisheries portal",

@@ -1,5 +1,5 @@
 {
-  "rules_version": "1.0.0",
+  "rules_version": "1.1.0",
   "generated": "2026-07-29",
   "disclaimer": "Deterministic, source-attributed rules. Any rule not marked verified is provisional. Always verify against the latest official fisheries notice.",
   "rules": [
@@ -12,10 +12,28 @@
       "source_id": "S1",
       "source_title": "Fisheries and Marine Resources (Fishing of Octopus) Regulations 2016",
       "source_url": "https://faolex.fao.org/docs/pdf/mat161116.pdf",
-      "effective_date": "2016-08-15",
+      "effective_date": "2016-08-06",
       "verification_date": "2026-07-29",
       "verification_status": "provisional",
-      "note": "Closure window recorded from the 2016 regulations. Current-year confirmation pending; verify against the latest official fisheries notice."
+      "note": "Regulation text verified against the FAOLEX copy of GN 167/2016 on 2026-07-29 (closed season: 15 August to 15 October). Whether it remains in force in 2026 is pending confirmation.",
+      "citation": "GN No. 167 of 2016, Government Gazette of Mauritius No. 69, 6 August 2016; made under s.74(1)(f),(j) Fisheries and Marine Resources Act",
+      "scope_note": "Regulation 3: not applicable to Rodrigues. Regulation 5: scientific-research exemption by the Permanent Secretary."
+    },
+    {
+      "rule_id": "R-OCT-MINSIZE-2016",
+      "species_id": "octopus_cyanea",
+      "rule_type": "minimum_size",
+      "minimum_length_cm": 7.0,
+      "measurement": "mantle_length_cm",
+      "source_id": "S1",
+      "source_title": "Fisheries and Marine Resources (Fishing of Octopus) Regulations 2016",
+      "source_url": "https://faolex.fao.org/docs/pdf/mat161116.pdf",
+      "citation": "GN No. 167 of 2016, reg. 2 and 4(a): 'undersized octopus' means any octopus which is less than 7 centimetres in mantle size",
+      "effective_date": "2016-08-06",
+      "verification_date": "2026-07-29",
+      "verification_status": "provisional",
+      "scope_note": "Not applicable to Rodrigues; scientific-research exemption exists (reg. 5).",
+      "note": "GN 167/2016 defines undersized octopus by MANTLE size (under 7 cm), not total length. The app records total length, so this rule cannot be decided from that measurement - measure the mantle and verify. Whether the regulation remains in force in 2026 is pending confirmation."
     },
     {
       "rule_id": "R-OCT-CLOSE-JAN-HIST",
