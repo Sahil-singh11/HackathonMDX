@@ -16,39 +16,12 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
-class FisherProfile(SQLModel, table=True):
-    id: str = Field(default_factory=_uuid, primary_key=True)
-    display_name: str = ""
-    preferred_language: str = "mfe"
-    fishing_area: str = ""
-    created_at: datetime = Field(default_factory=_now)
-
-
-class Species(SQLModel, table=True):
-    species_id: str = Field(primary_key=True)
-    scientific: str
-    english: str
-    morisyen: str = ""
-    morisyen_status: str = "provisional"
-    habitat: str = ""
-    keywords: str = ""  # comma-separated
-    characteristics: str = ""  # pipe-separated
-
-
-class SpeciesRule(SQLModel, table=True):
-    rule_id: str = Field(primary_key=True)
-    species_id: str = Field(index=True)
-    rule_type: str  # seasonal_closure | minimum_size | historical_note
-    closed_from: str | None = None  # MM-DD
-    closed_to: str | None = None
-    minimum_length_cm: float | None = None
-    source_id: str | None = None
-    source_title: str | None = None
-    source_url: str | None = None
-    effective_date: str | None = None
-    verification_date: str | None = None
-    verification_status: str = "unavailable"  # provisional | verified | unavailable | historical_note
-    note: str = ""
+# REMOVED 2026-07-29: FisherProfile, Species and SpeciesRule (see DECISION_LOG
+# entry 12). They were created by create_all but never read or written — the
+# source of truth for species and rules is the versioned, source-attributed JSON
+# under data/ (services/species/retrieval.py, services/fisheries_rules/engine.py).
+# Keeping empty mirror tables invited a future reader to trust whichever copy
+# they found first. Profile state lives client-side in the Zustand store.
 
 
 class CatchAnalysis(SQLModel, table=True):
