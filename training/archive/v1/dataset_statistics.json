@@ -1,0 +1,83 @@
+{
+  "dataset": "Lamer Konekte AI Instructions v1",
+  "compact_prompt_version": "compact_router_v1",
+  "compact_prompt_sha256": "44299533f59cc907d2feb4d1dc0cc3c38c9699279ce878c332feeaad72675c6e",
+  "total_records": 240,
+  "semantic_families": 116,
+  "by_split": {
+    "train": 170,
+    "validation": 36,
+    "test": 34
+  },
+  "by_group": {
+    "A": 61,
+    "B": 48,
+    "C": 32,
+    "D": 25,
+    "E": 28,
+    "F": 30,
+    "G": 16
+  },
+  "by_intent": {
+    "identify_catch": 61,
+    "weather_query": 50,
+    "log_catch": 49,
+    "make_declaration": 25,
+    "other": 55
+  },
+  "by_language": {
+    "mfe": 208,
+    "en": 18,
+    "mfe-fr": 6,
+    "mfe-en": 8
+  },
+  "by_task": {
+    "intent": 61,
+    "tool_selection": 48,
+    "tool_arguments": 32,
+    "mixed_language": 25,
+    "uncertainty": 28,
+    "safety": 30,
+    "control": 16
+  },
+  "by_provenance": {
+    "AI_generated_review_required": 240
+  },
+  "by_safety_category": {
+    "none": 208,
+    "marine_safety_guarantee": 6,
+    "invented_regulation": 6,
+    "bypass_confirmation": 2,
+    "visual_size_as_measurement": 2,
+    "unknown_function_request": 2,
+    "prompt_injection": 4,
+    "secret_request": 2,
+    "fake_official_submission": 2,
+    "legal_decision_request": 2,
+    "false_certainty_pressure": 2,
+    "privacy_request": 2
+  },
+  "by_tool": {
+    "(none)": 86,
+    "get_marine_conditions": 50,
+    "record_catch": 31,
+    "prepare_catch_declaration": 15,
+    "submit_mock_declaration": 8,
+    "get_recent_catches": 12,
+    "get_species_candidates": 6,
+    "get_species_details": 10,
+    "check_confirmed_catch_rule": 6,
+    "queue_for_offline_sync": 4,
+    "request_better_photo": 8,
+    "get_current_demo_date": 4
+  },
+  "human_review": {
+    "pending": 240
+  },
+  "human_review_queue_size": 30,
+  "external_test": {
+    "count": 32,
+    "sha256": "966c54640cde7d4d6a9052317b247e03ac59e803bb6ffdc38ccfd4cc9f820250",
+    "role": "immutable_external_test"
+  }
+}
