@@ -191,9 +191,15 @@ html[data-scene='dark'] .lk-onboard {
    and dusk keep the opaque panel above - frosted glass over a light scene
    reads as a smudged window, not depth. Sunlight never sets data-daypart
    (BathymetricScene returns early for it), so this can never engage there. */
+/* --surface, deliberately NOT used here: it's THEME-scoped (white in Day),
+   but this rule is scene-scoped and applies in Day-theme-at-night too - using
+   --surface produced a 72%-opaque WHITE card over a dark scene, exactly the
+   washed-out "smudged window" look the brief warns against. --abyss is a
+   palette-level constant (same dark navy regardless of theme), which is what
+   the non-glass dark panel above already keys its own background off of. */
 [data-daypart='night'] .lk-fix,
 [data-daypart='predawn'] .lk-fix {
-  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  background: color-mix(in srgb, var(--abyss) 72%, transparent);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
   border-color: color-mix(in srgb, var(--accent) 15%, transparent);
@@ -586,10 +592,12 @@ html[data-scene='dark'] .lk-onboard {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.lk-onboard__masthead { animation: lk-fade-in 400ms var(--ease-out) 0ms both; }
-.lk-fix { animation: lk-fix-in 300ms var(--ease-out) 300ms both; }
-.lk-fix > .lk-fix__welcome,
-.lk-fix > .lk-fix__intro { animation: lk-group-in 260ms var(--ease-out) 480ms both; }
+/* The five beats, in order: logo -> heading -> card (carrying its own welcome
+   heading/intro text in with it, not staggered separately) -> three form
+   groups 60ms apart -> conditions strip last. ~1200ms end to end. */
+.lk-onboard__masthead img { animation: lk-fade-in 250ms var(--ease-out) 0ms both; }
+.lk-onboard__masthead > div { animation: lk-group-in 280ms var(--ease-out) 150ms both; }
+.lk-fix { animation: lk-fix-in 320ms var(--ease-out) 320ms both; }
 .lk-fix > .lk-lang { animation: lk-group-in 260ms var(--ease-out) 540ms both; }
 .lk-fix > .lk-fix__divider,
 .lk-fix > .lk-field-stack { animation: lk-group-in 260ms var(--ease-out) 600ms both; }
@@ -622,9 +630,9 @@ html[data-scene='dark'] .lk-onboard {
    The canvas still renders its composed still frame (handled in the
    component); only movement is removed. */
 @media (prefers-reduced-motion: reduce) {
-  .lk-onboard__masthead,
+  .lk-onboard__masthead img, .lk-onboard__masthead > div,
   .lk-fix,
-  .lk-fix > .lk-fix__welcome, .lk-fix > .lk-fix__intro, .lk-fix > .lk-lang,
+  .lk-fix > .lk-lang,
   .lk-fix > .lk-fix__divider, .lk-fix > .lk-field-stack,
   .lk-fix > .lk-start, .lk-fix > .lk-start-guest, .lk-fix > .lk-fix__coords,
   .lk-onboard__legend, .lk-onboard__footer, .lk-conditions,
@@ -636,10 +644,9 @@ html[data-scene='dark'] .lk-onboard {
   .lk-onboard--departing .lk-conditions { animation: none !important; }
   .lk-lang__check { transition: none !important; }
 }
-html[data-reduce-motion='on'] .lk-onboard__masthead,
+html[data-reduce-motion='on'] .lk-onboard__masthead img,
+html[data-reduce-motion='on'] .lk-onboard__masthead > div,
 html[data-reduce-motion='on'] .lk-fix,
-html[data-reduce-motion='on'] .lk-fix > .lk-fix__welcome,
-html[data-reduce-motion='on'] .lk-fix > .lk-fix__intro,
 html[data-reduce-motion='on'] .lk-fix > .lk-lang,
 html[data-reduce-motion='on'] .lk-fix > .lk-fix__divider,
 html[data-reduce-motion='on'] .lk-fix > .lk-field-stack,
