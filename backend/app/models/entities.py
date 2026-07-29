@@ -124,3 +124,38 @@ class DemoSetting(SQLModel, table=True):
     key: str = Field(primary_key=True)
     value: str = ""
     updated_at: datetime = Field(default_factory=_now)
+
+
+class AisPosition(SQLModel, table=True):
+    """Rolling window of recent AIS observations (Marine Transport pillar).
+
+    Capped and time-windowed on every write — see pillars/transport/store.py.
+    A collector left running overnight would otherwise grow the SQLite file
+    without bound, which is a real failure mode for a single-file database on
+    a small instance, not a theoretical one.
+
+    `data_kind` travels with the row rather than being inferred at read time,
+    because a single table can legitimately hold both a committed synthetic
+    seed and live observations, and a result must never label a row fresher
+    than it was. It mirrors DataProvenance.data_kind exactly.
+
+    No vessel identity is invented here: every nullable column stays NULL when
+    AIS did not supply it (static data is broadcast far less often than
+    position, so name/type/destination/ETA are frequently unknown).
+    """
+
+    id: str = Field(default_factory=_uuid, primary_key=True)
+    mmsi: int = Field(index=True)
+    received_at: datetime = Field(default_factory=_now, index=True)  # when WE stored it
+    time_utc: datetime                                              # when the vessel reported it
+    latitude: float
+    longitude: float
+    nav_status: int | None = None
+    sog_knots: float | None = None
+    cog_degrees: float | None = None
+    ship_name: str | None = None
+    ship_type_code: int | None = None
+    destination: str | None = None
+    eta_utc: datetime | None = None
+    draught_m: float | None = None
+    data_kind: str = "synthetic"  # live | cached | sample | synthetic

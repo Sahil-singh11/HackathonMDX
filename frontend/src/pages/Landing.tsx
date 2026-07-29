@@ -15,6 +15,9 @@
  * setOnboarded fires, and skips it entirely under reduced motion.
  */
 import { useEffect, useRef, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { Check, MapPin, Thermometer, Timer, User, Waves } from 'lucide-react'
+import { api } from '../api/client'
 import { useT } from '../i18n'
 import { useAppStore } from '../store/app'
 import { useTheme } from '../theme'
@@ -38,6 +41,22 @@ const LANDING_SITES = [
   'Cap Malheureux', 'Bain Boeuf', 'Tamarin', 'Black River', "Poudre d'Or",
 ]
 
+/**
+ * The tagline is one sentence pair ("X. Y.") in both languages. Split on the
+ * first sentence boundary so it reads as two lines — the copy itself is
+ * untouched, only where it wraps.
+ */
+function taglineLines(s: string): [string, string] {
+  const i = s.indexOf('. ')
+  if (i < 0) return [s, '']
+  return [s.slice(0, i + 1), s.slice(i + 2)]
+}
+
+function formatClock(ms: number): string {
+  const d = new Date(ms)
+  return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+}
+
 export default function Landing() {
   const t = useT()
   const { language, setLanguage, setProfile, setOnboarded } = useAppStore()
@@ -48,6 +67,12 @@ export default function Landing() {
   const announce = useAnnounce()
   const timer = useRef<number | null>(null)
   const panelRef = useRef<HTMLElement | null>(null)
+
+  const { data: marine, dataUpdatedAt } = useQuery({ queryKey: ['marine'], queryFn: api.marine, retry: false })
+  const waveHeight = typeof marine?.wave_height_m === 'number' ? marine.wave_height_m as number : null
+  const swellPeriod = typeof marine?.swell_period_s === 'number' ? marine.swell_period_s as number : null
+  const seaTemp = typeof marine?.sea_surface_temperature_c === 'number' ? marine.sea_surface_temperature_c as number : null
+  const conditionsAt = dataUpdatedAt ? formatClock(dataUpdatedAt) : null
 
   useEffect(() => () => { if (timer.current) window.clearTimeout(timer.current) }, [])
 
@@ -69,26 +94,39 @@ export default function Landing() {
     return () => window.removeEventListener('mousemove', onMove)
   }, [reduceMotion])
 
-  const start = () => {
+  const go = (finalName: string, finalArea: string) => {
     // Identical store writes to the previous implementation, in the same order.
-    const commit = () => { setProfile(name, area); setOnboarded(true) }
+    const commit = () => { setProfile(finalName, finalArea); setOnboarded(true) }
     announce(t('landing.start'))
     if (reduceMotion) { commit(); return }
     setDeparting(true)
     timer.current = window.setTimeout(commit, DEPART_MS)
   }
 
+  const start = () => go(name, area)
+  // Both fields are already optional — this just skips whatever is half-typed
+  // and commits with defaults, rather than requiring the fields to be cleared.
+  const startAsGuest = () => go('', '')
+
+  const [wLabel, wUnit] = waveHeight != null ? [waveHeight.toFixed(1), 'm'] : [null, null]
+  const [pLabel, pUnit] = swellPeriod != null ? [swellPeriod.toFixed(0), 's'] : [null, null]
+  const [sLabel, sUnit] = seaTemp != null ? [seaTemp.toFixed(1), '°C'] : [null, null]
+  const [taglineA, taglineB] = taglineLines(t('app.tagline'))
+
   return (
     <div className={`lk-onboard lk-scope${departing ? ' lk-onboard--departing' : ''}`}>
       <BathymetricScene />
 
       <div className="lk-onboard__inner">
-        <div>
+        <div className="lk-onboard__left">
           <div className="lk-onboard__masthead">
             <img src="/icon.svg" alt="" aria-hidden="true" />
             <div>
               <h1 className="lk-onboard__wordmark">{t('app.name')}</h1>
-              <span className="lk-onboard__tagline">{t('app.tagline')}</span>
+              <span className="lk-onboard__tagline">
+                {taglineA}
+                {taglineB && <><br />{taglineB}</>}
+              </span>
             </div>
           </div>
 
@@ -100,14 +138,12 @@ export default function Landing() {
 
             <fieldset className="lk-lang">
               <legend className="lk-lang__legend">{t('landing.chooseLanguage')}</legend>
-              <div className="lk-lang__options">
-                {/* Each input lives in its own cell so it positions against that
-                    cell, not against the card. See onboarding.css. */}
+              <div className="lk-lang__pill">
                 <div className="lk-lang__cell">
                   <input className="lk-lang__input" type="radio" id="lk-lang-mfe" name="lk-language"
                     checked={language === 'mfe'} onChange={() => choose('mfe')} />
                   <label className="lk-lang__option" htmlFor="lk-lang-mfe">
-                    <span className="lk-lang__marker" aria-hidden="true" />
+                    <Check className="lk-lang__check" size={18} aria-hidden="true" />
                     Kreol Morisien
                   </label>
                 </div>
@@ -116,7 +152,7 @@ export default function Landing() {
                   <input className="lk-lang__input" type="radio" id="lk-lang-en" name="lk-language"
                     checked={language === 'en'} onChange={() => choose('en')} />
                   <label className="lk-lang__option" htmlFor="lk-lang-en">
-                    <span className="lk-lang__marker" aria-hidden="true" />
+                    <Check className="lk-lang__check" size={18} aria-hidden="true" />
                     English
                   </label>
                 </div>
@@ -128,29 +164,84 @@ export default function Landing() {
             <div className="lk-field-stack">
               <div>
                 <label className="lk-onboard-label" htmlFor="lk-name">{t('landing.profileName')}</label>
-                <input className="lk-onboard-input" id="lk-name" value={name}
-                  onChange={(e) => setName(e.target.value)} autoComplete="name" />
+                <div className="lk-onboard-field">
+                  <User className="lk-onboard-field__icon" size={18} aria-hidden="true" />
+                  <input className="lk-onboard-input" id="lk-name" value={name}
+                    onChange={(e) => setName(e.target.value)} autoComplete="name" />
+                </div>
               </div>
               <div>
                 <label className="lk-onboard-label" htmlFor="lk-area">{t('landing.area')}</label>
-                <input className="lk-onboard-input" id="lk-area" value={area}
-                  list="lk-landing-sites" autoComplete="off"
-                  onChange={(e) => setArea(e.target.value)} placeholder="Grand Baie, Mahébourg…" />
-                <datalist id="lk-landing-sites">
-                  {LANDING_SITES.map((sIte) => <option key={sIte} value={sIte} />)}
-                </datalist>
+                <div className="lk-onboard-field">
+                  <MapPin className="lk-onboard-field__icon" size={18} aria-hidden="true" />
+                  <input className="lk-onboard-input" id="lk-area" value={area}
+                    list="lk-landing-sites" autoComplete="off"
+                    onChange={(e) => setArea(e.target.value)} placeholder="Grand Baie, Mahébourg…" />
+                  <datalist id="lk-landing-sites">
+                    {LANDING_SITES.map((sIte) => <option key={sIte} value={sIte} />)}
+                  </datalist>
+                </div>
               </div>
             </div>
 
             <button className="lk-start" type="button" onClick={start}>
               {t('landing.start')}
             </button>
+            <button className="lk-start-guest" type="button" onClick={startAsGuest}>
+              {t('landing.guest')}
+            </button>
 
             <span className="lk-fix__coords" aria-hidden="true">{FIX}</span>
           </section>
+
+          <p className="lk-onboard__legend">{t('limitation.permanent')}</p>
+
+          <p className="lk-onboard__footer">
+            {t('landing.footerSupport')} · {t('landing.footerLocale')}
+          </p>
         </div>
 
-        <p className="lk-onboard__legend">{t('limitation.permanent')}</p>
+        <div className="lk-onboard__scene-space" aria-hidden="true" />
+
+        <div className="lk-conditions" role="group" aria-label={t('landing.conditions')}>
+          <span className="lk-conditions__title">{t('landing.conditions')}</span>
+          <div className="lk-conditions__row">
+            <div className="lk-conditions__item">
+              <Waves className="lk-conditions__icon" size={20} aria-hidden="true" />
+              <div>
+                <span className="lk-conditions__value">
+                  {wLabel ?? '—'}{wUnit && <span className="lk-conditions__unit">{wUnit}</span>}
+                </span>
+                <span className="lk-conditions__label">
+                  {t('marine.waveHeight')}{wLabel == null && ` · ${t('landing.noDataYet')}`}
+                </span>
+              </div>
+            </div>
+            <div className="lk-conditions__item">
+              <Timer className="lk-conditions__icon" size={20} aria-hidden="true" />
+              <div>
+                <span className="lk-conditions__value">
+                  {pLabel ?? '—'}{pUnit && <span className="lk-conditions__unit">{pUnit}</span>}
+                </span>
+                <span className="lk-conditions__label">
+                  {t('marine.swellPeriod')}{pLabel == null && ` · ${t('landing.noDataYet')}`}
+                </span>
+              </div>
+            </div>
+            <div className="lk-conditions__item">
+              <Thermometer className="lk-conditions__icon" size={20} aria-hidden="true" />
+              <div>
+                <span className="lk-conditions__value">
+                  {sLabel ?? '—'}{sUnit && <span className="lk-conditions__unit">{sUnit}</span>}
+                </span>
+                <span className="lk-conditions__label">
+                  {t('marine.sst')}{sLabel == null && ` · ${t('landing.noDataYet')}`}
+                </span>
+              </div>
+            </div>
+          </div>
+          {conditionsAt && <span className="lk-conditions__updated">{t('marine.updated')} {conditionsAt}</span>}
+        </div>
       </div>
     </div>
   )

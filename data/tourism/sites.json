@@ -1,0 +1,96 @@
+{
+  "sites_version": "1.0.0",
+  "generated": "2026-07-30",
+  "disclaimer": "Site coordinates are approximate centre points for a named beach or lagoon area, adequate for a forecast lookup and nothing more. They are not survey positions, not entry points, and must never be used for navigation. Conditions described from these coordinates apply to the general area, not to any specific spot within it.",
+  "coverage_note": "Condition briefs describe sea state and weather only. They carry NO information about visitor numbers, crowding, water quality, pollution, jellyfish or other marine hazards, lifeguard presence, reef health, or whether access is permitted. Suitability reflects forecast conditions alone.",
+  "sites": [
+    {
+      "site_id": "blue_bay",
+      "name": "Blue Bay",
+      "region": "South-east",
+      "latitude": -20.4436,
+      "longitude": 57.7139,
+      "character": "Shallow, sheltered lagoon inside a marine park, known for clear water over coral. Protected from the prevailing south-easterly swell by the reef.",
+      "typical_activities": ["snorkelling", "swimming", "glass-bottom boat"],
+      "protected_area": true,
+      "protected_area_note": "Blue Bay Marine Park — activity rules apply and are NOT encoded in this app. Check with the authorities before any in-water activity."
+    },
+    {
+      "site_id": "trou_aux_biches",
+      "name": "Trou aux Biches",
+      "region": "North-west",
+      "latitude": -20.0333,
+      "longitude": 57.545,
+      "character": "Long west-coast beach with a wide, gently shelving lagoon. Usually calm because the island shelters it from the dominant south-easterly.",
+      "typical_activities": ["swimming", "snorkelling", "diving"],
+      "protected_area": false,
+      "protected_area_note": ""
+    },
+    {
+      "site_id": "belle_mare",
+      "name": "Belle Mare",
+      "region": "East",
+      "latitude": -20.19,
+      "longitude": 57.77,
+      "character": "Broad east-coast beach with a wide lagoon. Exposed to the south-easterly trade winds, so it is often the windiest of the named sites.",
+      "typical_activities": ["swimming", "windsurfing", "kitesurfing"],
+      "protected_area": false,
+      "protected_area_note": ""
+    },
+    {
+      "site_id": "le_morne",
+      "name": "Le Morne",
+      "region": "South-west",
+      "latitude": -20.455,
+      "longitude": 57.32,
+      "character": "Lagoon beneath Le Morne Brabant, with a reef pass that concentrates swell. A well-known wind-sport area precisely because it is not sheltered.",
+      "typical_activities": ["kitesurfing", "windsurfing", "surfing"],
+      "protected_area": false,
+      "protected_area_note": ""
+    },
+    {
+      "site_id": "pereybere",
+      "name": "Pereybère",
+      "region": "North",
+      "latitude": -19.993,
+      "longitude": 57.59,
+      "character": "Small northern cove with shallow, sheltered water. Compact and enclosed, so it stays workable in conditions that close larger beaches.",
+      "typical_activities": ["swimming", "snorkelling"],
+      "protected_area": false,
+      "protected_area_note": ""
+    },
+    {
+      "site_id": "grand_baie",
+      "name": "Grand Baie",
+      "region": "North",
+      "latitude": -20.0064,
+      "longitude": 57.5806,
+      "character": "Sheltered northern bay and the island's main water-sports hub. Deeper than the surrounding lagoons and busy with boat traffic.",
+      "typical_activities": ["swimming", "diving", "boat trips"],
+      "protected_area": false,
+      "protected_area_note": ""
+    },
+    {
+      "site_id": "flic_en_flac",
+      "name": "Flic-en-Flac",
+      "region": "West",
+      "latitude": -20.276,
+      "longitude": 57.3644,
+      "character": "Long west-coast lagoon with a reef drop-off offshore. Typically calm inside the reef; the outer wall is a known dive area.",
+      "typical_activities": ["swimming", "snorkelling", "diving"],
+      "protected_area": false,
+      "protected_area_note": ""
+    },
+    {
+      "site_id": "mahebourg",
+      "name": "Mahebourg",
+      "region": "South-east",
+      "latitude": -20.4081,
+      "longitude": 57.7,
+      "character": "South-eastern bay open to the trade winds, with a working fishing waterfront. Choppier than the northern and western lagoons.",
+      "typical_activities": ["kitesurfing", "boat trips"],
+      "protected_area": false,
+      "protected_area_note": ""
+    }
+  ]
+}

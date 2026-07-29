@@ -23,6 +23,8 @@ from pydantic import BaseModel, Field
 from app.core.config import get_settings
 from app.core.ratelimit import InMemoryRateLimiter
 from app.pillars.base import PillarModule, SourceDescriptor
+from app.pillars.transport.module import transport_pillar
+from app.pillars.transport.routes import router as transport_router
 
 log = logging.getLogger(__name__)
 
@@ -167,9 +169,10 @@ def register_default_pillars(registry: PillarRegistry) -> None:
         pillar_id="transport",
         pillar_name="Marine Transport & Trade",
         owner="Yadhav (WS1)",
-        description="Port Louis arrivals brief from live AIS positions; Gemma narrates and reasons over risk, counts and ETAs stay deterministic (Task 4b).",
-        sources=[SourceDescriptor(name="aisstream.io", url="https://aisstream.io",
-                                  description="Real-time AIS WebSocket, bounding-box subscription. Candidate until a live Port Louis message is captured.", status="candidate")],
+        description=("Port Louis arrivals brief from recent AIS positions; Gemma narrates and "
+                     "reasons over risk, counts and ETAs stay deterministic (Task 4b)."),
+        sources=list(transport_pillar.sources()),
+        endpoints=["/api/pillars/transport/arrivals"],
     ))
     registry.register_descriptor(PillarDescriptor(
         pillar_id="tourism",
@@ -203,6 +206,12 @@ def register_default_pillars(registry: PillarRegistry) -> None:
         sources=[SourceDescriptor(name="Uploaded documents", url=None,
                                   description="User-supplied documents; no external feed.", status="none")],
     ))
+
+    # Implementations. Declaring a descriptor above and attaching a module here
+    # are separate acts on purpose: a pillar is only "live" when it is both
+    # implemented AND named in PILLARS_ENABLED, so landing this code does not
+    # by itself expose the route (Task 4a §4).
+    registry.register_module(transport_pillar, router=transport_router)
 
 
 pillar_registry = PillarRegistry()

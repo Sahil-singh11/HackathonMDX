@@ -79,7 +79,9 @@ class GemmaHostedProvider:
                             candidates: list[dict], ctx: ToolContext) -> ProviderResult:
         return gemma_hosted.analyse(image_jpeg, note, language, candidates, ctx)
 
-    def chat(self, prompt: str, language: str = "en") -> str:
+    def chat(self, prompt: str, language: str = "en",
+             system_instruction: str | None = None,
+             timeout_seconds: int | None = None) -> str:
         settings = get_settings()
         if not settings.hosted_available:
             raise gemma_hosted.HostedUnavailable("GEMINI_API_KEY not configured")
@@ -87,13 +89,18 @@ class GemmaHostedProvider:
         from google.genai import types
 
         from app.prompts.system import SYSTEM_INSTRUCTION
+        # None keeps the fisheries default — the pre-Task-4b behaviour, pinned
+        # by test_hosted_chat_default_instruction_is_unchanged.
+        instruction = SYSTEM_INSTRUCTION if system_instruction is None else system_instruction
+        # None keeps the deployment-wide ceiling; a route may carry its own.
+        seconds = settings.gemma_timeout_seconds if timeout_seconds is None else timeout_seconds
         client = genai.Client(api_key=settings.gemini_api_key)
         response = client.models.generate_content(
             model=settings.gemma_model,
             contents=f"Preferred language: {language}\n\n{prompt}",
             config=types.GenerateContentConfig(
-                system_instruction=SYSTEM_INSTRUCTION, temperature=0.2,
-                http_options=types.HttpOptions(timeout=settings.gemma_timeout_seconds * 1000)))
+                system_instruction=instruction, temperature=0.2,
+                http_options=types.HttpOptions(timeout=seconds * 1000)))
         return (response.text or "").strip()
 
     def call_tools(self, name: str, args: dict, ctx: ToolContext) -> tuple[dict, FunctionTraceEntry]:
@@ -120,7 +127,12 @@ class MockProvider:
         image_sha = hashlib.sha256(image_jpeg).hexdigest() if image_jpeg else None
         return mock.analyse(image_sha, note, language, candidates, ctx)
 
-    def chat(self, prompt: str, language: str = "en") -> str:
+    def chat(self, prompt: str, language: str = "en",
+             system_instruction: str | None = None,
+             timeout_seconds: int | None = None) -> str:
+        # Instruction and timeout are accepted and ignored: the mock does no inference,
+        # so honouring it would imply a scoping that never happened. What it
+        # must never do is drop the disclosure.
         if language == "mfe":
             return f"(MOCK) {MOCK_DISCLOSURE} Mo kapav ed twa ar lapes, lamer ek deklarasion."
         return f"(MOCK) {MOCK_DISCLOSURE} I can help with catches, sea conditions and declarations."
