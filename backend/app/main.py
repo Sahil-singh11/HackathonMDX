@@ -15,6 +15,7 @@ from app.core.config import get_settings
 from app.core.logging import configure, new_request_id
 from app.db.session import get_engine, init_db
 from app.pillars.routes import build_pillar_router
+from app.pillars.tourism import prewarm_tourism_sites, register_tourism
 from app.services.marine.client import prewarm_demo_locations
 
 log = logging.getLogger(__name__)
@@ -25,6 +26,16 @@ def _run_marine_prewarm() -> None:
     with Session(get_engine()) as session:
         prewarm_demo_locations(session)
     log.info("Marine cache pre-warm finished")
+
+
+def _run_tourism_prewarm() -> None:
+    """Tourism site cache (Workstream 2), same worker-thread contract.
+
+    Eight named sites x two endpoints, staggered inside the helper. Separate
+    task from the marine pre-warm so one slow host cannot delay the other.
+    """
+    prewarm_tourism_sites()
+    log.info("Tourism cache pre-warm finished")
 
 
 def create_app() -> FastAPI:
@@ -57,9 +68,14 @@ def create_app() -> FastAPI:
             # never wait on a live Open-Meteo round trip. Worst case (network
             # down/slow) previously blocked boot for up to ~60s here.
             asyncio.create_task(asyncio.to_thread(_run_marine_prewarm))
+            asyncio.create_task(asyncio.to_thread(_run_tourism_prewarm))
         log.info("Lamer Konekte backend started (provider default: %s)", settings.provider_mode)
 
     app.include_router(router)
+    # Workstream 2: attach the tourism pillar before the router is built, so
+    # mount_all() picks it up. Registering does not enable it — PILLARS_ENABLED
+    # still gates the routes (503 until listed).
+    register_tourism()
     app.include_router(build_pillar_router())
 
     dist = Path(__file__).resolve().parents[2] / "frontend" / "dist"
