@@ -1,0 +1,85 @@
+{
+  "families": 116,
+  "records": 240,
+  "families_spanning_multiple_splits": {},
+  "family_size_distribution": {
+    "3": 8,
+    "2": 108
+  },
+  "largest_families": [
+    [
+      "a_ident_lagoon_morning",
+      3
+    ],
+    [
+      "a_ident_net_catch",
+      3
+    ],
+    [
+      "a_weather_afternoon_trip",
+      3
+    ],
+    [
+      "a_log_after_confirm",
+      3
+    ],
+    [
+      "a_decl_monthly",
+      3
+    ]
+  ],
+  "by_split_group": {
+    "train": {
+      "A": 39,
+      "B": 38,
+      "C": 22,
+      "D": 21,
+      "E": 20,
+      "F": 20,
+      "G": 10
+    },
+    "validation": {
+      "A": 10,
+      "B": 6,
+      "C": 4,
+      "D": 2,
+      "E": 2,
+      "F": 6,
+      "G": 6
+    },
+    "test": {
+      "A": 12,
+      "B": 4,
+      "C": 6,
+      "E": 6,
+      "F": 4,
+      "D": 2
+    }
+  },
+  "by_split_intent": {
+    "train": {
+      "identify_catch": 46,
+      "weather_query": 32,
+      "log_catch": 31,
+      "other": 49,
+      "make_declaration": 12
+    },
+    "validation": {
+      "weather_query": 12,
+      "log_catch": 10,
+      "identify_catch": 8,
+      "other": 4,
+      "make_declaration": 2
+    },
+    "test": {
+      "log_catch": 8,
+      "make_declaration": 11,
+      "weather_query": 6,
+      "identify_catch": 7,
+      "other": 2
+    }
+  },
+  "warnings": [],
+  "failures": [],
+  "passed": true
+}
