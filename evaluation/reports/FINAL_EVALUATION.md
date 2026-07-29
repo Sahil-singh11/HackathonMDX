@@ -1,5 +1,23 @@
 # Final Evaluation — Prototype Benchmark Metrics
 
+## Real-photo species benchmark (hosted Gemma, 29 Jul)
+
+`evaluation/species_benchmark.py` over the licensed iNaturalist set — the metric the Morisyen suite could not provide, because those cases pair notes with synthetic drawings.
+
+| Metric | Value |
+|---|---|
+| Images evaluated | 52 real photos, 5 species |
+| **Top-1 agreement (all images)** | **86.5%** |
+| Top-1 agreement (when it answered) | 93.8% |
+| Honest abstentions (`species_id: null`) | 4 |
+| **False-confident rate (high confidence AND wrong)** | **2.1%** |
+| Median latency | 23.7 s |
+
+Per species: octopus 11/11 · spangled emperor 9/11 · honeycomb grouper 9/10 · bluespine unicornfish 9/10 · shoemaker spinefoot 7/10.
+
+The false-confident rate is the number that matters for this product: a wrong answer delivered confidently is the failure mode that could mislead a fisher, whereas an abstention routes them to manual selection and costs nothing but a tap. Ground truth is the iNaturalist community identification, not an expert re-verification; results are single-run and subject to sampling variance.
+
+
 Provider mode of the committed run: **mock (deterministic pipeline)**. These metrics validate the safety rails and pipeline, **not** Gemma model quality — the hosted run is gated on the API key and writes to the same files when executed (`evaluation/run_all.py --provider hosted`).
 
 | Group | Metric | Value |

@@ -1,19 +1,35 @@
 {
-  "run_at": "2026-07-29T15:27:51.106825+00:00",
+  "run_at": "2026-07-29T17:43:24.960718+00:00",
   "model": "gemma-4-26b-a4b-it",
   "split": "all",
-  "images": 3,
-  "answered": 3,
-  "abstained": 0,
-  "abstention_rate": 0.0,
-  "top1_agreement_all_images": 1.0,
-  "top1_agreement_when_answered": 1.0,
-  "false_confident_rate": 0.0,
-  "median_latency_ms": 20473,
+  "images": 52,
+  "answered": 48,
+  "abstained": 4,
+  "abstention_rate": 0.077,
+  "top1_agreement_all_images": 0.865,
+  "top1_agreement_when_answered": 0.938,
+  "false_confident_rate": 0.021,
+  "median_latency_ms": 23655,
   "per_species": {
     "octopus_cyanea": {
-      "n": 3,
-      "correct": 3
+      "n": 11,
+      "correct": 11
+    },
+    "lethrinus_nebulosus": {
+      "n": 11,
+      "correct": 9
+    },
+    "siganus_sutor": {
+      "n": 10,
+      "correct": 7
+    },
+    "epinephelus_merra": {
+      "n": 10,
+      "correct": 9
+    },
+    "naso_unicornis": {
+      "n": 10,
+      "correct": 9
     }
   },
   "note": "Ground truth is the iNaturalist community identification, not an expert re-verification. Abstention (species_id null) is counted separately from a wrong answer: for this product, an honest 'unsure' is a safe outcome, a confident wrong answer is not."
