@@ -14,6 +14,9 @@
  *   Dhanesh  /record      Record a catch  (pages/CatchFlow)
  *            /log         Catch log       (pages/History)
  *            /queue       Offline queue
+ *            /pillars     Blue-economy pillar index + /pillars/:id detail
+ *                         (pillars/) — added by Workstream 2, pillar phase.
+ *                         Sahil: second one-line touch of your file, same reason.
  *            /assistant   Rules assistant (assistant/AssistantPage) — added by
  *                         Workstream 2; Sahil, this is the one line that needed
  *                         your file. Route name chosen to avoid Lane C's paths.
@@ -33,6 +36,8 @@
 import { useEffect } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import AssistantPage from './assistant/AssistantPage'
+import PillarDetail from './pillars/PillarDetail'
+import PillarsIndex from './pillars/PillarsIndex'
 import About from './pages/About'
 import CatchFlow from './pages/CatchFlow'
 import Dashboard from './pages/Dashboard'
@@ -68,6 +73,8 @@ function FisherRoutes() {
           <Route path="/record" element={<CatchFlow />} />
           <Route path="/log" element={<History />} />
           <Route path="/assistant" element={<AssistantPage />} />
+          <Route path="/pillars" element={<PillarsIndex />} />
+          <Route path="/pillars/:id" element={<PillarDetail />} />
           <Route path="/declaration" element={<Declaration />} />
           <Route path="/queue" element={<Queue />} />
           <Route path="/proof" element={<Proof />} />
