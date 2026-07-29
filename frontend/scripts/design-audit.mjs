@@ -253,23 +253,34 @@ async function checkHeadingsTouchTypography(browser) {
           small.push(`${el.tagName.toLowerCase()}${cls ? '.' + cls : ''}(${Math.round(b.width)}x${Math.round(b.height)})`);
         }
       }
-      const tiny = [];
-      for (const el of document.querySelectorAll('p,li,label,span,div,button,a')) {
+      // "Body never below 16px" applies to BODY COPY. The token scale
+      // deliberately includes --fs-sm 14px and --fs-xs 12px for captions and
+      // metadata, and the legacy sheet styles .caption/.small at 14px on
+      // purpose. Flagging those as failures made the audit cry wolf on ~20
+      // intentional captions, which just teaches everyone to ignore it. So:
+      // an element that OPTS IN to caption/metadata styling is a note; an
+      // unmarked paragraph or list item below the floor is a failure. Anything
+      // under 12px is a failure regardless — that is off the scale entirely.
+      const META = /(^|[\s-])(caption|small|hint|note|sub|meta|provider|coverage|label)($|[\s-])/i;
+      const tiny = [], tinyMeta = [];
+      for (const el of document.querySelectorAll('p,li,label')) {
         const own = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
         if (!own) continue;
         const cs = getComputedStyle(el);
         const px = parseFloat(cs.fontSize);
         const b = el.getBoundingClientRect();
         if (b.width < 4 || b.height < 4) continue;
-        // Metadata is allowed below the body floor; flag only real body copy.
-        if (px < bodyMin && ['P', 'LI', 'LABEL'].includes(el.tagName)) {
-          tiny.push(`${el.tagName.toLowerCase()}@${px}px`);
-        }
+        if (px >= bodyMin) continue;
+        const cls = String(el.className || '');
+        const entry = `${el.tagName.toLowerCase()}${cls ? '.' + cls.split(' ')[0] : ''}@${px}px`;
+        if (px < 12) tiny.push(entry + ' (below the 12px scale floor)');
+        else if (META.test(cls)) tinyMeta.push(entry);
+        else tiny.push(entry);
       }
-      return { h1s, jump, small: [...new Set(small)], tiny: [...new Set(tiny)] };
+      return { h1s, jump, small: [...new Set(small)], tiny: [...new Set(tiny)], tinyMeta: [...new Set(tinyMeta)] };
     }, { touchMin: TOUCH_MIN, bodyMin: BODY_MIN_PX });
 
-    console.log(`${route.padEnd(14)} ${String(r.h1s.length).padEnd(3)} ${String(r.jump || 'ok').padEnd(10)} ${String(r.small.length).padEnd(14)} ${r.tiny.length}`);
+    console.log(`${route.padEnd(14)} ${String(r.h1s.length).padEnd(3)} ${String(r.jump || "ok").padEnd(10)} ${String(r.small.length).padEnd(14)} ${r.tiny.length}`);
     if (CHECKS.includes('headings')) {
       if (r.h1s.length !== 1) fail('headings', route, `${r.h1s.length} h1 elements: ${JSON.stringify(r.h1s)} (CLAUDE.md: one h1 per page)`);
       if (r.jump) fail('headings', route, `heading level skipped: ${r.jump}`);
@@ -280,8 +291,9 @@ async function checkHeadingsTouchTypography(browser) {
       // decision, not a per-page bug — see the summary.
       note('touch', route, `${r.small.length} target(s) under ${TOUCH_MIN}px: ${r.small.slice(0, 5).join(', ')}`);
     }
-    if (CHECKS.includes('typography') && r.tiny.length) {
-      fail('typography', route, `body text under ${BODY_MIN_PX}px: ${r.tiny.join(', ')}`);
+    if (CHECKS.includes('typography')) {
+      if (r.tiny.length) fail('typography', route, `body copy under ${BODY_MIN_PX}px: ${r.tiny.join(', ')}`);
+      if (r.tinyMeta.length) note('typography', route, `caption/metadata under ${BODY_MIN_PX}px (intentional by class, listed for the redesign): ${r.tinyMeta.slice(0, 5).join(', ')}`);
     }
   }
   await ctx.close();
