@@ -85,13 +85,15 @@ export function A11yPanel({ open, onClose }: { open: boolean; onClose: () => voi
             while being silently overridden. */}
         <Checkbox checked={preference && !blockedBy} disabled={blockedBy !== null}
           onChange={(e) => setOceanEnabled(e.target.checked)}
-          label="Background wave animation"
+          label="Background chart lines"
           hint={<><Waves size={14} aria-hidden="true" /> {
             blockedBy === 'reduce-motion'
               ? 'Turned off because Reduce motion is on.'
               : blockedBy === 'sunlight'
                 ? 'Turned off in the Sunlight theme, where legibility comes first.'
-                : 'The swell matches the current sea state — one wave cycle takes the real swell period. Turn it off to save battery.'
+                : blockedBy === 'day-theme'
+                  ? 'Shown in the Night theme only — on a light background it washes out the page.'
+                  : 'Deep contour lines in the margins, from the same chart as the welcome screen. Turn it off to save battery.'
           }</>} />
       </fieldset>
 
