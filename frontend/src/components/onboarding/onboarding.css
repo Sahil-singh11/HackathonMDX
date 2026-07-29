@@ -151,13 +151,18 @@
 /* Derived from tokens via color-mix rather than written as literals, so a theme
    change carries through. --surface-raised is the warm sand in Day; --bg is the
    near-black paper at night. */
-/* Warm paper by default (Day, light scene). */
+/* Warm paper by default (Day, light scene). A recessed field reads as a
+   groove either by going darker than its surroundings OR lighter - in Night
+   darker sells it because the panel is already dark and near-black recedes
+   further; on Day's warm sand card, going darker turned muddy, so the field
+   instead lifts toward --surface (pure white in Day), the same "one step
+   away from the card" relationship in the other direction. */
 .lk-onboard {
   --panel: color-mix(in srgb, var(--surface-raised) 95%, transparent);
   --panel-edge: color-mix(in srgb, var(--text) 20%, transparent);
   --panel-ink: var(--text);
   --panel-ink-muted: var(--text-muted);
-  --field-bg: color-mix(in srgb, var(--text) 6%, var(--surface-raised));
+  --field-bg: color-mix(in srgb, var(--surface) 60%, var(--surface-raised));
   --field-edge: color-mix(in srgb, var(--text) 14%, transparent);
 }
 /* Dark elevated surface whenever the SCENE is dark - which includes Day theme
