@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     gemma_provider: str = "google"
     gemma_timeout_seconds: int = 60
     provider_mode: str = "mock"  # hosted | local | mock; hosted requires a key
+    # Canonical provider selection (auto | gemma_hosted | gemma_local | mock).
+    # Empty means "derive from provider_mode", which stays a working alias.
+    inference_provider: str = ""
 
     database_url: str = f"sqlite:///{REPO_ROOT / 'storage' / 'lamer_konekte.sqlite3'}"
     upload_max_bytes: int = 8 * 1024 * 1024
