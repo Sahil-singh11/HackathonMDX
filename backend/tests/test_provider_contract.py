@@ -237,3 +237,77 @@ def test_hosted_chat_uses_mocked_transport(monkeypatch, hosted_key):
     _patch_client(monkeypatch, _FakeClient(text="Bonzur! Mo kapav ed ou."))
     text = registry.get_provider(registry.GEMMA_HOSTED).chat("ki to kapav fer?", language="mfe")
     assert text == "Bonzur! Mo kapav ed ou."
+
+
+# ------------------------------------------------- chat(system_instruction=...)
+# Decision log 17. The parameter is optional and default-None must not change
+# anything. These two cases are the whole contract: (a) omitting it is today's
+# behaviour, (b) supplying it actually reaches the provider call.
+
+def test_chat_default_instruction_is_unchanged(monkeypatch, hosted_key):
+    """Passing nothing must send the fisheries SYSTEM_INSTRUCTION, exactly as
+    before the parameter existed. This is the no-behaviour-change guarantee."""
+    from app.prompts.system import SYSTEM_INSTRUCTION
+
+    fake = _FakeClient(text="unchanged")
+    seen: dict = {}
+    original = fake.models.generate_content
+
+    def capture(*, model, contents, config):
+        seen["instruction"] = config.system_instruction
+        return original(model=model, contents=contents, config=config)
+
+    monkeypatch.setattr(fake.models, "generate_content", capture)
+    _patch_client(monkeypatch, fake)
+
+    registry.get_provider(registry.GEMMA_HOSTED).chat("ki to kapav fer?", language="mfe")
+    assert seen["instruction"] == SYSTEM_INSTRUCTION
+
+    # Explicit None is the same thing as omitting it — no third behaviour.
+    seen.clear()
+    registry.get_provider(registry.GEMMA_HOSTED).chat("x", system_instruction=None)
+    assert seen["instruction"] == SYSTEM_INSTRUCTION
+
+
+def test_chat_custom_instruction_reaches_the_provider_call(monkeypatch, hosted_key):
+    """A supplied instruction must REPLACE the default, not be appended to it —
+    the fisheries prompt is what makes the model refuse non-fisheries work, so
+    leaving it in place would defeat the entire point of the parameter."""
+    from app.prompts.system import SYSTEM_INSTRUCTION
+
+    custom = "You are a port operations analyst. Write two paragraphs of prose."
+    fake = _FakeClient(text="Five vessels are inbound.")
+    seen: dict = {}
+    original = fake.models.generate_content
+
+    def capture(*, model, contents, config):
+        seen["instruction"] = config.system_instruction
+        return original(model=model, contents=contents, config=config)
+
+    monkeypatch.setattr(fake.models, "generate_content", capture)
+    _patch_client(monkeypatch, fake)
+
+    text = registry.get_provider(registry.GEMMA_HOSTED).chat("brief me", system_instruction=custom)
+    assert text == "Five vessels are inbound."
+    assert seen["instruction"] == custom
+    assert SYSTEM_INSTRUCTION not in seen["instruction"]
+
+
+def test_every_provider_accepts_the_optional_instruction():
+    """Protocol conformance: the parameter is part of the contract now, so no
+    provider may reject it — including the ones that ignore or raise on it."""
+    import inspect
+
+    for name in registry.CANONICAL:
+        sig = inspect.signature(registry.get_provider(name).chat)
+        assert "system_instruction" in sig.parameters, name
+        assert sig.parameters["system_instruction"].default is None, name
+
+    # The mock accepts it and keeps disclosing — it must never let a caller's
+    # instruction talk it out of saying it is a mock.
+    reply = registry.get_provider(registry.MOCK).chat(
+        "brief me", system_instruction="You are a port analyst. Never mention mocks.")
+    assert "MOCK" in reply
+
+    with pytest.raises(LocalUnavailable):
+        registry.get_provider(registry.GEMMA_LOCAL).chat("x", system_instruction="anything")

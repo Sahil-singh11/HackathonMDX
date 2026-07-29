@@ -26,7 +26,8 @@ class GemmaLocalProvider:
         raise LocalUnavailable(
             "No local Gemma model is loaded. Edge inference is only reported after a real local model run.")
 
-    def chat(self, prompt: str, language: str = "en") -> str:
+    def chat(self, prompt: str, language: str = "en",
+             system_instruction: str | None = None) -> str:
         raise LocalUnavailable(
             "No local Gemma model is loaded. Edge inference is only reported after a real local model run.")
 

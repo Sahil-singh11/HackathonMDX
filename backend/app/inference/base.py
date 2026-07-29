@@ -45,8 +45,30 @@ class InferenceProvider(Protocol):
         FROZEN AnalyseCatchResponse schema — no provider may extend it."""
         ...
 
-    def chat(self, prompt: str, language: str = "en") -> str:
-        """Plain-text exchange (offline-assistant workstream). No tools."""
+    def chat(self, prompt: str, language: str = "en",
+             system_instruction: str | None = None) -> str:
+        """Plain-text exchange (offline-assistant workstream). No tools.
+
+        `system_instruction` is OPTIONAL and defaults to None, which means "use
+        this provider's default instruction" — for the hosted provider that is
+        the fisheries `SYSTEM_INSTRUCTION`, unchanged. Passing None must remain
+        byte-for-byte identical to the pre-Task-4b behaviour; a contract test
+        pins that.
+
+        It exists because the default instruction is fisheries-scoped and orders
+        structured output, so a non-fisheries caller gets a refusal in a JSON
+        envelope rather than prose. Measured 30 Jul 2026: asked for a port
+        arrivals brief, the live hosted model replied "I am an analysis engine
+        for fishers, not a port officer." Every non-fisheries pillar hits this.
+        See DECISION_LOG entry 17 — this signature was frozen at S1 and the
+        change is recorded there.
+
+        Callers passing an instruction own its safety rules. The honesty
+        obligations do not transfer: a pillar that swaps the instruction is
+        still responsible for validating what comes back (the transport pillar
+        keeps a grounding guard that rejects refusals, structured envelopes and
+        invented identifiers).
+        """
         ...
 
     def call_tools(self, name: str, args: dict, ctx: ToolContext) -> tuple[dict, FunctionTraceEntry]:

@@ -288,7 +288,10 @@ class TransportPillar:
         prompt = brief.build_prompt(arrivals, congestion, conditions,
                                     window_hours=window_hours, data_kind=data_kind)
         try:
-            text = (provider.chat(prompt) or "").strip()
+            # Transport-scoped instruction (decision log 17). Without it the
+            # provider default is the fisheries catch-assistant prompt, under
+            # which the live model refuses this task and answers in JSON.
+            text = (provider.chat(prompt, system_instruction=brief.SYSTEM_INSTRUCTION) or "").strip()
         except Exception as exc:  # noqa: BLE001 — a model outage degrades, never 500s
             log.warning("transport: provider chat failed: %s", exc)
             return fallback, fallback, "deterministic_fallback", f"model call failed: {exc}", provider_name

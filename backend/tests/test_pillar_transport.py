@@ -73,9 +73,11 @@ def _stub(name: str, reply=None, *, raises: Exception | None = None,
         def __init__(self) -> None:
             self.name = name
             self.seen_prompt = ""
+            self.seen_instruction = None
 
-        def chat(self, prompt, language="en"):
+        def chat(self, prompt, language="en", system_instruction=None):
             self.seen_prompt = prompt
+            self.seen_instruction = system_instruction
             if raises is not None:
                 raise raises
             return reply
@@ -193,8 +195,13 @@ def test_grounded_model_output_is_used_and_labelled(session, monkeypatch):
     assert result.narrative.startswith("Five vessels")
     assert "berthing" in result.risk_reasoning
     assert result.provenance.model_provider == "stub_good"
+    # The honesty rules live in the transport-scoped system instruction
+    # (decision log 17), not the fisheries default the provider would otherwise use.
+    assert provider.seen_instruction is brief.SYSTEM_INSTRUCTION
+    assert "Never invent a vessel" in provider.seen_instruction
+    assert "Never state an MMSI" in provider.seen_instruction
+    assert "maritime operations analyst" in provider.seen_instruction
     assert "Do NOT invent a vessel" in provider.seen_prompt
-    assert "Do NOT state any MMSI" in provider.seen_prompt
 
 
 def test_single_paragraph_reply_does_not_get_split_into_fake_structure(session, monkeypatch):
