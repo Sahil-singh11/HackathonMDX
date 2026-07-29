@@ -14,45 +14,11 @@
  */
 import { mix, readToken, type RGB } from './chart'
 
-/* ===================================================================== camera */
-
-export interface Camera {
-  heading: number      // radians, rotation about Y
-  pitch: number        // radians, rotation about X (negative looks down)
-  dist: number         // world units from the origin
-  height: number       // camera elevation above the Z=0 plane
-  f: number            // focal length in px
-  cx: number
-  cy: number
-}
-
-export interface P2 { x: number; y: number; depth: number }
-
-/**
- * World -> screen. Rotate about Y (heading), then X (pitch), then divide.
- * One function, no matrix library.
- *
- * `depth` comes back with the point so the caller can fade by distance — that
- * opacity ramp is what actually sells the 3D, more than the projection does.
+/* ===================================================================== camera
+ * The perspective projection now lives in components/ocean/projection.ts and is
+ * shared with the in-app ambient layer: one implementation, two configurations.
  */
-export function project(x: number, y: number, z: number, c: Camera): P2 {
-  // heading
-  const ch = Math.cos(c.heading), sh = Math.sin(c.heading)
-  const rx = x * ch - y * sh
-  const ry = x * sh + y * ch
-
-  // The plane lies flat: world Y becomes ground-depth, world Z is elevation.
-  const gz = ry + c.dist          // distance in front of the camera
-  const gy = z - c.height         // height relative to the camera
-
-  // pitch
-  const cp = Math.cos(c.pitch), sp = Math.sin(c.pitch)
-  const py = gy * cp - gz * sp
-  const pz = gy * sp + gz * cp
-
-  const denom = Math.max(0.06, pz)
-  return { x: c.cx + (rx * c.f) / denom, y: c.cy + (py * c.f) / denom, depth: denom }
-}
+export { project, focalFor, type Camera, type Projected as P2 } from '../ocean/projection'
 
 /* ========================================================= Mauritius coastline
  *

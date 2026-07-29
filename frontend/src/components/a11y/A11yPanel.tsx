@@ -17,7 +17,7 @@ import { Sheet } from '../ui'
 import { Radio, Checkbox } from '../ui'
 import { useTheme, THEME_LABELS, type Theme, type TextScale } from '../../theme'
 import { useAppStore } from '../../store/app'
-import { useOceanEnabled } from '../ocean'
+import { useOceanState } from '../ocean'
 
 const THEME_ICONS: Record<Theme, typeof Sun> = { day: Sun, night: Moon, sunlight: Contrast }
 
@@ -33,7 +33,7 @@ export function A11yPanel({ open, onClose }: { open: boolean; onClose: () => voi
     textScale, setTextScale, reduceMotion, setReduceMotion, systemReduceMotion,
   } = useTheme()
   const { language, setLanguage } = useAppStore()
-  const { oceanEnabled, setOceanEnabled } = useOceanEnabled()
+  const { preference, blockedBy, setOceanEnabled } = useOceanState()
 
   return (
     <Sheet open={open} onClose={onClose} title="Display & accessibility">
@@ -80,9 +80,19 @@ export function A11yPanel({ open, onClose }: { open: boolean; onClose: () => voi
           hint={systemReduceMotion
             ? 'Turned on by your device settings, so it cannot be switched off here.'
             : 'Removes animation and transitions.'} />
-        <Checkbox checked={oceanEnabled} onChange={(e) => setOceanEnabled(e.target.checked)}
+        {/* Dependent state: reduce-motion and Sunlight both force this off, so
+            the control disables itself and SAYS why rather than sitting enabled
+            while being silently overridden. */}
+        <Checkbox checked={preference && !blockedBy} disabled={blockedBy !== null}
+          onChange={(e) => setOceanEnabled(e.target.checked)}
           label="Background wave animation"
-          hint={<><Waves size={14} aria-hidden="true" /> The ambient layer reflects the current sea state. Turn it off to save battery.</>} />
+          hint={<><Waves size={14} aria-hidden="true" /> {
+            blockedBy === 'reduce-motion'
+              ? 'Turned off because Reduce motion is on.'
+              : blockedBy === 'sunlight'
+                ? 'Turned off in the Sunlight theme, where legibility comes first.'
+                : 'The swell matches the current sea state — one wave cycle takes the real swell period. Turn it off to save battery.'
+          }</>} />
       </fieldset>
 
       <fieldset style={{ border: 0, padding: 0 }}>
