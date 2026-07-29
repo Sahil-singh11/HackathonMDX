@@ -1,0 +1,30 @@
+{
+  "families": 164,
+  "challenge_families": 24,
+  "family_split_overlap": [],
+  "by_split_intent": {
+    "train": {
+      "identify_catch": 52,
+      "weather_query": 36,
+      "log_catch": 47,
+      "other": 57,
+      "make_declaration": 56
+    },
+    "validation": {
+      "weather_query": 12,
+      "log_catch": 10,
+      "identify_catch": 8,
+      "other": 4,
+      "make_declaration": 8
+    },
+    "test": {
+      "log_catch": 12,
+      "make_declaration": 15,
+      "weather_query": 12,
+      "identify_catch": 7,
+      "other": 2
+    }
+  },
+  "failures": [],
+  "passed": true
+}

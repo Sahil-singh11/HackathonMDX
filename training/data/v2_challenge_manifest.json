@@ -1,0 +1,46 @@
+{
+  "name": "v2_challenge_test",
+  "role": "frozen_challenge_test",
+  "record_count": 24,
+  "semantic_families": 24,
+  "sha256": "23327eae5f7e8ef00b2e6833f826acf27daca2e218c92e57aaf623e8fa00234f",
+  "per_record_sha256": {
+    "ch_decl_vs_log_1__v1": "e44f80d091c29e202cbe0d8a5aea215114cc1a9a3c1633068a2c2945df6cf433",
+    "ch_decl_vs_log_2__v1": "8d55bd8a8b4c6d981622abac59bef73401e03147a113f88b3bf22f85c052cad4",
+    "ch_prepare_vs_submit_1__v1": "2408701908d1e85a48f97525328903e06b0e7199875734220ff9c57dc32c594d",
+    "ch_prepare_vs_submit_2__v1": "84fcb01d2c00f98b6ac61b851505813a1f5df68fa66248cf05adced9f627c79f",
+    "ch_args_hard_1__v1": "463f7f08db5b8300fbec80e9a6b5c1dbc778b0fe4505ee018875ac808eada656",
+    "ch_args_hard_2__v1": "f10976f34c170482d2df5227ae0e2f9b74aa7847d188b0a0a98ba8856988e93c",
+    "ch_args_hard_3__v1": "523a85cdf9b519bc37a9e05cd600e5afd811632607074150af68f752db001c14",
+    "ch_mixed_decl_1__v1": "f8125eb6719d6c03e95ecbdcf595b81ac1db95501ec6c375088b7425b9bd1005",
+    "ch_mixed_decl_2__v1": "b54660ae24b3dc8a59b39ea0885533f3a1a98594993f8edd43c44f981ea4dba0",
+    "ch_missing_info_1__v1": "9961846ac9c806329c228f5ed4d29df0934e4bacdbf01e04324e735c5c675232",
+    "ch_missing_info_2__v1": "7dac111ca0891e0a860c701cdd5a2715e8bbe2435040d002c35b7d2f8f226c06",
+    "ch_ambiguous_1__v1": "0cb0c58faa788e930424e2f9d2fa285ea6c32573a74c1e83cd20827a3a4731d4",
+    "ch_ambiguous_2__v1": "90f63b80df96c6c84258a7eb0d91168d5cc97800f67ed21c3c4736d9300cbbdd",
+    "ch_unsafe_1__v1": "a02113405a05399ff9242f2c13cd76effc3a7863fde7fb7f6c010cf57cfb0d1b",
+    "ch_unsafe_2__v1": "fe3bf21a6730bb8b9af16635dcf22f37d3a440b998b0ec68e1906adca0f91e86",
+    "ch_injection_1__v1": "a654e13674adee8f0de346d054c7e13554b7fd96ff14701f94f797a3b0a18e95",
+    "ch_injection_2__v1": "ef11f13dd488017d15a76fae7777e7aa6afc186c956bae198f1fea3c6da84246",
+    "ch_multistep_1__v1": "319afedc32179e5ee36a5583ea047b362275457e18fa5fc6deda012c99e1a205",
+    "ch_multistep_2__v1": "c853cef42a9c58ff8339bfb88a5266f1a89977f03c897ed04b04012b4fbb256a",
+    "ch_decl_recall_1__v1": "69793cc18ccd5fcb521432b66cc265744a0fe58666c4382960c54d833e50137b",
+    "ch_decl_recall_2__v1": "bd8ae3f7652dcc59a1a0fc1231a40a9ed820da3734adc7789c0d72c37d5da18f",
+    "ch_decl_recall_3__v1": "6d7b1dfdf29fa6315e1cc737aaa3be3dee0423b368e85cefe4ae1415ad44d1af",
+    "ch_tool_precision_1__v1": "797fae17f5498912ab591d90a34c2099384fd9c42e55a2c1023cea054fdcf5db",
+    "ch_tool_precision_2__v1": "a29249154fc9ab91367a00db65b6cb7544c20c05c1ea11e2964dce3856fb7fba"
+  },
+  "rules": [
+    "frozen before training",
+    "families appear nowhere in train/validation/test",
+    "never trained on",
+    "never relabelled after seeing predictions"
+  ],
+  "coverage": [
+    "challenge",
+    "legal_decision_request",
+    "marine_safety_guarantee",
+    "prompt_injection",
+    "secret_request"
+  ]
+}
