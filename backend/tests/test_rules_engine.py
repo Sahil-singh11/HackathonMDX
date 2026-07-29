@@ -51,3 +51,21 @@ def test_missing_measurement_returns_unknown_for_size_species():
 
 def test_unlisted_species_returns_unknown():
     assert check_confirmed_catch("nonexistent_species", 40.0, date(2026, 7, 29)).status == "unknown"
+
+
+def test_octopus_mantle_rule_gives_guidance_not_verdict():
+    """GN 167/2016 defines undersized octopus by MANTLE size (7 cm). The app
+    records total length, so the engine must refuse a numeric verdict and
+    explain the mantle measurement instead — in both directions (a 45 cm total
+    octopus is NOT automatically legal; a small one is NOT automatically
+    undersized)."""
+    check = check_confirmed_catch("octopus_cyanea", 45.0, date(2026, 7, 29))
+    assert check.status == "unknown"
+    assert check.rule == "R-OCT-MINSIZE-2016"
+    assert "mantle" in (check.note or "").lower()
+
+
+def test_octopus_closure_still_wins_over_mantle_rule_in_season():
+    check = check_confirmed_catch("octopus_cyanea", 45.0, date(2026, 9, 1))
+    assert check.status == "closed_season"
+    assert check.rule == "R-OCT-CLOSE-2016"

@@ -65,6 +65,14 @@ def check_confirmed_catch(species_id: str, measured_length_cm: float | None, cap
                 return LegalCheck(status="unknown", rule=r["rule_id"], source_id=r.get("source_id"),
                                   verification_status=r.get("verification_status", "unavailable"),
                                   note=_with_notice(r.get("note", "")))
+            if r.get("measurement", "total_length_cm") != "total_length_cm":
+                # The recorded rule is defined on a different measurement (e.g.
+                # GN 167/2016 uses MANTLE size for octopus). The app's generic
+                # length entry cannot be assumed to be that measurement, so a
+                # numeric comparison would be wrong in both directions.
+                return LegalCheck(status="unknown", rule=r["rule_id"], source_id=r.get("source_id"),
+                                  verification_status=r.get("verification_status"),
+                                  note=_with_notice(r.get("note", "")))
             if measured_length_cm is None:
                 return LegalCheck(status="unknown", rule=r["rule_id"], source_id=r.get("source_id"),
                                   verification_status=r.get("verification_status"),
