@@ -117,6 +117,20 @@ export interface CertificateVerification {
   [key: string]: unknown
 }
 
+/**
+ * The regulatory dataset served verbatim by GET /api/rules/static
+ * (Workstream 2). The offline assistant bundles the same JSON at build time and
+ * calls this only to detect a stale bundle, so `rules_version` is the field
+ * that matters; the payloads are typed loosely on purpose because the assistant
+ * narrows them in `assistant/rulesData.ts` rather than duplicating shapes here.
+ */
+export interface StaticRules {
+  rules_version: string
+  rules: Record<string, unknown>
+  catalogue: Record<string, unknown>
+  sources: Record<string, unknown>
+}
+
 async function jsonOrThrow<T>(res: Response): Promise<T> {
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json() as Promise<T>
@@ -131,7 +145,8 @@ async function jsonOrThrow<T>(res: Response): Promise<T> {
  *
  * Ownership:
  *   Sahil    — config, marine, providerStatus, reportToday, species, syncQueue
- *   Dhanesh  — analyse, catches (listCatches), confirm, createCatch (recordCatch), processSync
+ *   Dhanesh  — analyse, catches (listCatches), confirm, createCatch (recordCatch),
+ *              processSync, rulesStatic
  *   Shirish  — getSubmission, listSubmissions, mockSubmit, prepareDeclaration,
  *              submitDeclaration, verifyCertificate, verifyLedger
  */
@@ -177,6 +192,7 @@ export const api = {
   processSync: () => fetch('/api/sync/process', { method: 'POST' }).then((r) => jsonOrThrow<Record<string, unknown>>(r)),
   providerStatus: () => fetch('/api/provider/status').then((r) => jsonOrThrow<Record<string, unknown>>(r)),
   reportToday: () => fetch('/api/reports/today').then((r) => jsonOrThrow<Record<string, unknown>>(r)),
+  rulesStatic: () => fetch('/api/rules/static').then((r) => jsonOrThrow<StaticRules>(r)),
   setDemoDate(date: string) {
     const form = new FormData()
     form.append('simulated_date', date)

@@ -1,0 +1,148 @@
+/* Workstream 2 — assistant page styles.
+ * Semantic tokens only (CLAUDE.md two-palette rule): no hex literals, no legacy
+ * tokens, no raw palette names. Everything is inside .lk-scope.
+ */
+
+.asst-page { display: flex; flex-direction: column; gap: var(--sp-4); }
+
+.asst-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+.asst-head__badges { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+
+.asst-intro { color: var(--text-muted); margin: 0; max-width: 60ch; }
+
+.asst-stale-warning {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: var(--sp-3);
+  border: 1px solid var(--warning);
+  border-radius: var(--r-card);
+  background: var(--warning-quiet);
+  color: var(--text);
+}
+
+/* --- species cards ------------------------------------------------------ */
+.asst-species-list { display: flex; flex-direction: column; gap: var(--sp-4); }
+
+.asst-species-title { font-weight: 600; }
+.asst-species-sci { font-style: italic; color: var(--text-muted); font-weight: 400; }
+.asst-habitat { color: var(--text-muted); margin: 0 0 var(--sp-2); }
+
+.asst-rule { padding: var(--sp-3) 0; border-bottom: 1px solid var(--border); }
+.asst-rule:last-child { border-bottom: 0; padding-bottom: 0; }
+
+.asst-rule__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+.asst-rule__fact {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-base);
+}
+
+.asst-rule__mantle-callout {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  margin: var(--sp-2) 0 0;
+  padding: var(--sp-3);
+  border: 1px solid var(--warning);
+  border-radius: var(--r-card);
+  background: var(--warning-quiet);
+  font-weight: 600;
+}
+
+.asst-rule__note { margin: var(--sp-2) 0 0; color: var(--text-muted); }
+.asst-rule__scope { margin: var(--sp-1) 0 0; color: var(--text-muted); font-size: var(--fs-sm); }
+.asst-rule__cite {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+.asst-rule__cite a {
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.asst-data { font-family: var(--font-data); }
+
+.asst-footnote { color: var(--text-muted); font-size: var(--fs-sm); margin: 0; }
+
+/* --- declaration guide -------------------------------------------------- */
+.asst-mock-warning {
+  margin: 0 0 var(--sp-3);
+  padding: var(--sp-3);
+  border: 2px solid var(--danger);
+  border-radius: var(--r-card);
+  background: var(--danger-quiet);
+  font-weight: 700;
+}
+
+.asst-guide { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-4); }
+.asst-guide__step { display: flex; gap: var(--sp-3); align-items: flex-start; }
+.asst-guide__num {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-chip);
+  border: 2px solid var(--border-strong);
+  background: var(--surface);
+  font-size: var(--fs-md);
+  font-weight: 700;
+}
+.asst-guide__body { min-width: 0; }
+.asst-guide__title {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-base);
+  font-weight: 600;
+}
+.asst-guide__body p { margin: 0 0 var(--sp-1); color: var(--text-muted); }
+.asst-guide__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-min);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* --- sources ------------------------------------------------------------ */
+.asst-sources { display: flex; flex-direction: column; gap: var(--sp-4); }
+.asst-source {
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+.asst-source__title { margin: 0 0 var(--sp-1); font-size: var(--fs-base); }
+.asst-source__meta { margin: 0 0 var(--sp-2); font-size: var(--fs-sm); color: var(--text-muted); }
+.asst-source__note { margin: 0 0 var(--sp-2); color: var(--text-muted); }
+.asst-source__link { color: var(--accent); overflow-wrap: anywhere; font-size: var(--fs-sm); }
+
+.asst-disclaimer {
+  margin: 0;
+  padding: var(--sp-3);
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}

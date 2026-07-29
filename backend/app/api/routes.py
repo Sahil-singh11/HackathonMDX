@@ -325,6 +325,26 @@ def species_detail(species_id: str) -> dict:
 
 
 @router.get(
+    "/api/rules/static",
+    summary="The complete rules dataset, verbatim (Workstream 2: offline assistant)",
+    description=("Returns the three JSON files that are the app's regulatory source of truth "
+                 "(species rules, species catalogue, source register), unmodified. The offline "
+                 "assistant bundles the same files at build time and uses this endpoint only to "
+                 "detect that its bundle is stale — rules_version is the comparison key."),
+)
+def rules_static() -> dict:
+    s = get_settings()
+    payload: dict = {}
+    for key, rel in (("rules", "rules/species_rules.json"),
+                     ("catalogue", "processed/species_catalogue.json"),
+                     ("sources", "rules/source_register.json")):
+        with open(s.data_dir / rel, encoding="utf-8") as f:
+            payload[key] = json.load(f)
+    payload["rules_version"] = payload["rules"].get("rules_version")
+    return payload
+
+
+@router.get(
     "/api/catches",
     summary="List saved catch records, most recent first",
 )
