@@ -1,0 +1,58 @@
+{
+  "sites_version": "1.0.0",
+  "generated": "2026-07-30",
+  "disclaimer": "Candidate locations chosen for exposure to the prevailing south-easterly swell and trade winds, using public coordinates. NONE of these is a surveyed or proposed development site. No bathymetric survey, seabed assessment, grid-connection study, environmental assessment or consultation underlies this list — it exists so a forecast resource figure has somewhere to be computed.",
+  "coverage_note": "All candidate points are NEARSHORE (within a few km of the coast, mostly inside or just outside the reef). The deep-water wave-power formula used by this pillar overestimates in shallow water, so figures here are indicative only and not comparable with published deep-water resource atlases.",
+  "sites": [
+    {
+      "site_id": "se_coast_offshore",
+      "name": "South-east coast, offshore of Mahebourg",
+      "region": "South-east",
+      "latitude": -20.45,
+      "longitude": 57.78,
+      "exposure": "Directly exposed to the prevailing south-easterly swell and trade winds — the most energetic side of the island.",
+      "nearshore": true,
+      "approx_distance_from_shore_km": 3
+    },
+    {
+      "site_id": "south_coast_offshore",
+      "name": "South coast, offshore of Souillac",
+      "region": "South",
+      "latitude": -20.53,
+      "longitude": 57.52,
+      "exposure": "Open southern exposure with little reef shelter; receives long-period Southern Ocean swell.",
+      "nearshore": true,
+      "approx_distance_from_shore_km": 3
+    },
+    {
+      "site_id": "east_coast_offshore",
+      "name": "East coast, offshore of Belle Mare",
+      "region": "East",
+      "latitude": -20.19,
+      "longitude": 57.82,
+      "exposure": "Windward east coast; consistent trade-wind forcing, moderate swell.",
+      "nearshore": true,
+      "approx_distance_from_shore_km": 4
+    },
+    {
+      "site_id": "north_channel",
+      "name": "Northern channel, off Cap Malheureux",
+      "region": "North",
+      "latitude": -19.96,
+      "longitude": 57.62,
+      "exposure": "Channel between Mauritius and the northern islets; wind funnelling, weaker swell than the south-east.",
+      "nearshore": true,
+      "approx_distance_from_shore_km": 3
+    },
+    {
+      "site_id": "west_coast_offshore",
+      "name": "West coast, offshore of Flic-en-Flac",
+      "region": "West",
+      "latitude": -20.28,
+      "longitude": 57.31,
+      "exposure": "Leeward coast, sheltered by the island from the dominant south-easterly. Included as a low-resource reference point.",
+      "nearshore": true,
+      "approx_distance_from_shore_km": 4
+    }
+  ]
+}

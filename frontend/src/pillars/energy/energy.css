@@ -1,0 +1,70 @@
+/* Workstream 2 — energy surface. Semantic tokens only. */
+
+.ene-surface { display: flex; flex-direction: column; gap: var(--sp-4); }
+.ene-intro { color: var(--text-muted); margin: 0 0 var(--sp-3); }
+.ene-data { font-family: var(--font-data); }
+
+/* Sits above the numbers on purpose: a resource indication must not be read
+   as a yield study, and a footer disclaimer would not stop that. */
+.ene-basis {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-3);
+  border: 2px solid var(--warning);
+  border-radius: var(--r-card);
+  background: var(--warning-quiet);
+  font-weight: 600;
+}
+
+.ene-formulas {
+  margin-bottom: var(--sp-4);
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface-sunken);
+}
+.ene-formulas h4 { display: flex; align-items: center; gap: var(--sp-2); margin: 0 0 var(--sp-2); font-size: var(--fs-base); }
+.ene-formulas ul { margin: 0; padding-left: var(--sp-4); font-size: var(--fs-sm); color: var(--text-muted); }
+.ene-formulas__note { margin: var(--sp-2) 0 0; font-size: var(--fs-xs); color: var(--text-muted); }
+
+.ene-site-title { display: inline-flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
+.ene-rank { color: var(--accent); }
+.ene-exposure { margin: 0 0 var(--sp-1); color: var(--text-muted); }
+.ene-distance { margin: 0 0 var(--sp-3); font-size: var(--fs-sm); color: var(--text-muted); }
+
+.ene-resource-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--sp-4);
+}
+.ene-resource {
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+}
+.ene-resource h4 { display: flex; align-items: center; gap: var(--sp-2); margin: 0 0 var(--sp-2); font-size: var(--fs-base); }
+.ene-value { margin: 0; font-size: var(--fs-lg); font-weight: 700; }
+.ene-unit { font-size: var(--fs-base); font-weight: 400; color: var(--text-muted); }
+.ene-derivation { margin: var(--sp-1) 0 var(--sp-2); font-size: var(--fs-sm); color: var(--text-muted); }
+.ene-caveat {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-1);
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.ene-interpretation {
+  margin-top: var(--sp-4);
+  padding: var(--sp-3);
+  border-left: 3px solid var(--accent);
+  background: var(--surface-sunken);
+  border-radius: 0 var(--r-card) var(--r-card) 0;
+}
+.ene-interpretation h4 { margin: 0 0 var(--sp-2); font-size: var(--fs-base); }
+.ene-interpretation p { margin: 0; }
+.ene-interpretation__note { margin-top: var(--sp-2) !important; font-size: var(--fs-xs); color: var(--text-muted); }
+.ene-no-interpretation { margin: var(--sp-4) 0 0; font-size: var(--fs-sm); color: var(--text-muted); font-style: italic; }

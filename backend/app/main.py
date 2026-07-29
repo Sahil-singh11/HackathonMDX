@@ -15,6 +15,7 @@ from app.core.config import get_settings
 from app.core.logging import configure, new_request_id
 from app.db.session import get_engine, init_db
 from app.pillars.routes import build_pillar_router
+from app.pillars.energy import register_energy
 from app.pillars.tourism import prewarm_tourism_sites, register_tourism
 from app.services.marine.client import prewarm_demo_locations
 
@@ -76,6 +77,7 @@ def create_app() -> FastAPI:
     # mount_all() picks it up. Registering does not enable it — PILLARS_ENABLED
     # still gates the routes (503 until listed).
     register_tourism()
+    register_energy()
     app.include_router(build_pillar_router())
 
     dist = Path(__file__).resolve().parents[2] / "frontend" / "dist"
