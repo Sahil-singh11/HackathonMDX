@@ -14,7 +14,7 @@
 ## HIGH VALUE (directly worth rubric points)
 
 6. **Kaggle CLI auth** (`pip install kaggle`, `~/.kaggle/kaggle.json`) → `scripts/kaggle_push_training.sh` → monitor → `evaluate_adapter.ipynb` → fill `training/results/` with real numbers (strict §18E acceptance). Owner: Dhanesh.
-7. **Deploy public URL** — Render account + `deployment/render.yaml` + key as dashboard secret → validate `docs/DEPLOYMENT.md` checklist → update `kaggle/project_links.md`. Owner: fifth member.
+7. ~~Deploy public URL~~ — **DONE 29 Jul ~17:20**: **https://lamer-konekte.onrender.com** live on Render (Frankfurt, free tier). All 9 validation checks passed incl. real hosted inference through the public URL and zero key material in the served bundle. Auto-deploys on push to `main`; switch to manual deploys before the jury demo to freeze a known-good build.
 8. **Native Morisyen review** — complete `docs/MORISYEN_HUMAN_REVIEW.md`, upgrade name statuses, rebuild frontend. Owner: any native speaker on the team.
 
 ## OPTIONAL
