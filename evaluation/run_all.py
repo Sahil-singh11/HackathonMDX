@@ -46,6 +46,21 @@ def run(provider: str) -> dict:
 
     init_db()  # TestClient without a context manager does not fire startup events
     client = TestClient(app)
+
+    # The public-abuse throttle (10 analyse calls/min per client) would starve
+    # this in-process harness, which fires 40+ analyse calls from one address.
+    # Resetting it between benchmark calls measures the pipeline, not the guard;
+    # the guard has its own dedicated tests in backend/tests/test_rate_limit.py.
+    from app.api.routes import _analyse_limiter
+
+    _orig_post = client.post
+
+    def _post(url, *args, **kwargs):
+        if url == "/api/analyse-catch":
+            _analyse_limiter.reset()
+        return _orig_post(url, *args, **kwargs)
+
+    client.post = _post  # type: ignore[method-assign]
     summary: dict = {"run_at": datetime.now(timezone.utc).isoformat(), "provider_mode": provider,
                      "honesty_note": ("mock results measure the deterministic pipeline, not Gemma model quality"
                                       if provider == "mock" else "hosted results measure real Gemma inference"),
