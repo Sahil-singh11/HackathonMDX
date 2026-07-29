@@ -299,5 +299,11 @@
   "assistant.chat.errorTitle": "The assistant could not start",
   "assistant.chat.errorBody": "The model is on this device but would not load. The rules browser still works.",
   "assistant.chat.rulesPointer": "For size limits and closed seasons, the Rules tab is the source of truth.",
-  "assistant.chat.a11yAnswered": "Answer complete."
+  "assistant.chat.a11yAnswered": "Answer complete.",
+  "assistant.chat.groundedNote": "Answers come only from this app's rules data, never from the model's own memory. Rule references are shown so you can check them yourself.",
+  "assistant.chat.outOfScope": "I can only answer from this app's fisheries rules — size limits, closed seasons, the five species in the catalogue, and how to complete a declaration. I do not have information on that, so I would rather say so than guess.",
+  "assistant.chat.basedOn": "Based on:",
+  "assistant.chat.scopeSize": "Minimum sizes — \"what size can I keep an ourite?\"",
+  "assistant.chat.scopeSeason": "Closed seasons — \"when is octopus closed?\"",
+  "assistant.chat.scopeDeclaration": "Declarations — \"how do I submit my catches?\""
 }

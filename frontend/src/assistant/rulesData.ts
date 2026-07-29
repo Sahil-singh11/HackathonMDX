@@ -24,6 +24,9 @@ export interface SpeciesEntry {
   morisyen_status: string
   habitat: string
   visible_characteristics: string[]
+  /** Hand-written search terms spanning Morisyen, French and English
+   *  (e.g. octopus / ourite / poulpe). The grounding matcher relies on these. */
+  keywords: string[]
 }
 
 export interface RuleEntry {

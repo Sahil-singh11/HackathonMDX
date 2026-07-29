@@ -299,5 +299,11 @@
   "assistant.chat.errorTitle": "Asistan la pa ti kapav demare",
   "assistant.chat.errorBody": "Model la lor sa aparey la me li pann sarze. Navigater regleman la ankor mars bien.",
   "assistant.chat.rulesPointer": "Pou limit groser ek sezon ferme, tab Regleman la se sours laverite.",
-  "assistant.chat.a11yAnswered": "Repons fini."
+  "assistant.chat.a11yAnswered": "Repons fini.",
+  "assistant.chat.groundedNote": "Bann repons sorti zis dan done regleman sa app la, zame dan memwar model la. Referans regleman montre pou ki to kapav verifie tomem.",
+  "assistant.chat.outOfScope": "Mo kapav zis reponn depi regleman lapes sa app la — limit groser, sezon ferme, sink lespes dan katalog la, ek kouma ranpli enn deklarasion. Mo pena lenformasion lor sa, alor mo prefer dir sa ki devine.",
+  "assistant.chat.basedOn": "Baze lor:",
+  "assistant.chat.scopeSize": "Groser minimum — \"ki groser mo kapav gard enn ourite?\"",
+  "assistant.chat.scopeSeason": "Sezon ferme — \"kan ourite ferme?\"",
+  "assistant.chat.scopeDeclaration": "Deklarasion — \"kouma mo soumet mo bann lapes?\""
 }
