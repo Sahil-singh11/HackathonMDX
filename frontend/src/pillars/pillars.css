@@ -131,3 +131,32 @@
 .pil-badge-ref { display: flex; flex-direction: column; gap: var(--sp-3); }
 .pil-badge-ref h2 { margin: 0; }
 .pil-badge-ref__list { display: flex; flex-direction: column; gap: var(--sp-3); }
+
+/* --- 5d: data_kind at a glance ------------------------------------------ */
+.pil-kind-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-card);
+  background: var(--surface-sunken);
+}
+.pil-kind-summary__label {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.pil-card__prov { margin-bottom: var(--sp-3); }
+.pil-card__noprov {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}

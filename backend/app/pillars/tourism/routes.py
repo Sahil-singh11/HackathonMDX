@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session
 
 from app.db.session import get_session
+from app.pillars.probe import probe_provenance
 from app.pillars.tourism.module import tourism_pillar
 from app.pillars.tourism.sites import load_sites, public_site
 from app.pillars.tourism.suitability import ACTIVITIES
@@ -63,3 +64,17 @@ async def brief(
     )
     result = await tourism_pillar.analyse(bundle)
     return result.model_dump(mode="json")
+
+
+@router.get(
+    "/provenance",
+    summary="Cheap data-source probe for the pillar index (no model inference)",
+    description=(
+        "Runs fetch() only and reports data_kind, source and coverage_note. Used by "
+        "/pillars so the index can show at a glance which pillars are on live data "
+        "and which are on samples, without paying for a full result. No inference "
+        "runs, so model_provider is reported as 'not-invoked'."
+    ),
+)
+async def provenance(session: Session = Depends(get_session)) -> dict:
+    return await probe_provenance(tourism_pillar, {"session": session})

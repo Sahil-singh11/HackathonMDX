@@ -68,3 +68,23 @@ export interface PillarResult {
   generated_at: string
   provenance: DataProvenance
 }
+
+/**
+ * Response from the optional per-pillar provenance probe
+ * (GET /api/pillars/{id}/provenance).
+ *
+ * The probe runs the pillar's fetch() only — no inference — so `data_kind`,
+ * `source_name` and `coverage_note` are real while `model_provider` is the
+ * literal "not-invoked". `would_use_provider` names the provider that WOULD have
+ * served, which is not the same claim as having served.
+ *
+ * A pillar that has not adopted the convention returns 404. Render that as an
+ * absence; never substitute a guessed data_kind.
+ */
+export interface PillarProbe {
+  pillar_id: string
+  probe: true
+  provenance: DataProvenance
+  would_use_provider: string
+  note: string
+}
