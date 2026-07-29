@@ -156,7 +156,8 @@ async function jsonOrThrow<T>(res: Response): Promise<T> {
  * Ownership:
  *   Sahil    — config, marine, providerStatus, reportToday, species, syncQueue
  *   Dhanesh  — analyse, catches (listCatches), confirm, createCatch (recordCatch),
- *              pillars, processSync, rulesStatic, tourismBrief, tourismSites
+ *              energyResource, pillars, processSync, rulesStatic, tourismBrief,
+ *              tourismSites
  *   Shirish  — getSubmission, listSubmissions, mockSubmit, prepareDeclaration,
  *              submitDeclaration, verifyCertificate, verifyLedger
  */
@@ -177,6 +178,13 @@ export const api = {
     }).then((r) => jsonOrThrow<ConfirmResponse>(r))
   },
   demoReset: () => fetch('/api/demo/reset', { method: 'POST' }).then((r) => jsonOrThrow<Record<string, unknown>>(r)),
+
+  /** Wave/wind resource indication. Figures are computed server-side in Python. */
+  energyResource: (siteIds?: string[]) => {
+    const qs = siteIds?.length ? `?site_ids=${siteIds.join(',')}` : ''
+    return fetch(`/api/pillars/energy/resource${qs}`)
+      .then((r) => jsonOrThrow<Record<string, unknown>>(r))
+  },
 
   getSubmission: (declarationId: string) =>
     fetch(`/api/submissions/${declarationId}`).then((r) => jsonOrThrow<Record<string, unknown>>(r)),

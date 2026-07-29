@@ -17,6 +17,7 @@ import { Badge, Card, EmptyState, Skeleton } from '../components/ui'
 import { useT } from '../i18n'
 import { PillarStatusBadge } from './PillarsIndex'
 import { FIXTURE_PILLARS } from './fixture'
+import EnergySurface from './energy/EnergySurface'
 import TourismSurface from './tourism/TourismSurface'
 import './pillars.css'
 
@@ -31,6 +32,7 @@ import './pillars.css'
  * output the API would refuse to serve.
  */
 export const PILLAR_SURFACES: Record<string, ReactNode> = {
+  energy: <EnergySurface />,
   tourism: <TourismSurface />,
 }
 

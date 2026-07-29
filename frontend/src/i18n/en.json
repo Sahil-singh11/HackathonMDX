@@ -377,5 +377,17 @@
   "tourism.interpretationNote": "Written by the language model from the figures above. It cannot change any measurement or rating. Not safety advice.",
   "tourism.noInterpretation": "No written brief available — the language model could not be reached. The figures and ratings above are unaffected.",
   "tourism.loading": "Loading conditions…",
-  "tourism.noCache": "No conditions stored on this device yet, and the server cannot be reached. Open this page once while online and it will stay readable offline."
+  "tourism.noCache": "No conditions stored on this device yet, and the server cannot be reached. Open this page once while online and it will stay readable offline.",
+  "energy.title": "Wave and wind resource",
+  "energy.intro": "Forecast wave and wind power density at candidate coastal points. Both figures are computed in Python from Open-Meteo values; the language model writes the commentary and cannot produce or change a number.",
+  "energy.formulasTitle": "How these numbers are produced",
+  "energy.formulasNote": "Printed so you can re-derive any figure on this page by hand from the inputs shown beside it.",
+  "energy.wavePower": "Wave power density",
+  "energy.windPower": "Wind power density",
+  "energy.nearshore": "Nearshore — deep-water formula overstates",
+  "energy.offshore": "from shore",
+  "energy.interpretation": "Analyst note",
+  "energy.interpretationNote": "Written by the language model from the computed figures above. It cannot alter any figure. Not a yield assessment.",
+  "energy.noInterpretation": "No written note available — the language model could not be reached. The computed figures above are unaffected.",
+  "energy.unavailable": "Resource figures could not be loaded. This pillar needs the backend; there is no offline copy because a stale power figure would be misleading."
 }
