@@ -111,8 +111,9 @@ export function BathymetricScene() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       cam.f = (h / 2) / Math.tan(FOV / 2)
       // Island right of centre on wide screens so the card takes the left and
-      // the deep contours cascade across the rest of the frame.
-      cam.cx = w >= 900 ? w * 0.62 : w * 0.5
+      // the deep contours cascade across the rest of the frame. Threshold
+      // matches the CSS two-column breakpoint in onboarding.css.
+      cam.cx = w >= 1024 ? w * 0.64 : w * 0.5
       cam.cy = 0
     }
 
@@ -125,7 +126,7 @@ export function BathymetricScene() {
       cam.cy = 0
       const o = project(0, 0, 0, cam)
       // Island high in the frame so the deep rings sweep past the bottom edge.
-      cam.cy = (w >= 900 ? h * 0.48 : h * 0.30) - o.y
+      cam.cy = (w >= 1024 ? h * 0.48 : h * 0.30) - o.y
     }
     resize()
 
@@ -267,7 +268,7 @@ export function BathymetricScene() {
       if (local <= 0) return
       // Wide screens only. At phone widths it lands behind the card and bleeds
       // through as noise, and there is no clear space to move it to.
-      if (w < 900) return
+      if (w < 1024) return
       const right = w - 40
       const top = h - 108
       ctx.textAlign = 'right'

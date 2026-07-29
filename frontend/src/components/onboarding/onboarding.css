@@ -9,8 +9,15 @@
   flex-direction: column;
   overflow-x: hidden;
 }
-/* One viewport, no scroll, at desktop sizes - the disclaimer included. */
-@media (min-width: 900px) and (min-height: 700px) {
+/* One viewport, no scroll, at desktop sizes - the disclaimer included.
+   The full composition (masthead + card + disclaimer + footer + the
+   conditions strip) needs ~1080px of height to do that without cramming
+   anything; below that (a 1280x800 or 1024x768 laptop panel) forcing the
+   same fixed-height box would CLIP the disclaimer and footer off-screen
+   entirely rather than scroll to them, which is worse than a scrollbar - so
+   this only engages where it can actually keep its promise, and shorter
+   windows fall back to the normal scrollable flow. */
+@media (min-width: 1024px) and (min-height: 900px) {
   .lk-onboard { height: 100vh; height: 100dvh; overflow: hidden; }
 }
 
@@ -31,7 +38,7 @@
   flex: 1;
   display: grid;
   align-content: center;
-  gap: var(--sp-5);
+  gap: var(--sp-4);
   width: 100%;
   max-width: 560px;
   margin: 0 auto;
@@ -43,35 +50,55 @@
    which pushed the masthead past the viewport at 125%/150% text scaling. */
 .lk-onboard__inner > * { min-width: 0; }
 
-/* On wide screens the card takes the left and the island owns the right third,
-   the way a chart places a plotted fix beside the landmass rather than on it. */
-@media (min-width: 900px) {
+/* The scene is a fixed full-viewport canvas (layer 0), not a grid child. Below
+   1024px it is a full-bleed background behind the stacked column; there is
+   nothing to reserve space for, so the placeholder collapses. */
+.lk-onboard__scene-space { display: none; }
+
+/* ---------------------------------------------------------- two-column, wide
+   LEFT: masthead, card, disclaimer, footer. RIGHT: reserved space so the
+   scene — the fixed canvas painting behind everything — actually has room to
+   read as a composition instead of bleeding under a column that ignores it.
+   BOTTOM: the conditions strip, spanning both columns. */
+@media (min-width: 1024px) {
   .lk-onboard__inner {
-    max-width: 1240px;
-    grid-template-columns: minmax(420px, 460px) 1fr;
+    max-width: 1320px;
+    grid-template-columns: minmax(420px, 480px) 1fr;
+    grid-template-rows: 1fr auto;
     align-content: center;
     padding-inline: var(--sp-7);
   }
-  .lk-onboard__legend { grid-column: 1; }
+  .lk-onboard__left {
+    grid-column: 1;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .lk-onboard__scene-space {
+    display: block;
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .lk-conditions { grid-column: 1 / -1; grid-row: 2; }
 }
 
 /* ---------------------------------------------------------------- masthead */
 .lk-onboard__masthead {
   display: flex;
   align-items: center;
-  gap: var(--sp-3);
-  margin-bottom: var(--sp-4);
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-5);
   /* min-width:0 lets the text block shrink instead of pushing out of the
      viewport; without it the wordmark was clipped at 150% text scaling. */
   min-width: 0;
 }
 .lk-onboard__masthead > div { min-width: 0; }
-.lk-onboard__masthead img { width: 40px; height: 40px; border-radius: var(--r-input); flex-shrink: 0; }
+.lk-onboard__masthead img { width: 44px; height: 44px; border-radius: var(--r-input); flex-shrink: 0; }
 
-/* At 150% scaling on a 360px screen the wordmark at --fs-md is wider than the
+/* At 150% scaling on a 360px screen the wordmark at --fs-lg is wider than the
    viewport. Step it down and let both lines wrap rather than clip. */
 @media (max-width: 480px) {
-  .lk-onboard__wordmark { font-size: calc(var(--fs-base) * var(--text-scale)); }
+  .lk-onboard__wordmark { font-size: calc(var(--fs-md) * var(--text-scale)); }
   .lk-onboard__masthead img { width: 32px; height: 32px; }
 }
 .lk-onboard__wordmark,
@@ -79,20 +106,24 @@
 /* The masthead sits DIRECTLY on the painted sky, which is driven by the clock
    while --text is driven by the theme. Those two can disagree badly: at 9pm in
    the Day theme both resolved to near-navy and the wordmark measured 1.35:1.
-   --onboard-ink is set by NauticalChart to whichever of --text / --text-invert
+   --onboard-ink is set by BathymetricScene to whichever of --text / --text-invert
    actually wins against the sky; the fallback covers Sunlight (no canvas). */
 .lk-onboard__wordmark {
   font-family: var(--font-display);
-  font-size: calc(var(--fs-md) * var(--text-scale));
+  font-size: calc(var(--fs-lg) * var(--text-scale));
   font-weight: 700;
   letter-spacing: var(--tracking-display);
-  line-height: 1.15;
+  line-height: 1.1;
   color: var(--onboard-ink, var(--text));
   margin: 0;
 }
 .lk-onboard__tagline {
   display: block;
-  font-size: calc(var(--fs-sm) * var(--text-scale));
+  margin-top: var(--sp-2);
+  font-family: var(--font-body);
+  font-size: calc(var(--fs-md) * var(--text-scale));
+  font-weight: 500;
+  line-height: 1.35;
   color: var(--onboard-ink, var(--text-muted));
   opacity: 0.85;
 }
@@ -107,7 +138,7 @@
   background: var(--panel);
   border: 1px solid var(--panel-edge);
   border-radius: var(--r-card);
-  padding: var(--sp-5) var(--sp-6);
+  padding: var(--sp-4) var(--sp-6);
   box-shadow: var(--elev-3);
   /* Counter-parallax: drifts a few px against the camera orbit so it reads as
      nearer to the viewer than the seafloor. Set by Landing from pointer pos. */
@@ -165,10 +196,6 @@ html[data-scene='dark'] .lk-onboard {
 .lk-fix > .lk-fix__ticks::before { bottom: -1px; left: -1px; border-width: 0 0 1px 1px; }
 .lk-fix > .lk-fix__ticks::after { bottom: -1px; right: -1px; border-width: 0 1px 1px 0; }
 
-/* The single vertical hairline that used to sit at the top edge is GONE - it
-   read as a rendering artifact. The four corner ticks above are the whole
-   registration treatment now. */
-
 /* Mauritius, set small in mono along the bottom edge. */
 .lk-fix__coords {
   display: block;
@@ -181,14 +208,17 @@ html[data-scene='dark'] .lk-onboard {
 
 .lk-fix__welcome {
   font-family: var(--font-display);
-  font-size: calc(44px * var(--text-scale));
+  font-size: calc(36px * var(--text-scale));
   line-height: 1.05;
   letter-spacing: -0.03em;
   color: var(--panel-ink);
   margin: 0 0 var(--sp-3);
 }
+@media (min-width: 1024px) {
+  .lk-fix__welcome { font-size: calc(40px * var(--text-scale)); }
+}
 @media (max-width: 560px) {
-  .lk-fix__welcome { font-size: calc(34px * var(--text-scale)); }
+  .lk-fix__welcome { font-size: calc(32px * var(--text-scale)); }
 }
 .lk-fix__intro {
   color: var(--panel-ink-muted);
@@ -212,13 +242,20 @@ html[data-scene='dark'] .lk-onboard {
   margin-bottom: var(--sp-3);
   padding: 0;
 }
-.lk-lang__options { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); }
 
-/* Each option is its own positioning context. Without the cell, both hidden
-   radios were absolutely positioned against .lk-fix and stacked in the card's
-   top-left corner underneath the first label - so the second radio was not
-   directly clickable, and a click near that corner could toggle a language. */
+/* Two halves of ONE pill: a single shared border and radius on the outer
+   container, no gap between segments — a connected segmented control rather
+   than two separate buttons. */
+.lk-lang__pill {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 2px solid var(--field-edge);
+  border-radius: var(--r-card);
+  overflow: hidden;
+  background: var(--field-bg);
+}
 .lk-lang__cell { position: relative; display: flex; }
+.lk-lang__cell + .lk-lang__cell { border-left: 1px solid var(--field-edge); }
 
 /* The real radio drives state and focus; the label is the visible control. */
 .lk-lang__input {
@@ -228,7 +265,7 @@ html[data-scene='dark'] .lk-onboard {
   margin: 0;
   opacity: 0;
   cursor: pointer;
-  /* Sits ON TOP of its label so the whole 56px cell is the native radio's own
+  /* Sits ON TOP of its label so the whole 64px cell is the native radio's own
      hit area. The label stays purely visual underneath. */
   z-index: 1;
 }
@@ -237,54 +274,41 @@ html[data-scene='dark'] .lk-onboard {
   flex: 1;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--sp-2);
   min-height: 64px;
   padding: var(--sp-3) var(--sp-4);
-  border: 2px solid var(--field-edge);
-  border-radius: var(--r-input);
-  background: var(--field-bg);
   color: var(--panel-ink);
   font-size: calc(var(--fs-base) * var(--text-scale));
   font-weight: 600;
   cursor: pointer;
-  transition: border-color var(--motion-fast) var(--ease-out),
-              background var(--motion-fast) var(--ease-out);
+  transition: background var(--motion-fast) var(--ease-out),
+              font-weight var(--motion-fast) var(--ease-out);
 }
-.lk-lang__option:hover { border-color: var(--accent); }
 
-/* Selected state carries THREE signals, not just colour: a filled bearing
-   marker, a heavier border, and a tinted surface. This is the first real
-   decision the fisher makes; it should look decided. */
-.lk-lang__marker {
-  width: 18px; height: 18px;
-  border: 2px solid var(--field-edge);
-  border-radius: 50%;
+/* The check mark is reserved space at rest (not display:none) so selecting a
+   language does not reflow the label sideways. */
+.lk-lang__check {
+  color: var(--accent);
   flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  transition: border-color var(--motion-fast) var(--ease-out);
-}
-.lk-lang__marker::after {
-  content: '';
-  width: 9px; height: 9px;
-  border-radius: 50%;
-  background: var(--accent);
   transform: scale(0);
   transition: transform var(--motion-base) var(--ease-out);
 }
-/* Selected must be obvious from across a room, and not by colour alone: filled
-   accent surface + 2px accent border + the filled radio mark + heavier text. */
+
+/* Selected state carries THREE signals, not just colour: the check mark, a
+   tinted surface, and a weight change. This is the first real decision the
+   fisher makes; it should look decided. */
 .lk-lang__input:checked + .lk-lang__option {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 22%, var(--field-bg));
-  color: var(--panel-ink);
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
   font-weight: 700;
 }
-.lk-lang__input:checked + .lk-lang__option .lk-lang__marker { border-color: var(--accent); }
-.lk-lang__input:checked + .lk-lang__option .lk-lang__marker::after { transform: scale(1); }
+.lk-lang__input:checked + .lk-lang__option .lk-lang__check { transform: scale(1); }
 .lk-lang__input:focus-visible + .lk-lang__option {
   outline: var(--focus-ring-width) solid var(--accent);
-  outline-offset: var(--focus-ring-offset);
+  outline-offset: -3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lk-lang__check { transition: none; }
 }
 
 /* ------------------------------------------------------------------ fields */
@@ -300,30 +324,63 @@ html[data-scene='dark'] .lk-onboard {
 }
 /* Recessed rather than raised: the field sits INTO the panel, with a 1px inset
    top edge and no heavy outline, so it reads as machined rather than as a white
-   rectangle laid on top. */
-.lk-onboard-input {
+   rectangle laid on top. The icon lives inside this wrapper so it never
+   overlaps the datalist affordance browsers draw inside the input itself. */
+.lk-onboard-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.lk-onboard-field__icon {
+  position: absolute;
+  left: var(--sp-3);
+  color: var(--panel-ink-muted);
+  pointer-events: none;
+}
+/* .lk-onboard prefix is load-bearing, not decoration: base.css sets
+   `.lk-scope input { color: inherit }` at specificity (0,1,1), which beats a
+   bare `.lk-onboard-input` class selector (0,1,0) and silently inherits the
+   THEME's --text instead of the SCENE's --panel-ink. They usually look close
+   enough to pass a glance, which is exactly how this slipped through once
+   already (see the wordmark contrast comment above) - `.lk-onboard` pushes
+   this to (0,2,0) so it actually wins. */
+.lk-onboard .lk-onboard-input {
   width: 100%;
   min-height: var(--touch-min);
-  padding: var(--sp-3);
+  padding: var(--sp-3) var(--sp-3) var(--sp-3) calc(var(--sp-3) + 18px + var(--sp-2));
   background: var(--field-bg);
   color: var(--panel-ink);
   border: 0;
-  border-bottom: 2px solid var(--field-edge);
   border-radius: var(--r-input) var(--r-input) 0 0;
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--panel-ink) 16%, transparent);
   font-family: var(--font-body);
   font-size: calc(var(--fs-base) * var(--text-scale));
-  transition: border-color var(--motion-fast) var(--ease-out);
 }
 .lk-onboard-input::placeholder { color: var(--panel-ink-muted); opacity: 0.7; }
-.lk-onboard-input:hover { border-bottom-color: color-mix(in srgb, var(--accent) 60%, transparent); }
-.lk-onboard-input:focus {
-  outline: none;
-  border-bottom-color: var(--accent);
+
+/* The underline itself: a separate element that GROWS in from the centre on
+   focus, rather than an instant colour swap on a border that was always
+   there — this is what "animates in" means here. */
+.lk-onboard-field::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 2px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transition: transform var(--motion-base) var(--ease-out);
 }
-.lk-onboard-input:focus-visible {
+.lk-onboard-field:has(.lk-onboard-input:hover)::after { transform: scaleX(0.3); opacity: 0.6; }
+.lk-onboard-field:has(.lk-onboard-input:focus)::after { transform: scaleX(1); opacity: 1; }
+.lk-onboard-input:focus { outline: none; }
+.lk-onboard-input:focus-visible { outline: none; }
+.lk-onboard-field:has(.lk-onboard-input:focus-visible) {
   outline: var(--focus-ring-width) solid var(--accent);
   outline-offset: var(--focus-ring-offset);
+  border-radius: var(--r-input);
+}
+@media (prefers-reduced-motion: reduce) {
+  .lk-onboard-field::after { transition: none; }
 }
 
 /* Hairline divider: the required decision above, optional details below. */
@@ -333,15 +390,21 @@ html[data-scene='dark'] .lk-onboard {
   margin: 0 0 var(--sp-4);
 }
 
-/* ------------------------------------------------------------------ start */
-.lk-scope .lk-start,
-.lk-start {
+/* ------------------------------------------------------------------ start
+   .lk-onboard prefix beats base.css's `.lk-scope button { color: inherit }`
+   (0,1,1) for the same reason as the input above — without it the coral
+   button's --action-contrast is silently replaced by inherited --text. */
+.lk-onboard .lk-start {
   width: 100%;
   min-height: var(--touch-min);
   padding: var(--sp-3) var(--sp-6);
   border: 2px solid transparent;
   border-radius: var(--r-card);
-  background: var(--action);
+  /* Vertical gradient between two coral-family tokens. Contrast is VERIFIED
+     against both the top and bottom stop (see oceanperf-style contrast probe);
+     if the gradient ever failed the floor, the fix is to drop it and paint
+     --action flat rather than compromise the 4.5:1 requirement. */
+  background: linear-gradient(180deg, var(--action-hover), var(--action));
   color: var(--action-contrast);
   font-family: var(--font-body);
   font-size: calc(var(--fs-base) * var(--text-scale));
@@ -352,19 +415,40 @@ html[data-scene='dark'] .lk-onboard {
   align-items: center;
   justify-content: center;
   gap: var(--sp-2);
-  transition: background var(--motion-fast) var(--ease-out);
-}
-.lk-scope .lk-start { color: var(--action-contrast); }
-.lk-start {
-  min-height: 60px;
   box-shadow: 0 2px 0 color-mix(in srgb, #000 22%, transparent);
-  transition: background var(--motion-fast) var(--ease-out),
-              transform var(--motion-fast) var(--ease-out);
+  transition: transform var(--motion-fast) var(--ease-out),
+              box-shadow var(--motion-fast) var(--ease-out);
 }
-.lk-start:hover { background: var(--action-hover); transform: translateY(-1px); }
-.lk-start:focus-visible { transform: translateY(-1px); }
+/* Hover: a lift plus a soft accent-tinted shadow — no pulse. A button that
+   throbs every few seconds reads as distracting, not premium. */
+.lk-start:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--action) 45%, transparent),
+              0 2px 0 color-mix(in srgb, #000 22%, transparent);
+}
 .lk-start:active { transform: translateY(1px); box-shadow: none; }
 .lk-start:focus-visible {
+  outline: var(--focus-ring-width) solid var(--accent);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.lk-onboard .lk-start-guest {
+  width: 100%;
+  min-height: 56px;
+  margin-top: var(--sp-2);
+  padding: var(--sp-3) var(--sp-6);
+  border: 0;
+  border-radius: var(--r-card);
+  background: transparent;
+  color: var(--panel-ink-muted);
+  font-family: var(--font-body);
+  font-size: calc(var(--fs-base) * var(--text-scale));
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out);
+}
+.lk-onboard .lk-start-guest:hover { background: color-mix(in srgb, var(--panel-ink) 8%, transparent); color: var(--panel-ink); }
+.lk-start-guest:focus-visible {
   outline: var(--focus-ring-width) solid var(--accent);
   outline-offset: var(--focus-ring-offset);
 }
@@ -382,7 +466,79 @@ html[data-scene='dark'] .lk-onboard {
   border-left: 3px solid var(--accent);
   border-radius: var(--r-input);
   padding: var(--sp-3) var(--sp-4);
-  margin: 0;
+  margin: var(--sp-4) 0 0;
+}
+
+/* --------------------------------------------------------------- footer */
+.lk-onboard__footer {
+  margin: var(--sp-4) 0 0;
+  font-size: calc(var(--fs-xs) * var(--text-scale));
+  color: var(--onboard-ink, var(--text-muted));
+  opacity: 0.75;
+}
+
+/* ---------------------------------------------------------- conditions strip
+   Full-width, spans both columns on wide screens. Offline-first: a value only
+   ever renders from data actually in hand; otherwise an em-dash and a plain
+   "no data yet" label — never a spinner, never a fabricated zero. */
+.lk-conditions {
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  border-radius: var(--r-card);
+  padding: var(--sp-3) var(--sp-5);
+}
+.lk-conditions__title {
+  display: block;
+  font-size: calc(var(--fs-sm) * var(--text-scale));
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--panel-ink-muted);
+  margin-bottom: var(--sp-2);
+}
+.lk-conditions__row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-4);
+}
+.lk-conditions__item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+.lk-conditions__icon { color: var(--accent); flex-shrink: 0; }
+.lk-conditions__value {
+  display: block;
+  font-family: var(--font-data);
+  font-size: calc(var(--fs-md) * var(--text-scale));
+  font-weight: 600;
+  color: var(--panel-ink);
+  line-height: 1.2;
+}
+.lk-conditions__unit {
+  font-size: calc(var(--fs-sm) * var(--text-scale));
+  font-weight: 500;
+  margin-left: 0.15em;
+  color: var(--panel-ink-muted);
+}
+.lk-conditions__label {
+  display: block;
+  font-size: calc(var(--fs-sm) * var(--text-scale));
+  color: var(--panel-ink-muted);
+  overflow-wrap: anywhere;
+}
+.lk-conditions__updated {
+  display: block;
+  margin-top: var(--sp-3);
+  font-family: var(--font-data);
+  font-size: calc(var(--fs-xs) * var(--text-scale));
+  color: var(--panel-ink-muted);
+  opacity: 0.8;
+}
+@media (max-width: 640px) {
+  .lk-conditions__row { grid-template-columns: 1fr; gap: var(--sp-3); }
 }
 
 /* =========================================================== entry motion
@@ -392,17 +548,31 @@ html[data-scene='dark'] .lk-onboard {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-@keyframes lk-masthead-in {
+@keyframes lk-fade-in {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
-.lk-onboard__masthead { animation: lk-masthead-in 400ms var(--ease-out) 200ms both; }
-.lk-fix { animation: lk-fix-in 300ms var(--ease-out) 850ms both; }
-.lk-onboard__legend { animation: lk-masthead-in 400ms var(--ease-out) 1100ms both; }
+@keyframes lk-group-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.lk-onboard__masthead { animation: lk-fade-in 400ms var(--ease-out) 0ms both; }
+.lk-fix { animation: lk-fix-in 300ms var(--ease-out) 300ms both; }
+.lk-fix > .lk-fix__welcome,
+.lk-fix > .lk-fix__intro { animation: lk-group-in 260ms var(--ease-out) 480ms both; }
+.lk-fix > .lk-lang { animation: lk-group-in 260ms var(--ease-out) 540ms both; }
+.lk-fix > .lk-fix__divider,
+.lk-fix > .lk-field-stack { animation: lk-group-in 260ms var(--ease-out) 600ms both; }
+.lk-fix > .lk-start,
+.lk-fix > .lk-start-guest,
+.lk-fix > .lk-fix__coords { animation: lk-group-in 260ms var(--ease-out) 660ms both; }
+.lk-onboard__legend { animation: lk-fade-in 300ms var(--ease-out) 780ms both; }
+.lk-onboard__footer { animation: lk-fade-in 300ms var(--ease-out) 840ms both; }
+.lk-conditions { animation: lk-group-in 300ms var(--ease-out) 900ms both; }
 
 /* ======================================================= departure motion
-   Koumanse: the crosshair extends into a heading line, the card lifts away,
-   and the view descends past the waterline. Under 400ms end to end. */
+   Koumanse: the card lifts away and the view descends past the waterline.
+   Under 400ms end to end. */
 @keyframes lk-depart-card {
   from { opacity: 1; transform: translateY(0) scale(1); }
   to   { opacity: 0; transform: translateY(-28px) scale(0.985); }
@@ -411,11 +581,12 @@ html[data-scene='dark'] .lk-onboard {
   from { transform: translateY(0); }
   to   { transform: translateY(38px); }
 }
-}
 .lk-onboard--departing .lk-fix { animation: lk-depart-card 340ms var(--ease-out) both; }
 .lk-onboard--departing .lk-onboard__inner { animation: lk-depart-view 380ms var(--ease-out) both; }
 .lk-onboard--departing .lk-onboard__masthead,
-.lk-onboard--departing .lk-onboard__legend { animation: lk-masthead-in 200ms var(--ease-out) reverse both; }
+.lk-onboard--departing .lk-onboard__legend,
+.lk-onboard--departing .lk-onboard__footer,
+.lk-onboard--departing .lk-conditions { animation: lk-fade-in 200ms var(--ease-out) reverse both; }
 
 /* ==================================================== reduced motion: none
    The canvas still renders its composed still frame (handled in the
@@ -423,16 +594,31 @@ html[data-scene='dark'] .lk-onboard {
 @media (prefers-reduced-motion: reduce) {
   .lk-onboard__masthead,
   .lk-fix,
-  .lk-onboard__legend,
+  .lk-fix > .lk-fix__welcome, .lk-fix > .lk-fix__intro, .lk-fix > .lk-lang,
+  .lk-fix > .lk-fix__divider, .lk-fix > .lk-field-stack,
+  .lk-fix > .lk-start, .lk-fix > .lk-start-guest, .lk-fix > .lk-fix__coords,
+  .lk-onboard__legend, .lk-onboard__footer, .lk-conditions,
   .lk-onboard--departing .lk-fix,
   .lk-onboard--departing .lk-onboard__inner,
   .lk-onboard--departing .lk-onboard__masthead,
-  .lk-onboard--departing .lk-onboard__legend { animation: none !important; }
-  .lk-lang__marker::after { transition: none !important; }
+  .lk-onboard--departing .lk-onboard__legend,
+  .lk-onboard--departing .lk-onboard__footer,
+  .lk-onboard--departing .lk-conditions { animation: none !important; }
+  .lk-lang__check { transition: none !important; }
 }
 html[data-reduce-motion='on'] .lk-onboard__masthead,
 html[data-reduce-motion='on'] .lk-fix,
-html[data-reduce-motion='on'] .lk-onboard__legend { animation: none !important; }
+html[data-reduce-motion='on'] .lk-fix > .lk-fix__welcome,
+html[data-reduce-motion='on'] .lk-fix > .lk-fix__intro,
+html[data-reduce-motion='on'] .lk-fix > .lk-lang,
+html[data-reduce-motion='on'] .lk-fix > .lk-fix__divider,
+html[data-reduce-motion='on'] .lk-fix > .lk-field-stack,
+html[data-reduce-motion='on'] .lk-fix > .lk-start,
+html[data-reduce-motion='on'] .lk-fix > .lk-start-guest,
+html[data-reduce-motion='on'] .lk-fix > .lk-fix__coords,
+html[data-reduce-motion='on'] .lk-onboard__legend,
+html[data-reduce-motion='on'] .lk-onboard__footer,
+html[data-reduce-motion='on'] .lk-conditions { animation: none !important; }
 
 /* ========================================================= Sunlight theme
    Flat, hard-edged, maximum contrast. No elevation, no tint, 2px everywhere. */
@@ -446,21 +632,20 @@ html[data-reduce-motion='on'] .lk-onboard__legend { animation: none !important; 
 [data-theme='sunlight'] .lk-fix > .lk-fix__ticks::before,
 [data-theme='sunlight'] .lk-fix > .lk-fix__ticks::after { opacity: 1; border-width: 2px; }
 [data-theme='sunlight'] .lk-onboard__legend { border-width: 2px; border-left-width: 4px; }
-[data-theme='sunlight'] .lk-lang__input:checked + .lk-lang__option { background: var(--surface); border-width: 3px; }
 [data-theme='sunlight'] .lk-fix__coords { opacity: 1; }
+[data-theme='sunlight'] .lk-conditions { border-width: 2px; }
+
+[data-theme='sunlight'] .lk-lang__pill { border-width: 3px; }
+[data-theme='sunlight'] .lk-lang__input:checked + .lk-lang__option { background: color-mix(in srgb, var(--accent) 14%, transparent); }
 
 /* Sunlight: the recessed treatment relies on the field being a different tone
    from the panel, and at maximum contrast both are pure white - the name field
    became invisible except for its underline. Hard 2px borders instead. */
-[data-theme='sunlight'] .lk-onboard-input {
+[data-theme='sunlight'] .lk-onboard-field {
   border: 2px solid var(--border);
   border-radius: var(--r-input);
-  box-shadow: none;
 }
-[data-theme='sunlight'] .lk-onboard-input:focus { border-color: var(--accent); }
-[data-theme='sunlight'] .lk-lang__option { border-width: 2px; border-color: var(--border); }
-[data-theme='sunlight'] .lk-lang__input:checked + .lk-lang__option {
-  border-color: var(--accent); border-width: 3px; background: var(--surface);
-}
-[data-theme='sunlight'] .lk-fix__divider { border-top-width: 2px; }
-[data-theme='sunlight'] .lk-start { box-shadow: none; }
+[data-theme='sunlight'] .lk-onboard-input { box-shadow: none; }
+[data-theme='sunlight'] .lk-onboard-field::after { height: 3px; }
+[data-theme='sunlight'] .lk-start { box-shadow: none; background: var(--action); }
+[data-theme='sunlight'] .lk-start:hover { box-shadow: none; transform: none; }
