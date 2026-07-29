@@ -1,6 +1,6 @@
 /* Thin API client. The frontend never sees any API key — everything is server-side. */
 import { RateLimitError, emitRateLimited } from '../lib/httpError'
-import type { PillarsResponse } from '../pillars/types'
+import type { PillarProbe, PillarsResponse } from '../pillars/types'
 
 export interface PublicConfig {
   app: string
@@ -156,7 +156,8 @@ async function jsonOrThrow<T>(res: Response): Promise<T> {
  * Ownership:
  *   Sahil    — config, marine, providerStatus, reportToday, species, syncQueue
  *   Dhanesh  — analyse, catches (listCatches), confirm, createCatch (recordCatch),
- *              energyResource, pillars, processSync, rulesStatic, tourismBrief,
+ *              energyResource, pillarProvenance, pillars, processSync, rulesStatic,
+ *              tourismBrief,
  *              tourismSites
  *   Shirish  — getSubmission, listSubmissions, mockSubmit, prepareDeclaration,
  *              submitDeclaration, verifyCertificate, verifyLedger
@@ -202,6 +203,14 @@ export const api = {
     form.append('declaration_id', declarationId)
     return fetch('/api/declarations/mock-submit', { method: 'POST', body: form }).then((r) => jsonOrThrow<Record<string, unknown>>(r))
   },
+  /**
+   * Cheap data-source probe for one pillar (fetch() only, no inference).
+   * Returns 404 for pillars that do not implement the optional /provenance
+   * convention — callers must render that absence, never guess a data_kind.
+   */
+  pillarProvenance: (pillarId: string) =>
+    fetch(`/api/pillars/${pillarId}/provenance`).then((r) => jsonOrThrow<PillarProbe>(r)),
+
   /** All six blue-economy pillars with their real registry state (Task 4a). */
   pillars: () => fetch('/api/pillars').then((r) => jsonOrThrow<PillarsResponse>(r)),
 

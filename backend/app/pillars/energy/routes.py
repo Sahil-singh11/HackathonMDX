@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session
 
 from app.db.session import get_session
+from app.pillars.probe import probe_provenance
 from app.pillars.energy.module import energy_pillar
 from app.pillars.energy.sites import load_sites
 
@@ -55,3 +56,17 @@ async def resource(
     bundle = await energy_pillar.fetch({"session": session, "site_ids": wanted})
     result = await energy_pillar.analyse(bundle)
     return result.model_dump(mode="json")
+
+
+@router.get(
+    "/provenance",
+    summary="Cheap data-source probe for the pillar index (no model inference)",
+    description=(
+        "Runs fetch() only and reports data_kind, source and coverage_note. Used by "
+        "/pillars so the index can show at a glance which pillars are on live data "
+        "and which are on samples, without paying for a full result. No inference "
+        "runs, so model_provider is reported as 'not-invoked'."
+    ),
+)
+async def provenance(session: Session = Depends(get_session)) -> dict:
+    return await probe_provenance(energy_pillar, {"session": session})
