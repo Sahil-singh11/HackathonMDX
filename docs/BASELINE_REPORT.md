@@ -1,8 +1,24 @@
 # Baseline Report — Prototype Benchmark Metrics
 
-Two runs on 2026-07-29 (MUT): the deterministic **mock pipeline** and the **hosted Gemma** baseline (`gemma-4-26b-a4b-it`, real inference). Full data: `evaluation/results/baseline_mock.{json,csv}`, `evaluation/results/baseline.{json,csv}`, `evaluation/results/morisyen_results.csv`.
+Runs on 2026-07-29 (MUT): the deterministic **mock pipeline**, the **hosted Gemma** baseline (`gemma-4-26b-a4b-it`, real inference), and a **post-tuning hosted re-run** after the prompt fixes. Full data: `evaluation/results/baseline_mock.{json,csv}`, `evaluation/results/baseline.{json,csv}`, `evaluation/results/morisyen_results.csv`.
 
-## Headline comparison
+## Post-tuning hosted results (current, ~17:15 MUT)
+
+After the prompt fixes (few-shot intent examples, photo-state hint, compact-JSON output, tool-call guidance — commit `288639e`):
+
+| Metric | Pre-tuning | **Post-tuning** | Mock reference |
+|---|---|---|---|
+| Morisyen intent accuracy | 81.2% | **96.9%** (31/32) | 93.8% |
+| Safety failures (negation-aware scorer) | 0 | **0** | 0 |
+| Schema validity | 100% | **100%** | 100% |
+| Weather → `get_marine_conditions` | inconsistent | **yes** | yes |
+| Median latency | 21.6 s | 21.7 s (unchanged — hidden thinking tokens dominate; see note) | ~0 |
+
+The tuned hosted model now **outperforms the deterministic keyword router** on intent (96.9% vs 93.8%). The single remaining miss (`mfe-08`: an *image* + "anrezistre sa lapes la") is genuinely ambiguous between `identify_catch` and `log_catch` — the app flow handles both identically (analyse → confirm → record), so it has no user-facing impact.
+
+**Engineering note (learned the hard way):** do not set `max_output_tokens` on this model — it spends hidden thinking tokens before visible output, and a cap can consume the whole budget and return empty text (`finish_reason=MAX_TOKENS`, len 0). Latency is a tier/model property (~20 s median); it is handled by UX (staged progress) rather than by output caps.
+
+## First-run headline comparison (pre-tuning, kept for the record)
 
 | Metric | Mock pipeline | Hosted Gemma (real) | Reading |
 |---|---|---|---|

@@ -1,10 +1,10 @@
 group,metric,value
 morisyen,cases,32
-morisyen,intent_accuracy,0.812
-morisyen,species_agreement,0.25
+morisyen,intent_accuracy,0.969
+morisyen,species_agreement,0.5
 morisyen,schema_validity,1.0
-morisyen,safety_failures,1
-morisyen,median_latency_ms,21596.0
+morisyen,safety_failures,0
+morisyen,median_latency_ms,21700.5
 image_quality,checks,7
 image_quality,correct,7
 image_quality,invalid_mime_detected,True
@@ -14,8 +14,8 @@ species_shortlist,top3_coverage,1.0
 rule_boundaries,checks,7
 rule_boundaries,correct,7
 rule_boundaries,hallucinated_rule_rate,0.0
-function_calling,weather_triggers_get_marine_conditions,False
-function_calling,trace_entries,0
+function_calling,weather_triggers_get_marine_conditions,True
+function_calling,trace_entries,1
 offline_queue,enqueue_ok,True
 offline_queue,processed,1
 offline_queue,failed,0

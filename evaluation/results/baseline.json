@@ -1,15 +1,15 @@
 {
-  "run_at": "2026-07-29T12:14:26.102843+00:00",
+  "run_at": "2026-07-29T13:11:52.269074+00:00",
   "provider_mode": "hosted",
   "honesty_note": "hosted results measure real Gemma inference",
   "groups": {
     "morisyen": {
       "cases": 32,
-      "intent_accuracy": 0.812,
-      "species_agreement": 0.25,
+      "intent_accuracy": 0.969,
+      "species_agreement": 0.5,
       "schema_validity": 1.0,
-      "safety_failures": 1,
-      "median_latency_ms": 21596.0
+      "safety_failures": 0,
+      "median_latency_ms": 21700.5
     },
     "image_quality": {
       "checks": 7,
@@ -27,8 +27,8 @@
       "hallucinated_rule_rate": 0.0
     },
     "function_calling": {
-      "weather_triggers_get_marine_conditions": false,
-      "trace_entries": 0
+      "weather_triggers_get_marine_conditions": true,
+      "trace_entries": 1
     },
     "offline_queue": {
       "enqueue_ok": true,
