@@ -15,7 +15,7 @@ from app.core.limitations import (MARINE_DISCLAIMER, MOCK_DISCLOSURE,
 from app.core.ratelimit import InMemoryRateLimiter
 from app.db.session import get_session
 from app.models.entities import (CatchAnalysis, CatchRecord, Declaration,
-                                 SyncQueueItem, ToolTrace)
+                                 LedgerEntry, SyncQueueItem, ToolTrace)
 from app.providers.capabilities import all_capabilities
 from app.providers.dispatcher import analyse as provider_analyse
 from app.schemas.analysis import (AnalyseCatchResponse, ConfirmRequest,
@@ -24,6 +24,7 @@ from app.schemas.analysis import (AnalyseCatchResponse, ConfirmRequest,
 from app.services.declarations import service as declarations
 from app.services.fisheries_rules import demo_date
 from app.services.fisheries_rules.engine import check_confirmed_catch
+from app.services.ledger import service as ledger
 from app.services.marine.client import get_marine_conditions
 from app.services.species.retrieval import (candidates_for, get_species,
                                             load_catalogue, public_candidate)
@@ -289,6 +290,7 @@ def confirm_analysis(analysis_id: str, body: ConfirmRequest,
     session.add(analysis)
     session.commit()
     session.refresh(record)
+    ledger.append_record(session, record)
 
     extra = [RULE_VERIFY_NOTICE]
     if simulated:
@@ -354,6 +356,7 @@ def create_catch(body: ConfirmRequest, session: Session = Depends(get_session)) 
     session.add(record)
     session.commit()
     session.refresh(record)
+    ledger.append_record(session, record)
     extra = [RULE_VERIFY_NOTICE] + ([f"Simulated demo date in use: {capture.isoformat()}."] if simulated else [])
     return ConfirmResponse(catch_record_id=record.id, species_id=record.species_id, legal_check=check,
                            measured_length_cm=record.measured_length_cm, count=record.count,
@@ -366,6 +369,193 @@ def catch_detail(catch_id: str, session: Session = Depends(get_session)) -> dict
     if not row:
         raise HTTPException(404, "catch not found")
     return row.model_dump()
+
+
+# --- Traceability: ledger, certificates, submissions -------------------------
+# Backs the authority dashboard (/authority) and the public verification page
+# (/verify/:id). Every response states the limits of what the chain proves.
+
+LEDGER_SCOPE_NOTE = (
+    "This chain proves a record has not been altered or removed since it was logged. "
+    "It does NOT verify that the original catch details were reported truthfully. "
+    "The ledger is local to this deployment, not a distributed blockchain."
+)
+
+
+@router.get(
+    "/api/ledger",
+    summary="Inspect the catch-record hash chain (officer view)",
+    description="Entries in sequence, each committing to its record's content and to the previous entry.",
+)
+def ledger_chain(limit: int = 200, session: Session = Depends(get_session)) -> dict:
+    rows = session.exec(select(LedgerEntry).order_by(LedgerEntry.seq).limit(min(limit, 1000))).all()  # type: ignore[union-attr,arg-type]
+    return {
+        "entries": [
+            {"seq": e.seq, "record_id": e.record_id, "payload_sha256": e.payload_sha256,
+             "prev_hash": e.prev_hash, "entry_hash": e.entry_hash,
+             "created_at": e.created_at.isoformat()}
+            for e in rows
+        ],
+        "genesis_hash": ledger.GENESIS_HASH,
+        "count": len(rows),
+        "scope_note": LEDGER_SCOPE_NOTE,
+    }
+
+
+@router.get(
+    "/api/ledger/verify",
+    summary="Walk the chain and report intact or broken, naming the first bad record",
+    responses={200: {"content": {"application/json": {"example": {
+        "status": "intact", "entries": 12, "verified_through": 12, "broken_at": None,
+        "detail": "All 12 entries verified from genesis. No record has been altered since it was logged.",
+        "scope_note": LEDGER_SCOPE_NOTE,
+    }}}}},
+)
+def ledger_verify(session: Session = Depends(get_session)) -> dict:
+    result = ledger.verify_chain(session)
+    result["scope_note"] = LEDGER_SCOPE_NOTE
+    return result
+
+
+@router.get(
+    "/api/verify/{record_id}",
+    summary="Public certificate verification (no auth) — verified | not_found | chain_broken",
+    description="Backs the QR-code landing page. Deliberately states what it does not prove.",
+)
+def verify_certificate(record_id: str, session: Session = Depends(get_session)) -> dict:
+    record = session.get(CatchRecord, record_id)
+    entry = ledger.entry_for_record(session, record_id)
+
+    if record is None or entry is None:
+        return {
+            "verdict": "not_found",
+            "record_id": record_id,
+            "headline": "No certificate found for this reference.",
+            "detail": ("This reference does not match any sealed catch record in this deployment. "
+                       "Check the reference, or the certificate may not originate from this system."),
+            "scope_note": LEDGER_SCOPE_NOTE,
+            "limitations": _limitations(),
+        }
+
+    chain = ledger.verify_chain(session)
+    tampered = ledger.payload_hash(record) != entry.payload_sha256
+    # A break anywhere at or before this entry invalidates this record's proof.
+    broken_at_or_before = (
+        chain["status"] == "broken"
+        and chain["broken_at"] is not None
+        and entry.seq is not None
+        and chain["broken_at"]["seq"] <= entry.seq
+    )
+
+    if tampered or broken_at_or_before:
+        return {
+            "verdict": "chain_broken",
+            "record_id": record_id,
+            "headline": "This record has changed since it was logged.",
+            "detail": (chain["detail"] if broken_at_or_before else
+                       "The record's contents no longer match the value sealed onto the ledger."),
+            "broken_at": chain["broken_at"],
+            "scope_note": LEDGER_SCOPE_NOTE,
+            "limitations": _limitations(),
+        }
+
+    species = get_species(record.species_id) or {}
+    return {
+        "verdict": "verified",
+        "record_id": record_id,
+        "headline": "This record is unaltered since it was logged.",
+        "detail": ("The sealed value still matches the record, and every link before it verifies. "
+                   "This confirms the record was not edited after logging."),
+        "verified": {
+            "species_id": record.species_id,
+            "species_english": species.get("english"),
+            "species_morisyen": species.get("morisyen"),
+            "species_morisyen_status": species.get("morisyen_status"),
+            "measured_length_cm": record.measured_length_cm,
+            "count": record.count,
+            "capture_date": record.capture_date,
+            "fishing_area": record.fishing_area,
+            "sealed_at": entry.created_at.isoformat(),
+            "ledger_seq": entry.seq,
+            "entry_hash": entry.entry_hash,
+            "prev_hash": entry.prev_hash,
+        },
+        "not_verified": [
+            "That the species identification is correct — it was AI-assisted and confirmed by the fisher, not independently verified.",
+            "That the measurement is accurate — it is self-reported by the fisher.",
+            "That the catch was legally taken — see the fisheries rule status, which is informational only.",
+        ],
+        "legal_status_informational": {
+            "status": record.legal_status,
+            "rule_id": record.legal_rule_id,
+            "note": RULE_VERIFY_NOTICE,
+        },
+        "scope_note": LEDGER_SCOPE_NOTE,
+        "limitations": _limitations(),
+    }
+
+
+@router.get(
+    "/api/submissions",
+    summary="List declaration submissions (officer view)",
+)
+def list_submissions(session: Session = Depends(get_session)) -> dict:
+    rows = session.exec(select(Declaration).order_by(Declaration.created_at.desc())).all()  # type: ignore[union-attr]
+    out = []
+    for d in rows:
+        catches = json.loads(d.catches_json)
+        out.append({
+            "declaration_id": d.id,
+            "fisher_name": d.fisher_name,
+            "fishing_area": d.fishing_area,
+            "period_start": d.period_start,
+            "period_end": d.period_end,
+            "record_count": len(catches),
+            "total_count": sum(int(c.get("count") or 0) for c in catches),
+            "status": d.status,
+            "mock_receipt_id": d.mock_receipt_id,
+            "submitted_at": d.created_at.isoformat(),
+        })
+    return {"submissions": out, "count": len(out), "mock_label": declarations.MOCK_LABEL}
+
+
+@router.get(
+    "/api/submissions/{declaration_id}",
+    summary="Submission detail with per-record ledger status (officer view)",
+)
+def submission_detail(declaration_id: str, session: Session = Depends(get_session)) -> dict:
+    decl = session.get(Declaration, declaration_id)
+    if not decl:
+        raise HTTPException(404, "submission not found")
+
+    records = []
+    for c in json.loads(decl.catches_json):
+        rid = c.get("record_id") or c.get("id")
+        entry = ledger.entry_for_record(session, rid) if rid else None
+        records.append({
+            **c,
+            "record_id": rid,
+            "ledger_seq": entry.seq if entry else None,
+            "entry_hash": entry.entry_hash if entry else None,
+            "sealed": entry is not None,
+        })
+
+    return {
+        "declaration_id": decl.id,
+        "fisher_name": decl.fisher_name,
+        "fishing_area": decl.fishing_area,
+        "period_start": decl.period_start,
+        "period_end": decl.period_end,
+        "status": decl.status,
+        "mock_receipt_id": decl.mock_receipt_id,
+        "submitted_at": decl.created_at.isoformat(),
+        "records": records,
+        "chain": ledger.verify_chain(session),
+        "mock_label": declarations.MOCK_LABEL,
+        "officer_action_note": ("Verification actions are advisory-assisted and recorded as the officer's "
+                                "decision. Nothing here is automated or legally binding."),
+        "scope_note": LEDGER_SCOPE_NOTE,
+    }
 
 
 @router.get("/api/reports/today")
@@ -507,7 +697,9 @@ def demo_set_date(simulated_date: str = Form(...), session: Session = Depends(ge
 @router.post("/api/demo/reset")
 def demo_reset(session: Session = Depends(get_session)) -> dict:
     demo_date.set_simulated_date(session, None)
-    for model in (CatchRecord, CatchAnalysis, Declaration, SyncQueueItem, ToolTrace):
+    # LedgerEntry must be cleared alongside CatchRecord: a chain left pointing at
+    # deleted records would report "broken" forever after a demo reset.
+    for model in (CatchRecord, CatchAnalysis, Declaration, LedgerEntry, SyncQueueItem, ToolTrace):
         for row in session.exec(select(model)).all():
             session.delete(row)
     session.commit()
