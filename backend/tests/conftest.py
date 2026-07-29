@@ -14,8 +14,48 @@ if _TEST_DB.exists():
     _TEST_DB.unlink()
 os.environ["DATABASE_URL"] = f"sqlite:///{_TEST_DB}"
 os.environ["PROVIDER_MODE"] = "mock"
+# Preserve an exported key for the live tier BEFORE blanking it for the app
+# under test. Live tests read GEMINI_API_KEY_LIVE only — never .env — so the
+# default suite cannot pick up a key by accident.
+os.environ.setdefault("GEMINI_API_KEY_LIVE", os.environ.get("GEMINI_API_KEY", ""))
 os.environ["GEMINI_API_KEY"] = ""
 os.environ["MARINE_PREWARM_ON_STARTUP"] = "false"  # suite must not depend on live network
+
+
+@pytest.fixture(autouse=True)
+def _no_external_network(request, monkeypatch):
+    """Socket guard: the default suite makes ZERO external network calls.
+
+    Any attempt to resolve or connect to a non-local host raises. Code built
+    for the sea degrades gracefully (the marine client falls back to cache or
+    its deterministic mock on connection errors), so this both proves the
+    no-network property and continuously exercises offline behaviour.
+    Live-marked tests are exempt — they exist to hit the real API.
+    """
+    if request.node.get_closest_marker("live"):
+        yield
+        return
+
+    import socket as _socket
+
+    _LOCAL = {"localhost", "127.0.0.1", "::1", "testserver", ""}
+    real_getaddrinfo = _socket.getaddrinfo
+    real_connect = _socket.socket.connect
+
+    def guarded_getaddrinfo(host, *args, **kwargs):
+        if str(host) in _LOCAL:
+            return real_getaddrinfo(host, *args, **kwargs)
+        raise _socket.gaierror(f"[socket guard] external DNS blocked in default suite: {host!r}")
+
+    def guarded_connect(self, address):
+        host = address[0] if isinstance(address, tuple) else address
+        if str(host) in _LOCAL or str(host).startswith(("127.", "::1")):
+            return real_connect(self, address)
+        raise OSError(f"[socket guard] external connect blocked in default suite: {host!r}")
+
+    monkeypatch.setattr(_socket, "getaddrinfo", guarded_getaddrinfo)
+    monkeypatch.setattr(_socket.socket, "connect", guarded_connect)
+    yield
 
 
 @pytest.fixture(scope="session")

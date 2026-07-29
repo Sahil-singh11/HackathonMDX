@@ -1,0 +1,24 @@
+/* RateLimitBanner. Fixed at the TOP of the viewport (Toast owns the bottom),
+   semantic tokens only, per CLAUDE.md's new-code rules. */
+.lk-ratelimit-region {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  top: calc(var(--sp-3) + env(safe-area-inset-top));
+  z-index: 80; width: calc(100% - var(--sp-8)); max-width: 480px;
+  pointer-events: none;
+}
+.lk-ratelimit {
+  pointer-events: auto; display: flex; align-items: flex-start; gap: var(--sp-3);
+  background: var(--surface); color: var(--text);
+  border: 2px solid var(--warning); border-radius: var(--r-card);
+  box-shadow: var(--elev-3); padding: var(--sp-3) var(--sp-4);
+}
+.lk-ratelimit--ready { border-color: var(--success); }
+.lk-ratelimit__body {
+  flex: 1; min-width: 0; font-size: calc(var(--fs-base) * var(--text-scale));
+}
+.lk-ratelimit__dismiss {
+  flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
+  width: var(--touch-min); height: var(--touch-min); margin: calc(var(--touch-min) / -2) calc(var(--touch-min) / -3) 0 0;
+  background: transparent; border: none; color: var(--text-muted); cursor: pointer; border-radius: var(--r-input);
+}
+.lk-ratelimit__dismiss:hover { color: var(--text); background: var(--surface-sunken); }

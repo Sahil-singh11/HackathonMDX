@@ -56,6 +56,11 @@ class CatchRecord(SQLModel, table=True):
     legal_status: str = "unknown"  # allowed | closed_season | below_minimum_size | unknown
     legal_rule_id: str | None = None
     legal_note: str = ""
+    # Which inference provider produced the analysis this record was confirmed
+    # from, as "mode:model" (e.g. "hosted:gemma-4-26b-a4b-it", "mock:none").
+    # None for manual / offline-sync entries, which involve no model at all —
+    # recording nothing there is the honest value, not a gap.
+    analysis_provider: str | None = None
     created_at: datetime = Field(default_factory=_now)
 
 

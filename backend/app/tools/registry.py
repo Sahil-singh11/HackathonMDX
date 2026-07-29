@@ -219,10 +219,17 @@ REGISTRY: dict[str, tuple[type[BaseModel], Callable]] = {
 
 
 def execute(name: str, raw_args: dict, ctx: ToolContext) -> tuple[dict, FunctionTraceEntry]:
-    """Validate and run an allow-listed function. Never raises to the caller."""
+    """Validate and run an allow-listed function. Never raises to the caller.
+
+    A name that is registered but was never DECLARED to the model is rejected
+    identically to a genuinely unknown one: from the model's point of view it
+    was never told the function exists, so it must not be reachable either.
+    This is the runtime half of the allow-list; the test-time half is
+    test_tool_allowlist.py's identity assertion.
+    """
     start = time.monotonic()
     entry = REGISTRY.get(name)
-    if entry is None:
+    if entry is None or name not in DECLARED:
         trace = FunctionTraceEntry(function=name, argument_names=[], result_status="unknown_function",
                                    duration_ms=0, final_action="rejected")
         _persist_trace(ctx, trace)
@@ -287,9 +294,26 @@ def gemma_function_declarations() -> list[dict]:
         decl("check_confirmed_catch_rule", "Deterministically check the recorded fisheries rule for a CONFIRMED species and measured length.",
              {"species_id": {"type": "string"}, "measured_length_cm": {"type": "number"}, "capture_date": {"type": "string"}},
              ["species_id"]),
+        decl("prepare_catch_declaration", "Draft a declaration from the fisher's confirmed catches in a date range. "
+                                          "Demonstration only — this is never a real government submission.",
+             {"fisher_name": {"type": "string"}, "fishing_area": {"type": "string"},
+              "period_start": {"type": "string"}, "period_end": {"type": "string"}},
+             ["period_start", "period_end"]),
+        decl("submit_mock_declaration", "Submit a previously prepared declaration to the MOCK demonstration "
+                                        "endpoint. This never contacts a real government system.",
+             {"declaration_id": {"type": "string"}}, ["declaration_id"]),
+        decl("queue_for_offline_sync", "Queue an action (e.g. a catch record) for later sync when connectivity "
+                                       "returns, instead of losing it.",
+             {"kind": {"type": "string"}, "payload": {"type": "object"}}),
         decl("request_better_photo", "Ask the fisher to retake the photo with guidance.",
              {"reason": {"type": "string"}}),
         decl("get_current_demo_date", "Get the current (possibly simulated) app date.", {}),
         decl("translate_safe_static_message", "Fetch an approved static safety message in en or mfe.",
              {"message_key": {"type": "string"}, "language": {"type": "string"}}, ["message_key"]),
     ]
+
+
+# Every name REGISTRY can execute must appear here too. execute() enforces this
+# at runtime (defence in depth); test_tool_allowlist.py enforces it at test time
+# so the two lists can never silently drift apart again.
+DECLARED: frozenset[str] = frozenset(d["name"] for d in gemma_function_declarations())
