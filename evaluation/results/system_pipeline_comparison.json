@@ -1,0 +1,41 @@
+{
+  "run_at": "2026-07-29T16:18:21.497590+00:00",
+  "completed_at": "2026-07-29T16:28:50.766972+00:00",
+  "compact_prompt_version": "compact_router_v1",
+  "compact_prompt_sha256": "44299533f59cc907d2feb4d1dc0cc3c38c9699279ce878c332feeaad72675c6e",
+  "test_split": "training/data/test.jsonl",
+  "test_records": 34,
+  "pipeline_a": {
+    "description": "Hosted gemma-4-26b-a4b-it performs routing AND image analysis.",
+    "routing_model": "gemma-4-26b-a4b-it",
+    "image_model": "gemma-4-26b-a4b-it",
+    "hosted_calls_per_routing_request": 1,
+    "routing": {
+      "label": "pipeline_a_hosted_26b_compact_routing",
+      "n": 34,
+      "intent_accuracy": 0.7059,
+      "tool_accuracy": 0.5,
+      "structured_validity": 0.9706,
+      "valid_intent_enum_rate": 0.9706,
+      "tool_allow_list_rate": 1.0,
+      "unknown_function_rate": 0.0,
+      "safety_pass_rate": 1.0,
+      "mixed_language_accuracy": null,
+      "english_control_accuracy": null,
+      "uncertainty_accuracy": 1.0,
+      "api_failure_rate": 0.0294,
+      "median_latency_ms": 18546,
+      "p90_latency_ms": 32266,
+      "hosted_calls": 33
+    }
+  },
+  "pipeline_b": {
+    "description": "Fine-tuned gemma-4-E2B-it router performs compact intent/tool routing; hosted gemma-4-26b-a4b-it keeps image analysis.",
+    "routing_model": "google/gemma-4-E2B-it + LoRA adapter",
+    "image_model": "gemma-4-26b-a4b-it",
+    "hosted_calls_per_routing_request": 0,
+    "routing": null,
+    "status": "not measured — no accepted adapter"
+  },
+  "verdict": "Pipeline B is NOT claimed better. Its routing half is unmeasured until a tuned adapter passes the Step-3 acceptance gate."
+}

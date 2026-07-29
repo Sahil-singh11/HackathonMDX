@@ -531,10 +531,40 @@ for name, mod in model.named_modules():
         linear_names[leaf] += 1
 print("candidate linear leaves:", linear_names.most_common(16))
 
+import torch.nn as nn
+
 PREFERRED = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
-TARGET_MODULES = [n for n in PREFERRED if n in linear_names]
+
+# peft can only inject into real Linear layers. Gemma 4 wraps each projection in
+# Gemma4ClippableLinear, whose weight lives on a `.linear` child, so target that instead
+# — but only where the wrapper actually exists.
+INJECTABLE = (nn.Linear, nn.Embedding, nn.Conv1d, nn.Conv2d, nn.Conv3d)
+
+def resolve_target(proj_name):
+    for name, mod in model.named_modules():
+        if not name.endswith(proj_name):
+            continue
+        if isinstance(mod, INJECTABLE) or mod.__class__.__name__.startswith("Linear4bit"):
+            return proj_name
+        inner = getattr(mod, "linear", None)
+        if inner is not None:
+            return f"{proj_name}.linear"
+        for child_name, child in mod.named_children():
+            if isinstance(child, INJECTABLE) or child.__class__.__name__.startswith("Linear4bit"):
+                return f"{proj_name}.{child_name}"
+        return None
+    return None
+
+TARGET_MODULES = []
+for proj in PREFERRED:
+    resolved = resolve_target(proj)
+    if resolved:
+        TARGET_MODULES.append(resolved)
+    else:
+        print(f"  {proj}: not found or not injectable, skipping")
+
 if not TARGET_MODULES:
-    TARGET_MODULES = [n for n, _ in linear_names.most_common(6)]
+    raise SystemExit("no injectable LoRA target modules found — refusing to guess")
 print("LoRA target modules:", TARGET_MODULES)
 """)
 
@@ -548,7 +578,9 @@ code("""
 import gc as _gc
 
 model.config.use_cache = False
-model.gradient_checkpointing_enable()
+# use_reentrant=False: the reentrant implementation can drop grad flow to injected adapter
+# params, which surfaces later as "No inf checks were recorded for this optimizer".
+model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
 model.enable_input_require_grads()
 
 n_norm = 0
@@ -570,9 +602,23 @@ lora = LoraConfig(
 )
 model = get_peft_model(model, lora)
 
+# LoRA params must be fp32 under fp16 AMP. Without this the GradScaler finds nothing to
+# unscale and Trainer dies with "AssertionError: No inf checks were recorded for this
+# optimizer." This is the ONE part of prepare_model_for_kbit_training we still need — and
+# it is cheap, because it touches only the ~5.7M adapter params, not the embeddings.
+n_cast = 0
+for _n, _p in model.named_parameters():
+    if _p.requires_grad and _p.dtype in (torch.float16, torch.bfloat16):
+        _p.data = _p.data.to(torch.float32)
+        n_cast += 1
+
 trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
 total = sum(p.numel() for p in model.parameters())
+print(f"cast {n_cast} adapter tensors to fp32 for AMP stability")
 print(f"trainable {trainable:,} / total {total:,}  ({100*trainable/total:.4f}%)")
+# The base was frozen before injection; peft must have re-enabled the adapter params.
+assert trainable > 0, "no trainable parameters after LoRA injection"
+assert all(p.dtype == torch.float32 for p in model.parameters() if p.requires_grad),     "trainable params must be fp32 under AMP"
 """)
 
 # ---------------------------------------------------------------- 11 smoke
@@ -676,8 +722,11 @@ def make_args(max_steps=-1, epochs=EPOCHS, out=OUTPUT_DIR, eval_strategy="epoch"
         load_best_model_at_end=(eval_strategy == "epoch"),
         metric_for_best_model="eval_loss",
         greater_is_better=False,
-        bf16=(COMPUTE_DTYPE is torch.bfloat16),
-        fp16=(COMPUTE_DTYPE is torch.float16),
+        bf16=BF16_OK,
+        # No fp16 AMP: with a 4-bit base and fp32 adapter params the GradScaler had no
+        # scaled grads to inspect and Trainer aborted with "No inf checks were recorded
+        # for this optimizer." fp32 adapter math on ~5.7M params is cheap.
+        fp16=False,
         gradient_checkpointing=True,
         optim=("paged_adamw_8bit" if USE_4BIT else "adamw_torch"),
         report_to="none",
@@ -708,6 +757,12 @@ if SMOKE_OK:
             print("!! estimate exceeds the 4 h budget — not launching full training")
     except Exception as e:
         print("smoke training failed:", type(e).__name__, str(e)[:300])
+        import traceback; traceback.print_exc()
+        print("grad status of trainable params (first 5):")
+        for _i, (_n, _p) in enumerate((x for x in model.named_parameters() if x[1].requires_grad)):
+            if _i >= 5:
+                break
+            print(f"   {_n}: dtype={_p.dtype} grad={'set' if _p.grad is not None else 'None'}")
 else:
     print("skipping smoke training — memory smoke test did not pass")
 """)
