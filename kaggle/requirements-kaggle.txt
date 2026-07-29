@@ -1,0 +1,10 @@
+# Demo notebook (Kaggle images already ship most of these)
+google-genai>=1.0
+pillow>=10.3
+numpy>=1.26
+# Training notebooks (GPU)
+transformers>=4.44
+peft>=0.12
+bitsandbytes>=0.43
+accelerate>=0.33
+datasets>=2.20
