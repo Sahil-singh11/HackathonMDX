@@ -1,0 +1,133 @@
+/* Workstream 2 — pillar shell styles.
+ * Semantic tokens only (CLAUDE.md two-palette rule): no hex, no legacy tokens.
+ */
+
+.pil-page { display: flex; flex-direction: column; gap: var(--sp-4); }
+
+.pil-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+.pil-head h1 { display: flex; align-items: center; gap: var(--sp-2); margin: 0; }
+
+.pil-intro { color: var(--text-muted); margin: 0; max-width: 68ch; }
+.pil-data { font-family: var(--font-data); }
+
+.pil-offline-note {
+  margin: 0;
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface-sunken);
+  color: var(--text-muted);
+}
+
+.pil-back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: var(--touch-min);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* --- index grid --------------------------------------------------------- */
+.pil-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--sp-4);
+}
+.pil-card__desc { margin: 0 0 var(--sp-3); color: var(--text-muted); }
+
+.pil-card__facts { margin: 0 0 var(--sp-3); display: flex; flex-direction: column; gap: var(--sp-2); }
+.pil-card__facts > div { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: baseline; }
+.pil-card__facts dt {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  min-width: 5.5rem;
+}
+.pil-card__facts dd { margin: 0; display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+
+.pil-source { display: inline-flex; align-items: center; gap: var(--sp-1); font-size: var(--fs-sm); }
+
+.pil-card__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: var(--touch-min);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.pil-contract-note {
+  margin: 0;
+  padding: var(--sp-3);
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+/* --- detail ------------------------------------------------------------- */
+.pil-source-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-3); }
+.pil-source-list__head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); }
+.pil-source-list p { margin: var(--sp-1) 0 0; color: var(--text-muted); font-size: var(--fs-sm); }
+.pil-source-list a { color: var(--accent); }
+
+.pil-endpoints { margin: 0; padding-left: var(--sp-4); font-size: var(--fs-sm); color: var(--text-muted); }
+
+/* --- ProvenanceBadge ---------------------------------------------------- */
+/* Visual weight scales with risk: live/cached quiet, sample marked,
+   synthetic loud. Never colour alone — each state also carries an icon,
+   a text label, and (loud states) a heavier border. */
+.pil-prov {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface-sunken);
+  font-size: var(--fs-sm);
+}
+.pil-prov--compact {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.pil-prov__src { color: var(--text-muted); }
+
+.pil-prov__head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); }
+.pil-prov__meta { color: var(--text-muted); }
+.pil-prov__meta a { color: var(--accent); }
+
+.pil-prov--sample { border-color: var(--warning); background: var(--warning-quiet); }
+.pil-prov--synthetic { border: 2px solid var(--danger); background: var(--danger-quiet); }
+
+.pil-prov__alarm {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  margin: 0;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.pil-prov__coverage { margin: 0; color: var(--text); }
+.pil-prov__coverage strong { color: var(--text); }
+.pil-prov__missing { color: var(--danger); font-weight: 700; }
+
+.pil-prov__provider { margin: 0; color: var(--text-muted); font-size: var(--fs-xs); }
+
+/* --- badge reference ---------------------------------------------------- */
+.pil-badge-ref { display: flex; flex-direction: column; gap: var(--sp-3); }
+.pil-badge-ref h2 { margin: 0; }
+.pil-badge-ref__list { display: flex; flex-direction: column; gap: var(--sp-3); }
