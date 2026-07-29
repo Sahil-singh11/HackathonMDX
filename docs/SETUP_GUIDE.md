@@ -283,7 +283,7 @@ Install the venv package: `sudo apt install python3.12-venv`.
 You are in the wrong directory. All pytest and uvicorn commands must run from **`~/HackathonMDX/backend`**, not the repo root.
 
 **`sqlite3.OperationalError: unable to open database file` on startup**
-Fixed in the app as of commit `d6bd6f1` — **`git pull`** and try again. It was caused by a relative `DATABASE_URL` in an early `.env`; relative paths are now resolved against the repo root regardless of where you launch the server. If you still see it, comment out the `DATABASE_URL` line in your `.env` entirely.
+Fixed in the app as of commit `5c12619` — **`git pull`** and try again. It was caused by a relative `DATABASE_URL` in an early `.env`; relative paths are now resolved against the repo root regardless of where you launch the server. If you still see it, comment out the `DATABASE_URL` line in your `.env` entirely.
 
 **Other database errors**
 Delete the local DBs and re-run; they regenerate automatically:
