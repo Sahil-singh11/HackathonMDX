@@ -1,0 +1,4 @@
+path,truth,predicted,confidence,correct,abstained,quality,latency_ms,split
+data/raw/octopus_cyanea/octopus_cyanea_8993018.jpg,octopus_cyanea,octopus_cyanea,high,True,False,acceptable,17888,train
+data/raw/octopus_cyanea/octopus_cyanea_217000496.jpg,octopus_cyanea,octopus_cyanea,high,True,False,acceptable,20473,train
+data/raw/octopus_cyanea/octopus_cyanea_16636632.jpg,octopus_cyanea,octopus_cyanea,high,True,False,acceptable,27880,train

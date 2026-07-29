@@ -84,7 +84,7 @@ slide("Why Gemma 4", [
     "One model — gemma-4-26b-a4b-it via the official google-genai SDK",
     "Photo understanding + Morisyen + structured JSON + native function calling",
     "Candidate shortlist retrieval: Gemma suggests ONLY from allowed species",
-    "Gemma family scales down (E2B/E4B) → a credible on-device roadmap for offline lagoons",
+    "All 10 hosted gates PASS on real inference — image, Morisyen, tool round trip",
     "!Bounded by design: suggest, never declare · no legality · no invented rules",
 ], kicker="0:50 — WHY GEMMA")
 
@@ -100,8 +100,16 @@ slide("Moment 2 — On the water", [
     "Constrained suggestion + visible characteristics + honest confidence",
     "Fisher CONFIRMS or corrects — mandatory, always",
     "Measured length with a ruler → deterministic, source-attributed rule check",
-    "!29 July: no closure · simulated 1 September (badged): closed season, 2016 regulations, ‘provisional’",
+    "!29 July: no closure · simulated 1 September (badged): closed season, GN 167/2016",
 ], kicker="2:00 — LIVE DEMO · CATCH FLOW")
+
+slide("We read the actual law", [
+    "GN 167 of 2016 also bans octopus under 7 cm — measured by MANTLE, not total length",
+    "Our app records total length, so a naive check would compare the wrong numbers",
+    "The engine refuses a verdict: returns ‘unknown’ and tells the fisher to measure the mantle",
+    "Every rule carries its gazette citation, effective date and verification status",
+    "!Unknown over invented — the honest answer is the compliant one",
+], accent=CORAL, kicker="THE DETAIL THAT MATTERS")
 
 slide("Moment 3 — Back ashore", [
     "Catch log + today report",
@@ -112,9 +120,9 @@ slide("Moment 3 — Back ashore", [
 
 slide("Engineering proof", [
     "12 allow-listed functions · Pydantic-validated · explicit dispatch · redacted traces",
-    "44 backend tests: rule boundaries, prompt injection, privacy, secret hygiene",
-    "Prototype benchmark: 32 Morisyen cases · 100% schema validity · 0 safety failures",
-    "Training: QLoRA notebooks + leakage-safe data, push-button on Kaggle — status reported honestly",
+    "100 backend tests: rule boundaries, prompt injection, privacy, secret hygiene",
+    "Live benchmark: 96.9% Morisyen intent · 100% schema validity · 0 safety failures",
+    "Deployed public PWA + public Kaggle notebook, both on real Gemma inference",
     "!Provider badge on every response: hosted / mock / local, with real_inference flag",
 ], kicker="3:50 — TECHNICAL PROOF")
 
@@ -128,6 +136,7 @@ slide("Morisyen-first, honestly", [
 slide("From paper to policy-grade data", [
     "A working preview of digital catch declarations for the Blue Economy",
     "Humans confirm everything that matters; deterministic code owns the law",
+    "Live now: lamer-konekte.onrender.com · public Kaggle demo notebook",
     "Next: native-speaker review · ministry schema consultation · Gemma E2B edge pilot",
     "!Limitation on every screen: verify suggestions and rules with official sources",
 ], accent=CORAL, kicker="4:45 — IMPACT")
