@@ -15,9 +15,11 @@ from app.pillars.transport.module import (COVERAGE_NOTE, ArrivalsBrief,
 
 router = APIRouter()
 
-# A REAL captured response from a LIVE hosted-Gemma call (30 Jul 2026), trimmed
-# to two arrivals. Nothing here was written by hand to look good — an example
-# that does not match what the endpoint returns is worse than none.
+# A REAL captured response from a LIVE hosted-Gemma call, trimmed to two
+# arrivals. Re-captured 30 Jul 2026 22:51 UTC after the system-instruction change
+# (decision log 17), so it reflects the current code path. Nothing here was
+# written by hand to look good — an example that does not match what the endpoint
+# returns is worse than none.
 #
 # Read the two provenance fields together, because their split is the point:
 #   data_kind      "synthetic"    <- where the VESSEL DATA came from
@@ -25,21 +27,26 @@ router = APIRouter()
 # A real model reasoning over honestly-labelled synthetic data is not the same
 # claim as live data, and the payload keeps the two separable.
 #
-# `narrative_source` is `deterministic_fallback` here, and that is the true
-# recorded outcome rather than an outage: the hosted provider's chat() injects
-# the fisheries catch-assistant SYSTEM_INSTRUCTION, so the live model refused the
-# port-officer task and wrapped the refusal in that prompt's JSON envelope. The
-# output-edge guard rejected it and said why. See the PR body and
-# tests/test_pillar_transport.py::test_narrative_grounding_rejects_the_assistant_envelope
-# for the captured text. Until an inference entry point exists that does not
-# carry the fisheries system prompt, this is what the hosted path honestly does.
+# `narrative_source` is `deterministic_fallback` because THIS capture hit the
+# 60 s hosted timeout (`GEMMA_TIMEOUT_SECONDS`) — a transport-layer outage, not a
+# refusal. The degradation path did exactly its job and recorded the real reason.
+#
+# History worth keeping straight: an earlier capture failed differently. Under the
+# fisheries default instruction the model REFUSED the port task and answered with
+# the catch-assistant JSON envelope; that is what motivated decision log 17 and it
+# is pinned in
+# tests/test_pillar_transport.py::test_narrative_grounding_rejects_the_assistant_envelope.
+# That failure mode is fixed. This one is a timeout, and no grounded-prose capture
+# has been obtained yet — the two authorised live calls after the fix hit a
+# transient Google 503 and this timeout. Stated rather than papered over: we do
+# not yet have a measured example of real Gemma prose in this field.
 ARRIVALS_EXAMPLE = {
     "pillar_id": "transport",
-    "generated_at": "2026-07-29T22:38:13.558464Z",
+    "generated_at": "2026-07-29T22:51:55.024792Z",
     "provenance": {
         "source_name": "aisstream.io",
         "source_url": "https://aisstream.io",
-        "retrieved_at": "2026-07-29T22:38:13.558464Z",
+        "retrieved_at": "2026-07-29T22:51:55.024792Z",
         "data_kind": "synthetic",
         "model_provider": "gemma_hosted",
         "coverage_note": COVERAGE_NOTE,
@@ -51,17 +58,17 @@ ARRIVALS_EXAMPLE = {
             "mmsi": 645123456, "vessel_name": "MSC LORETO", "identity_known": True,
             "vessel_type": "cargo", "nav_status": "under way using engine",
             "destination_reported": "PORT LOUIS",
-            "reported_eta_utc": "2026-07-30T10:00:00+00:00", "hours_to_reported_eta": 11.4,
+            "reported_eta_utc": "2026-07-30T10:00:00+00:00", "hours_to_reported_eta": 11.1,
             "distance_nm": 6.36, "speed_knots": 11.4, "draught_m": 11.2,
-            "last_seen_utc": "2026-07-29T22:38:13.558464+00:00",
+            "last_seen_utc": "2026-07-29T22:51:55.024792+00:00",
         },
         {
             "mmsi": 645234567, "vessel_name": "CMA CGM MASCAREIGNE", "identity_known": True,
             "vessel_type": "cargo", "nav_status": "under way using engine",
             "destination_reported": "PORT LOUIS",
-            "reported_eta_utc": "2026-07-30T14:30:00+00:00", "hours_to_reported_eta": 15.9,
+            "reported_eta_utc": "2026-07-30T14:30:00+00:00", "hours_to_reported_eta": 15.6,
             "distance_nm": 10.66, "speed_knots": 14.1, "draught_m": 12.8,
-            "last_seen_utc": "2026-07-29T22:36:57.010464+00:00",
+            "last_seen_utc": "2026-07-29T22:50:38.476792+00:00",
         },
     ],
     "expected_arrivals_count": 5,
@@ -89,8 +96,7 @@ ARRIVALS_EXAMPLE = {
     ),
     "risk_reasoning": "(the same deterministic summary \u2014 see narrative_note)",
     "narrative_source": "deterministic_fallback",
-    "narrative_note": ("model output rejected: model returned structured output "
-                       "(JSON or a code block), not prose"),
+    "narrative_note": "model call failed: The read operation timed out",
     "advisory": True,
     "scope_note": (
         "Advisory only. The counts, ETAs and ordering are computed deterministically from AIS "
