@@ -1,13 +1,16 @@
 """Hosted integration tests — real calls to gemma-4-26b-a4b-it.
 
-These are the only tests that touch the network. They read GEMINI_API_KEY from
-the process environment (NOT from the conftest, which deliberately clears it),
-so run them with the key exported:
+These are the only tests that touch the network. They are marked `live`, which
+the default suite deselects (see pytest.ini), and they read the key ONLY from
+an explicitly exported environment variable — never from .env, so the default
+suite can never pick up a key by accident. Run them deliberately:
 
-    cd backend && .venv/Scripts/python.exe -m pytest tests/test_hosted_integration.py -v
+    GEMINI_API_KEY=... .venv/bin/python -m pytest -m live -v            (WSL/Linux)
+    $env:GEMINI_API_KEY='...'; .venv\\Scripts\\python -m pytest -m live   (Windows)
 
-Without a key every test is skipped — never silently "passed". The key value is
-never printed or asserted on.
+(conftest preserves the exported value as GEMINI_API_KEY_LIVE before blanking
+the app-facing variable.) Without a key every test is skipped — never silently
+"passed". The key value is never printed or asserted on.
 """
 from __future__ import annotations
 
@@ -25,22 +28,14 @@ sys.path.insert(0, str(BACKEND / "scripts"))
 
 REQUIRED_MODEL = "gemma-4-26b-a4b-it"
 
+# Environment only — the .env fallback was removed so that deselecting `live`
+# provably means zero network (amendment 3, Task 1a).
+API_KEY = os.environ.get("GEMINI_API_KEY_LIVE") or os.environ.get("GEMINI_API_KEY", "")
 
-def _env_key() -> str:
-    """Read the key from .env directly; conftest blanks the process variable."""
-    if os.environ.get("GEMINI_API_KEY"):
-        return os.environ["GEMINI_API_KEY"]
-    env = ROOT / ".env"
-    if not env.exists():
-        return ""
-    for line in env.read_text(encoding="utf-8").splitlines():
-        if line.startswith("GEMINI_API_KEY="):
-            return line.split("=", 1)[1].strip()
-    return ""
-
-
-API_KEY = _env_key()
-pytestmark = pytest.mark.skipif(not API_KEY, reason="GEMINI_API_KEY not configured; hosted gates cannot run")
+pytestmark = [
+    pytest.mark.live,
+    pytest.mark.skipif(not API_KEY, reason="GEMINI_API_KEY not exported; live tier skipped"),
+]
 
 
 @pytest.fixture(scope="module")

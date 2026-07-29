@@ -31,6 +31,8 @@
   "dashboard.yesterday": "Yer",
   "common.loading": "Pe sarze…",
   "common.error": "Enn problem inn arive. Silvouple re-esaye.",
+  "httpError.rateLimited": "Tro boukou esay. To kapav re-esaye dan {seconds}s.",
+  "httpError.rateLimitedReady": "To kapav re-esaye aster.",
   "common.retry": "Re-esaye",
   "common.offline": "Offline — bann aksion an atant pou sinkronize kan ena rezo",
   "common.online": "An liyn",

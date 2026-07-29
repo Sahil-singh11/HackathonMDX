@@ -1,4 +1,5 @@
 /* Thin API client. The frontend never sees any API key — everything is server-side. */
+import { RateLimitError, emitRateLimited } from '../lib/httpError'
 
 export interface PublicConfig {
   app: string
@@ -132,6 +133,14 @@ export interface StaticRules {
 }
 
 async function jsonOrThrow<T>(res: Response): Promise<T> {
+  if (res.status === 429) {
+    // /api/analyse-catch is throttled at 10 req/min per address (backend/app/core/ratelimit.py);
+    // /api/demo/reset clears it. Every caller gets this uniformly — nobody needs
+    // to special-case 429 in their own page.
+    const seconds = Number(res.headers.get('Retry-After')) || 60
+    emitRateLimited(seconds)
+    throw new RateLimitError(seconds)
+  }
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json() as Promise<T>
 }

@@ -5,7 +5,7 @@ import logging
 from datetime import date
 
 from fastapi import (APIRouter, Depends, File, Form, HTTPException, Request,
-                     UploadFile)
+                     Response, UploadFile)
 from fastapi.responses import FileResponse
 from sqlmodel import Session, select
 
@@ -140,6 +140,7 @@ def provider_status() -> dict:
 )
 async def analyse_catch(
     request: Request,
+    response: Response,
     image: UploadFile | None = File(default=None, description="Catch photo (JPEG/PNG). Optional if a note is given."),
     note: str | None = Form(default=None,
                             description="Optional free-text note in Morisyen or English; narrows species candidates."),
@@ -187,6 +188,7 @@ async def analyse_catch(
                                          real_inference=False, latency_ms=0)
             resp.limitations = _limitations(["No model call was made for this invalid image (token saving)."])
             _persist_analysis(session, analysis, resp)
+            response.headers["X-Inference-Provider"] = _provider_tag(resp.provider)
             return resp
         dup = session.exec(
             select(CatchAnalysis).where(CatchAnalysis.image_sha256 == image_sha,
@@ -222,7 +224,15 @@ async def analyse_catch(
 
     analysis.image_sha256 = image_sha
     _persist_analysis(session, analysis, resp)
+    response.headers["X-Inference-Provider"] = _provider_tag(resp.provider)
     return resp
+
+
+def _provider_tag(provider: ProviderInfo) -> str:
+    """Per-request provider record, `mode:model` — the header half of the
+    honesty trail (the persistent half lives on CatchAnalysis and, after
+    confirmation, CatchRecord.analysis_provider)."""
+    return f"{provider.mode}:{provider.model or provider.provider_name or 'none'}"
 
 
 def _persist_analysis(session: Session, analysis: CatchAnalysis, resp: AnalyseCatchResponse) -> None:
@@ -284,6 +294,8 @@ def confirm_analysis(analysis_id: str, body: ConfirmRequest,
         legal_status=check.status if check.status != "pending_confirmation" else "unknown",
         legal_rule_id=check.rule,
         legal_note=check.note or "",
+        analysis_provider=(f"{analysis.provider_mode}:{analysis.provider_model or 'none'}"
+                           if analysis.provider_mode else None),
     )
     analysis.confirmed = True
     session.add(record)

@@ -35,4 +35,6 @@ Only here does the deterministic rule engine run — with the confirmed species 
 - Coordinates rounded to 2 dp in traces; precise values never logged.
 
 ## Database entities
-FisherProfile, Species, SpeciesRule, CatchAnalysis, CatchRecord, MarineForecastCache, Declaration, SyncQueueItem, ToolTrace, DemoSetting. No API keys, no raw audio, no model reasoning, minimal metadata only.
+CatchAnalysis, CatchRecord, LedgerEntry, MarineForecastCache, Declaration, SyncQueueItem, ToolTrace, DemoSetting. No API keys, no raw audio, no model reasoning, minimal metadata only.
+
+`FisherProfile`, `Species` and `SpeciesRule` were removed on 2026-07-29 (DECISION_LOG 12): they were created but never read. **Species and fisheries rules are read from versioned JSON under `data/`, never from the database** — `data/processed/species_catalogue.json` via `services/species/retrieval.py` and `data/rules/species_rules.json` via `services/fisheries_rules/engine.py`. That JSON carries the source attribution and `verification_status` the rule engine and the offline assistant both depend on, which is why it is the source of truth.

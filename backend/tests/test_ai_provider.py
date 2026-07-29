@@ -51,7 +51,9 @@ def test_configured_real_provider_declares_full_capability_surface():
 def test_hosted_provider_uses_the_pinned_model_and_official_sdk():
     import inspect
 
-    from app.providers import hosted
+    # The implementation moved to app.inference.gemma_hosted in Task 1a;
+    # app.providers.hosted remains as a forwarding shim.
+    from app.inference import gemma_hosted as hosted
     src = inspect.getsource(hosted)
     assert "from google import genai" in src
     assert "settings.gemma_model" in src
