@@ -1,0 +1,30 @@
+{
+  "records": 240,
+  "tools_in_registry": 12,
+  "routable_tools": 11,
+  "argument_sets_validated": 18,
+  "context_supplied_tools": [
+    "check_confirmed_catch_rule",
+    "get_species_details",
+    "prepare_catch_declaration",
+    "record_catch",
+    "submit_mock_declaration"
+  ],
+  "negative_argument_cases": 8,
+  "by_tool": {
+    "(none)": 86,
+    "get_marine_conditions": 50,
+    "record_catch": 31,
+    "prepare_catch_declaration": 15,
+    "submit_mock_declaration": 8,
+    "get_recent_catches": 12,
+    "get_species_candidates": 6,
+    "get_species_details": 10,
+    "check_confirmed_catch_rule": 6,
+    "queue_for_offline_sync": 4,
+    "request_better_photo": 8,
+    "get_current_demo_date": 4
+  },
+  "failures": [],
+  "passed": true
+}

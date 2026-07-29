@@ -1,0 +1,100 @@
+{
+  "run_at": "2026-07-29T16:18:21.497590+00:00",
+  "completed_at": "2026-07-29T16:28:50.766972+00:00",
+  "compact_prompt_version": "compact_router_v1",
+  "compact_prompt_sha256": "44299533f59cc907d2feb4d1dc0cc3c38c9699279ce878c332feeaad72675c6e",
+  "test_split": "training/data/test.jsonl",
+  "test_records": 34,
+  "pipeline_a": {
+    "description": "Hosted gemma-4-26b-a4b-it performs routing AND image analysis.",
+    "routing_model": "gemma-4-26b-a4b-it",
+    "image_model": "gemma-4-26b-a4b-it",
+    "hosted_calls_per_routing_request": 1,
+    "routing": {
+      "label": "pipeline_a_hosted_26b_compact_routing",
+      "n": 34,
+      "intent_accuracy": 0.7059,
+      "tool_accuracy": 0.5,
+      "structured_validity": 0.9706,
+      "valid_intent_enum_rate": 0.9706,
+      "tool_allow_list_rate": 1.0,
+      "unknown_function_rate": 0.0,
+      "safety_pass_rate": 1.0,
+      "mixed_language_accuracy": null,
+      "english_control_accuracy": null,
+      "uncertainty_accuracy": 1.0,
+      "api_failure_rate": 0.0294,
+      "median_latency_ms": 18546,
+      "p90_latency_ms": 32266,
+      "hosted_calls": 33
+    }
+  },
+  "pipeline_b": {
+    "description": "Fine-tuned gemma-4-E2B-it router performs compact intent/tool routing; hosted gemma-4-26b-a4b-it keeps image analysis.",
+    "routing_model": "google/gemma-4-E2B-it + LoRA adapter",
+    "image_model": "gemma-4-26b-a4b-it",
+    "hosted_calls_per_routing_request": 0,
+    "routing": {
+      "label": "tuned_internal_test",
+      "n": 34,
+      "intent_accuracy": 0.7353,
+      "tool_accuracy": 0.5882,
+      "structured_validity": 1.0,
+      "valid_intent_enum_rate": 1.0,
+      "tool_allow_list_rate": 1.0,
+      "unknown_function_rate": 0.0,
+      "safety_pass_rate": 1.0,
+      "mixed_language_accuracy": null,
+      "english_control_accuracy": null,
+      "uncertainty_accuracy": 0.6667,
+      "reviewed_subset_accuracy": 0.5,
+      "unreviewed_subset_accuracy": 0.7667,
+      "median_latency_ms": 4438,
+      "per_intent_f1": {
+        "identify_catch": {
+          "f1": 0.9231,
+          "precision": 1.0,
+          "recall": 0.8571,
+          "support": 7
+        },
+        "weather_query": {
+          "f1": 0.7692,
+          "precision": 0.7143,
+          "recall": 0.8333,
+          "support": 6
+        },
+        "log_catch": {
+          "f1": 0.7,
+          "precision": 0.5833,
+          "recall": 0.875,
+          "support": 8
+        },
+        "make_declaration": {
+          "f1": 0.625,
+          "precision": 1.0,
+          "recall": 0.4545,
+          "support": 11
+        },
+        "other": {
+          "f1": 0.6667,
+          "precision": 0.5,
+          "recall": 1.0,
+          "support": 2
+        }
+      }
+    },
+    "status": "measured on Kaggle kernel v15; adapter REJECTED by the acceptance gate",
+    "acceptance_gate": {
+      "intent_accuracy_ge_0.90": false,
+      "tool_accuracy_ge_0.90": false,
+      "structured_validity_eq_1.0": true,
+      "safety_pass_eq_1.0": true,
+      "zero_unknown_function": true,
+      "improvement_ge_15pp": true,
+      "english_control_not_regressed": true,
+      "ACCEPTED": false
+    },
+    "external_benchmark_intent_accuracy": 0.75
+  },
+  "verdict": "Pipeline B beats Pipeline A on every routing metric measured (intent 0.7353 vs 0.7059, tool 0.5882 vs 0.5000, structured validity 1.0000 vs 0.9706, median latency 4438ms vs 18546ms) and removes one hosted call per routing request. HOWEVER the adapter FAILED the Step-3 acceptance gate: intent and tool accuracy are both below the 90% threshold. Per the Step-3 rules it is NOT integrated as the default. Pipeline A remains production."
+}

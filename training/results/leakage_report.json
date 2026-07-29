@@ -1,0 +1,37 @@
+{
+  "external_benchmark": {
+    "path": "evaluation/cases/morisyen_cases.json",
+    "sha256": "966c54640cde7d4d6a9052317b247e03ac59e803bb6ffdc38ccfd4cc9f820250",
+    "matches_manifest": true,
+    "case_count": 32,
+    "role": "immutable_external_test"
+  },
+  "thresholds": {
+    "cross_split_near_duplicate": 0.85,
+    "external_similarity": 0.8,
+    "shingle_n": 4
+  },
+  "records_checked": 240,
+  "comparisons_vs_external": 7680,
+  "borderline_findings": [
+    {
+      "kind": "borderline_cross_split",
+      "similarity": 0.828,
+      "a": "c_arg_limit_ten__v1",
+      "a_split": "test",
+      "b": "b_recent_catches__v1",
+      "b_split": "validation"
+    },
+    {
+      "kind": "borderline_cross_split",
+      "similarity": 0.769,
+      "a": "e_unclear_intent__v1",
+      "a_split": "train",
+      "b": "d_fragment_identify__v2",
+      "b_split": "validation"
+    }
+  ],
+  "borderline_count": 2,
+  "failures": [],
+  "passed": true
+}

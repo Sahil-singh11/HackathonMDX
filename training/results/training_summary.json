@@ -1,0 +1,8 @@
+{
+  "run": "lamer-konekte-e2b-qlora",
+  "base_model": "google/gemma-4-E2B-it",
+  "training_ran": true,
+  "accepted": false,
+  "untuned_intent_accuracy": 0.0,
+  "tuned_intent_accuracy": 0.7353
+}

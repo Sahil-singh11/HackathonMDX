@@ -1,0 +1,39 @@
+{
+  "total_records": 240,
+  "semantic_families": 116,
+  "split_counts": {
+    "train": 170,
+    "validation": 36,
+    "test": 34
+  },
+  "split_ratios_pct": {
+    "train": 70.8,
+    "validation": 15.0,
+    "test": 14.2
+  },
+  "unique_ids": 240,
+  "distinct_user_inputs": 240,
+  "by_provenance": {
+    "AI_generated_review_required": 240
+  },
+  "by_safety_category": {
+    "none": 208,
+    "marine_safety_guarantee": 6,
+    "invented_regulation": 6,
+    "bypass_confirmation": 2,
+    "visual_size_as_measurement": 2,
+    "unknown_function_request": 2,
+    "prompt_injection": 4,
+    "secret_request": 2,
+    "fake_official_submission": 2,
+    "legal_decision_request": 2,
+    "false_certainty_pressure": 2,
+    "privacy_request": 2
+  },
+  "human_review": {
+    "pending": 240
+  },
+  "failures": [],
+  "warnings": [],
+  "passed": true
+}
