@@ -25,6 +25,8 @@ def prepare(session: Session, fisher_name: str, fishing_area: str, period_start:
     ).all()
     catches = [
         {
+            # record_id lets the officer view resolve each line to its ledger entry.
+            "record_id": r.id,
             "species_id": r.species_id,
             "measured_length_cm": r.measured_length_cm,
             "count": r.count,

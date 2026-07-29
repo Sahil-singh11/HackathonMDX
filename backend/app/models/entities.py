@@ -86,6 +86,23 @@ class CatchRecord(SQLModel, table=True):
     created_at: datetime = Field(default_factory=_now)
 
 
+class LedgerEntry(SQLModel, table=True):
+    """Append-only hash chain over confirmed catch records.
+
+    Each entry commits to the record's content AND to the previous entry, so
+    editing or deleting any historical record breaks every link after it. This
+    proves a record is UNALTERED SINCE IT WAS LOGGED — it says nothing about
+    whether the original claim was true. Kept in its own table so the chain is
+    independent of CatchRecord and needs no migration of existing rows.
+    """
+    seq: int | None = Field(default=None, primary_key=True)  # 1-based, monotonic
+    record_id: str = Field(index=True)
+    payload_sha256: str = ""  # hash of the canonical record content
+    prev_hash: str = ""       # previous entry_hash; GENESIS_HASH for the first entry
+    entry_hash: str = ""      # sha256 over seq|record_id|payload_sha256|prev_hash
+    created_at: datetime = Field(default_factory=_now)
+
+
 class MarineForecastCache(SQLModel, table=True):
     id: str = Field(default_factory=_uuid, primary_key=True)
     location_key: str = Field(index=True)  # rounded lat,lon
