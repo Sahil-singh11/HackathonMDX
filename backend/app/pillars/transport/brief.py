@@ -174,17 +174,42 @@ def build_prompt(arrivals: list[dict], congestion_summary: dict, conditions: dic
 
 _NINE_DIGITS = re.compile(r"\b\d{9}\b")
 
+# Markers of the fisheries assistant's structured envelope. The hosted provider's
+# chat() injects the catch-assistant SYSTEM_INSTRUCTION, which orders the model to
+# "always produce valid structured output matching the requested JSON schema" and
+# scopes it to fishers. Asked for a port brief, the live model duly refused AND
+# wrapped the refusal in that envelope (measured 30 Jul 2026). Prose is what this
+# field promises, so an envelope is a failed narrative, not a narrative.
+_ENVELOPE_MARKERS = ('"intent"', '"reply_morisyen"', '"reply"', '"call"')
+
 
 def narrative_is_grounded(text: str, known_mmsis: set[int]) -> tuple[bool, str]:
-    """Reject a narrative that cites an identifier we do not hold.
+    """Reject anything that is not grounded prose about this brief.
 
-    Returns (ok, reason). This is a guard against invented *identifiers*, the
-    failure mode a port officer would act on. It does not and cannot verify the
-    prose itself — that limit is stated on the payload, not hidden here.
+    Returns (ok, reason). Three failures are caught, in the order they were
+    actually observed:
+
+    1. Empty output.
+    2. **Structured output instead of prose** — a JSON object or fenced code
+       block, or the fisheries envelope's keys. A refusal rendered as JSON must
+       never reach a port officer looking like a narrative.
+    3. An invented *identifier*: a 9-digit token that is not an MMSI we hold.
+
+    What it still cannot do is verify the prose itself — a model can describe a
+    busy approach as quiet and this returns True. That limit is stated on the
+    payload rather than hidden here, which is why the narrative ships beside the
+    deterministic numbers and never instead of them.
     """
     if not text or not text.strip():
         return False, "model returned an empty narrative"
-    for token in _NINE_DIGITS.findall(text):
+
+    stripped = text.strip()
+    if stripped.startswith("```") or stripped.startswith("{") or stripped.startswith("["):
+        return False, "model returned structured output (JSON or a code block), not prose"
+    if sum(marker in stripped for marker in _ENVELOPE_MARKERS) >= 2:
+        return False, "model returned the assistant's structured envelope, not a port narrative"
+
+    for token in _NINE_DIGITS.findall(stripped):
         if int(token) not in known_mmsis:
             return False, f"narrative cited identifier {token}, which is not in the AIS data"
     return True, ""

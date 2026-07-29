@@ -10,32 +10,39 @@ from fastapi import APIRouter, Depends
 from sqlmodel import Session
 
 from app.db.session import get_session
-from app.pillars.transport.module import ArrivalsBrief, transport_pillar
+from app.pillars.transport.module import (COVERAGE_NOTE, ArrivalsBrief,
+                                          transport_pillar)
 
 router = APIRouter()
 
-# A REAL captured response, trimmed to two arrivals for readability. Taken from
-# `GET /api/pillars/transport/arrivals` with the synthetic seed and the default
-# mock provider — which is why `narrative_source` is `deterministic_fallback`
-# and `data_kind` is `synthetic`. Nothing here was written by hand to look good:
-# an example that does not match what the endpoint returns is worse than none.
+# A REAL captured response from a LIVE hosted-Gemma call (30 Jul 2026), trimmed
+# to two arrivals. Nothing here was written by hand to look good — an example
+# that does not match what the endpoint returns is worse than none.
+#
+# Read the two provenance fields together, because their split is the point:
+#   data_kind      "synthetic"    <- where the VESSEL DATA came from
+#   model_provider "gemma_hosted" <- which model served the NARRATIVE step
+# A real model reasoning over honestly-labelled synthetic data is not the same
+# claim as live data, and the payload keeps the two separable.
+#
+# `narrative_source` is `deterministic_fallback` here, and that is the true
+# recorded outcome rather than an outage: the hosted provider's chat() injects
+# the fisheries catch-assistant SYSTEM_INSTRUCTION, so the live model refused the
+# port-officer task and wrapped the refusal in that prompt's JSON envelope. The
+# output-edge guard rejected it and said why. See the PR body and
+# tests/test_pillar_transport.py::test_narrative_grounding_rejects_the_assistant_envelope
+# for the captured text. Until an inference entry point exists that does not
+# carry the fisheries system prompt, this is what the hosted path honestly does.
 ARRIVALS_EXAMPLE = {
     "pillar_id": "transport",
-    "generated_at": "2026-07-29T22:22:54.009606Z",
+    "generated_at": "2026-07-29T22:38:13.558464Z",
     "provenance": {
         "source_name": "aisstream.io",
         "source_url": "https://aisstream.io",
-        "retrieved_at": "2026-07-29T22:22:54.009606Z",
+        "retrieved_at": "2026-07-29T22:38:13.558464Z",
         "data_kind": "synthetic",
-        "model_provider": "mock",
-        "coverage_note": (
-            "ETAs are self-reported by vessels over AIS plus reasoning over conditions — not a "
-            "validated predictive model, and not port authority data. Terrestrial AIS coverage "
-            "is nearshore and incomplete: vessels out of receiver range, with AIS switched off, "
-            "or transmitting Class B only are absent, so an empty or thin brief means 'nothing "
-            "observed', never 'nothing there'. This brief does not confirm any berth "
-            "allocation, clearance or port call."
-        ),
+        "model_provider": "gemma_hosted",
+        "coverage_note": COVERAGE_NOTE,
     },
     "port": {"name": "Port Louis", "unlocode": "MUPLU", "latitude": -20.158, "longitude": 57.488},
     "window_hours": 24,
@@ -44,17 +51,17 @@ ARRIVALS_EXAMPLE = {
             "mmsi": 645123456, "vessel_name": "MSC LORETO", "identity_known": True,
             "vessel_type": "cargo", "nav_status": "under way using engine",
             "destination_reported": "PORT LOUIS",
-            "reported_eta_utc": "2026-07-30T10:00:00+00:00", "hours_to_reported_eta": 11.6,
+            "reported_eta_utc": "2026-07-30T10:00:00+00:00", "hours_to_reported_eta": 11.4,
             "distance_nm": 6.36, "speed_knots": 11.4, "draught_m": 11.2,
-            "last_seen_utc": "2026-07-29T22:22:54.009606+00:00",
+            "last_seen_utc": "2026-07-29T22:38:13.558464+00:00",
         },
         {
             "mmsi": 645234567, "vessel_name": "CMA CGM MASCAREIGNE", "identity_known": True,
             "vessel_type": "cargo", "nav_status": "under way using engine",
             "destination_reported": "PORT LOUIS",
-            "reported_eta_utc": "2026-07-30T14:30:00+00:00", "hours_to_reported_eta": 16.1,
+            "reported_eta_utc": "2026-07-30T14:30:00+00:00", "hours_to_reported_eta": 15.9,
             "distance_nm": 10.66, "speed_knots": 14.1, "draught_m": 12.8,
-            "last_seen_utc": "2026-07-29T22:22:54.009606+00:00",
+            "last_seen_utc": "2026-07-29T22:36:57.010464+00:00",
         },
     ],
     "expected_arrivals_count": 5,
@@ -64,24 +71,26 @@ ARRIVALS_EXAMPLE = {
         "approach_radius_nm": 10.0, "identity_unknown": 2,
         "note": ("Counts are every vessel in the retention window, tallied by AIS navigational "
                  "status. 'identity_unknown' vessels sent a position but no static data, so "
-                 "their name, type, destination and ETA are genuinely unknown — they are "
+                 "their name, type, destination and ETA are genuinely unknown \u2014 they are "
                  "counted, never named or guessed."),
     },
     "conditions": {
-        "location": "-20.16,57.49", "source": "deterministic-mock", "mock": True,
+        "location": "-20.16,57.49", "source": "open-meteo", "mock": False,
         "wave_height_m": 1.46, "swell_height_m": 1.36, "swell_period_s": 10.4,
-        "sea_surface_temperature_c": 24.9,
+        "sea_surface_temperature_c": 25.1,
     },
     "narrative": (
         "5 vessel(s) report Port Louis as their destination within the next 24 hours; the "
         "earliest is MSC LORETO, reported ETA 2026-07-30T10:00:00+00:00. 12 vessel(s) are "
         "tracked in the window: 9 under way, 2 at anchor, 1 moored, 2 without identifying "
-        "static data. … No model reasoned over these figures — this summary is assembled "
+        "static data. Reported sea state at the approach: wave 1.46 m, swell 1.36 m at "
+        "10.4 s. No model reasoned over these figures \u2014 this summary is assembled "
         "mechanically from the AIS and marine fields above."
     ),
-    "risk_reasoning": "(same deterministic summary — no model reasoned over this brief)",
+    "risk_reasoning": "(the same deterministic summary \u2014 see narrative_note)",
     "narrative_source": "deterministic_fallback",
-    "narrative_note": "the selected provider is a disclosed mock, so no model reasoned over this brief",
+    "narrative_note": ("model output rejected: model returned structured output "
+                       "(JSON or a code block), not prose"),
     "advisory": True,
     "scope_note": (
         "Advisory only. The counts, ETAs and ordering are computed deterministically from AIS "

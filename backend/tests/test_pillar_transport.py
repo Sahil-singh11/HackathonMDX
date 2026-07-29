@@ -141,6 +141,41 @@ def test_narrative_grounding_rejects_empty_output():
     assert not ok and "empty" in reason
 
 
+def test_narrative_grounding_rejects_the_assistant_envelope():
+    """Regression: this is the REAL hosted-Gemma output captured on 30 Jul 2026.
+
+    chat() injects the fisheries SYSTEM_INSTRUCTION, so the live model refused
+    the port task and wrapped the refusal in the catch-assistant JSON envelope.
+    An earlier version of this guard passed it through as narrative_source
+    'model' — a refusal presented to a port officer as a brief.
+    """
+    captured = (
+        '```json\n{\n  "intent": "other",\n'
+        '  "reply": "I am an analysis engine for fishers, not a port officer. '
+        'I cannot write reports for maritime authorities.",\n'
+        '  "reply_morisyen": "Mo enn analiz pou peser, pa enn ofiser port.",\n'
+        '  "call": null\n}\n```'
+    )
+    ok, reason = brief.narrative_is_grounded(captured, {645123456})
+    assert not ok
+    assert "structured output" in reason
+
+
+def test_narrative_grounding_rejects_bare_json_and_envelope_keys():
+    ok, reason = brief.narrative_is_grounded('{"intent": "other"}', {645123456})
+    assert not ok and "structured output" in reason
+    ok, reason = brief.narrative_is_grounded(
+        'intent: "intent" and "reply_morisyen" were requested', {645123456})
+    assert not ok and "structured envelope" in reason
+
+
+def test_narrative_grounding_still_accepts_ordinary_prose():
+    ok, _ = brief.narrative_is_grounded(
+        "Five vessels report Port Louis. Swell is moderate and berthing should hold.",
+        {645123456})
+    assert ok
+
+
 def test_ungrounded_model_output_falls_back_and_says_why(session, monkeypatch):
     _use(monkeypatch, _stub("stub_hallucinating",
                             "Vessel 111222333 is inbound.\n\nSeas are calm."))
@@ -209,6 +244,14 @@ def test_coverage_note_carries_both_honesty_statements(session):
     assert "self-reported by vessels over AIS" in note
     assert "not port authority data" in note
     assert "nearshore and incomplete" in note
+
+
+def test_coverage_note_states_why_the_data_is_synthetic(session):
+    """The probe finding travels with every response, not just the PR."""
+    note = _brief(session).provenance.coverage_note
+    assert "probed on 30 Jul 2026" in note
+    assert "zero messages for the Mauritius region" in note
+    assert "until a covered feed exists" in note
 
 
 def test_scope_note_disclaims_model_authorship_of_data(session):
@@ -387,5 +430,9 @@ def test_brief_builds_with_zero_network(session):
 
 
 def test_collector_is_disabled_by_default():
-    """A long-lived WebSocket must never start unasked (Task 4b step 2)."""
-    assert get_settings().ais_collector_enabled is False
+    """The live collector is deliberately unimplemented — the 30 Jul coverage
+    probe found no AIS receiver traffic for the region — so these settings are
+    dormant forward declarations and must stay off until that changes."""
+    settings = get_settings()
+    assert settings.ais_collector_enabled is False
+    assert settings.aisstream_api_key == ""

@@ -64,6 +64,9 @@ COVERAGE_NOTE = (
     "Terrestrial AIS coverage is nearshore and incomplete: vessels out of receiver "
     "range, with AIS switched off, or transmitting Class B only are absent, so an "
     "empty or thin brief means 'nothing observed', never 'nothing there'. "
+    "Live AIS via aisstream was probed on 30 Jul 2026 — global stream flowing, zero "
+    "messages for the Mauritius region — so this deployment serves schema-accurate "
+    "synthetic data until a covered feed exists. "
     "This brief does not confirm any berth allocation, clearance or port call."
 )
 
