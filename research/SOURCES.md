@@ -16,4 +16,7 @@ All access dates 2026-07-29 (MUT) unless stated.
 | S10 | UNDP/GEF: first temporary octopus fisheries closure in Mauritius | UN DESA | https://sdgs.un.org/partnerships/promoting-sustainable-fisheries-national-awareness-programme-support-first-temporary | Secondary | Context on closure programme; not rule authority |
 | S11 | Budget 2026-2027 ("Future-Ready Economy") | National Assembly of Mauritius | https://mauritiusassembly.govmu.org/mauritiusassembly/index.php/budget-2026-2027/ | Primary (policy) | National-vision framing in writeup/presentation (cited by the hackathon problem statement) |
 
+| S12 | Mauritius — 2018 Investment Climate Statement | US Department of State | https://2017-2021.state.gov/reports/2018-investment-climate-statements/mauritius/index.html | Secondary (governmental) | Corroborates EEZ scale; sole source seen for the 2,040 km² land area (F10, not displayed) |
+| S13 | "In Mauritius, Champions for the Blue Economy" | World Bank | https://www.worldbank.org/en/news/feature/2016/09/29/in-mauritius-champions-for-the-blue-economy | Secondary | Corroborates EEZ scale for F9 |
+
 Rules of use: a secondary source is never cited where a primary exists; every claim entering the app or writeup is logged in `VERIFIED_FACTS.md` with confidence and human-verification requirement.

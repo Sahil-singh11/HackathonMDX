@@ -19,7 +19,7 @@ import { useT } from '../i18n'
 import { useAppStore } from '../store/app'
 import { useTheme } from '../theme'
 import { useAnnounce } from '../lib/announce'
-import { NauticalChart } from '../components/onboarding/NauticalChart'
+import { BathymetricScene } from '../components/onboarding/BathymetricScene'
 import '../components/onboarding/onboarding.css'
 
 /** Mauritius. Set small in mono along the card's lower edge. */
@@ -36,16 +36,27 @@ export default function Landing() {
   const { reduceMotion } = useTheme()
   const announce = useAnnounce()
   const timer = useRef<number | null>(null)
+  const panelRef = useRef<HTMLElement | null>(null)
 
   useEffect(() => () => { if (timer.current) window.clearTimeout(timer.current) }, [])
 
-  // Warms the horizon a touch once a language has been chosen.
-  const [warm, setWarm] = useState(0)
+  const choose = (lang: 'mfe' | 'en') => setLanguage(lang)
 
-  const choose = (lang: 'mfe' | 'en') => {
-    setLanguage(lang)
-    setWarm(1)
-  }
+  // Counter-parallax: the panel drifts a few px AGAINST the camera orbit, so it
+  // reads as nearer to the viewer than the seafloor behind it.
+  useEffect(() => {
+    if (reduceMotion) return
+    const el = panelRef.current
+    if (!el) return
+    const onMove = (e: MouseEvent) => {
+      const nx = (e.clientX / window.innerWidth) * 2 - 1
+      const ny = (e.clientY / window.innerHeight) * 2 - 1
+      el.style.setProperty('--panel-dx', `${(-nx * 6).toFixed(1)}px`)
+      el.style.setProperty('--panel-dy', `${(-ny * 4).toFixed(1)}px`)
+    }
+    window.addEventListener('mousemove', onMove, { passive: true })
+    return () => window.removeEventListener('mousemove', onMove)
+  }, [reduceMotion])
 
   const start = () => {
     // Identical store writes to the previous implementation, in the same order.
@@ -58,7 +69,7 @@ export default function Landing() {
 
   return (
     <div className={`lk-onboard lk-scope${departing ? ' lk-onboard--departing' : ''}`}>
-      <NauticalChart warm={warm} />
+      <BathymetricScene />
 
       <div className="lk-onboard__inner">
         <div>
@@ -70,7 +81,7 @@ export default function Landing() {
             </div>
           </div>
 
-          <section className="lk-fix">
+          <section className="lk-fix" ref={panelRef}>
             <span className="lk-fix__ticks" aria-hidden="true" />
             <span className="lk-fix__cross" aria-hidden="true" />
 

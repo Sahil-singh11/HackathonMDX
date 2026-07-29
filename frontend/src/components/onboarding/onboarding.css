@@ -9,6 +9,10 @@
   flex-direction: column;
   overflow-x: hidden;
 }
+/* One viewport, no scroll, at desktop sizes - the disclaimer included. */
+@media (min-width: 900px) and (min-height: 700px) {
+  .lk-onboard { height: 100vh; height: 100dvh; overflow: hidden; }
+}
 
 /* Layer 0: the chart. Behind everything, never interactive. */
 .lk-chart {
@@ -96,15 +100,35 @@
 /* ------------------------------------------------------- the plotted fix */
 .lk-fix {
   position: relative;
-  /* --surface, not --surface-raised: in Night the raised surface is --kelp,
-     which turned the card green against a coral dusk sky and read as an
-     arbitrary colour choice rather than a plotted fix on a chart. */
-  background: var(--surface);
-  border: 1px solid var(--border);
+  /* A floating instrument panel over the seafloor - deliberately NOT opaque
+     white, which was the worst part of the previous pass. --panel is set per
+     theme below: dark and slightly translucent at night so the terrain reads
+     through it, warm paper in Day. */
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
   border-radius: var(--r-card);
   padding: var(--sp-6);
   box-shadow: var(--elev-3);
+  /* Counter-parallax: drifts a few px against the camera orbit so it reads as
+     nearer to the viewer than the seafloor. Set by Landing from pointer pos. */
+  transform: translate3d(var(--panel-dx, 0px), var(--panel-dy, 0px), 0);
+  transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
 }
+
+/* Panel tones. Night/pre-dawn are dark; Day is warm paper. Both sit on the
+   terrain rather than blanking it out. */
+/* Derived from tokens via color-mix rather than written as literals, so a theme
+   change carries through. --surface-raised is the warm sand in Day; --bg is the
+   near-black paper at night. */
+.lk-onboard {
+  --panel: color-mix(in srgb, var(--surface-raised) 94%, transparent);
+  --panel-edge: color-mix(in srgb, var(--text) 18%, transparent);
+}
+[data-theme='night'] .lk-onboard {
+  --panel: color-mix(in srgb, var(--bg) 90%, transparent);
+  --panel-edge: color-mix(in srgb, var(--text) 20%, transparent);
+}
+[data-theme='sunlight'] .lk-onboard { --panel: var(--surface); --panel-edge: var(--border); }
 
 /* Hairline corner ticks — the registration marks of a plotted position. */
 .lk-fix::before,
@@ -150,11 +174,14 @@
 
 .lk-fix__welcome {
   font-family: var(--font-display);
-  font-size: calc(var(--fs-lg) * var(--text-scale));
-  line-height: var(--lh-tight);
-  letter-spacing: var(--tracking-display);
+  font-size: calc(44px * var(--text-scale));
+  line-height: 1.05;
+  letter-spacing: -0.03em;
   color: var(--text);
   margin: 0 0 var(--sp-3);
+}
+@media (max-width: 560px) {
+  .lk-fix__welcome { font-size: calc(34px * var(--text-scale)); }
 }
 .lk-fix__intro {
   color: var(--text-muted);
