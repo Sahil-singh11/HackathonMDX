@@ -23,6 +23,7 @@ class Settings(BaseSettings):
 
     marine_api_base: str = "https://marine-api.open-meteo.com/v1/marine"
     marine_cache_minutes: int = 30
+    marine_prewarm_on_startup: bool = True  # off in tests (conftest.py) — no network in the suite
     demo_mode: bool = False
 
     data_dir: Path = REPO_ROOT / "data"

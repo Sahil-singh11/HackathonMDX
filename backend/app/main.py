@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 from pathlib import Path
 
@@ -15,6 +16,13 @@ from app.db.session import get_engine, init_db
 from app.services.marine.client import prewarm_demo_locations
 
 log = logging.getLogger(__name__)
+
+
+def _run_marine_prewarm() -> None:
+    """Runs on a worker thread — never blocks the event loop or app readiness."""
+    with Session(get_engine()) as session:
+        prewarm_demo_locations(session)
+    log.info("Marine cache pre-warm finished")
 
 
 def create_app() -> FastAPI:
@@ -40,10 +48,13 @@ def create_app() -> FastAPI:
         return response
 
     @app.on_event("startup")
-    def startup() -> None:
+    async def startup() -> None:
         init_db()
-        with Session(get_engine()) as session:
-            prewarm_demo_locations(session)
+        if settings.marine_prewarm_on_startup:
+            # Fire-and-forget on a worker thread: readiness (and /health) must
+            # never wait on a live Open-Meteo round trip. Worst case (network
+            # down/slow) previously blocked boot for up to ~60s here.
+            asyncio.create_task(asyncio.to_thread(_run_marine_prewarm))
         log.info("Lamer Konekte backend started (provider default: %s)", settings.provider_mode)
 
     app.include_router(router)
