@@ -28,6 +28,7 @@ frontend/playwright-report/
 frontend/test-results/
 
 # Databases and local state
+.run/
 *.sqlite3
 *.db
 storage/
