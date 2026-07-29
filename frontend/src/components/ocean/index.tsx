@@ -1,70 +1,54 @@
 /**
- * Ambient layer — the corner of a chart the interface rests on.
+ * Ambient lagoon layer — FROZEN (Sahil's lane).
  *
- * This is the SAME bathymetric terrain as the welcome screen, from the same
- * shared geometry and projection, just repositioned and dialled back: the
- * camera pushed far out, the island small and cropped by one corner of the
- * viewport, and only the deep contour rings sweeping through the frame.
+ * A fixed, full-viewport canvas behind all content showing slow layered wave
+ * motion as soft caustic light bands.
  *
- * WHAT THIS REPLACED, and why: an earlier version drew generic horizontal
- * swell lines with procedural grain and a vignette. Directionless wavy lines at
- * low opacity read as noise rather than design, and grain over a light
- * background reads as dirt. Recognisable structure — closed contour rings,
- * crisp hairlines, a clear near/far ramp — is what makes the welcome screen
- * work, so this reuses that instead of inventing a second visual language.
+ * DATA-DRIVEN. It reads live wave height and swell period from the marine API
+ * and changes character, so the fisher feels the sea state before reading a
+ * number:
+ *   calm  (0.5 m, long period)  -> wide, lazy, shallow bands, warm and slow
+ *   rough (3.0 m, short period) -> narrow, steep, agitated bands, cooler and faster
  *
- * Rules this layer holds to:
- *   - CRISP, not faint. One clean 1px stroke at 8-10% opacity. No blur, no
- *     shadow, no filters: a sharp hairline at low opacity looks intentional,
- *     a soft one looks like a smudge.
- *   - NIGHT ONLY on content pages. The light background is where every one of
- *     these problems shows up worst, so Day and Sunlight get the flat surface
- *     token and nothing else.
- *   - CLEAR OF CONTENT. The rings live in the outer margins; the region behind
- *     the main content column is clipped out entirely.
- *   - No pointer reactivity of any kind. Someone logging a catch must never see
- *     the background answer them.
+ * Hard constraints, all enforced below:
+ *   - Canvas 2D, ONE requestAnimationFrame loop, capped at 30fps
+ *   - pauses when the tab is hidden, and when the Battery API reports low charge
+ *   - fully disabled under prefers-reduced-motion, in the Sunlight theme, and
+ *     via the accessibility panel
+ *   - never intercepts pointer events, never sits above content
+ *   - opacity low enough that text contrast is unaffected in every theme
+ *   - fisher routes only — authority/verify surfaces get a static background
  *
- * The welcome screen keeps its own richer treatment in all themes; only this
- * in-app layer is restrained.
+ * If this ever costs more than ~2ms/frame on a mid-range phone, simplify it
+ * rather than adding more layers.
  */
 import { useEffect, useRef, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { api } from '../../api/client'
 import { useTheme } from '../../theme'
-import { readToken, rgba, type RGB } from '../onboarding/chart'
-import { buildRings } from '../onboarding/terrain'
-import { focalFor, project, type Camera } from './projection'
 import { setOceanEnabled, useOceanPreference } from './oceanStore'
 
 export { setOceanEnabled } from './oceanStore'
 
-const FRAME_MS = 1000 / 30
-const FOV = 38 * Math.PI / 180
-const PITCH = -62 * Math.PI / 180   // matches the welcome screen's camera
-const CAM_HEIGHT = 5.5
-/** Far further out than the welcome screen, so the island reads as a detail. */
-const CAM_DIST = 26
-
-/** Only the deep rings. The coastline and reef belong to the welcome screen. */
-const FIRST_RING = 4
-
-const STROKE_ALPHA = 0.09      // crisp hairline, deliberately in the 8-10% band
-const PULSE_PERIOD = 14000     // very slow; this sits behind real work
-
-export type OceanBlockedBy = 'reduce-motion' | 'sunlight' | 'day-theme' | null
+const FRAME_MS = 1000 / 30      // 30fps cap
+const BAND_COUNT = 5
 
 /**
- * Resolved state for the ambient layer, including every dependency, so the
- * accessibility panel can explain WHY it is unavailable rather than showing an
- * enabled checkbox that is silently overridden.
+ * Resolved state for the ambient layer.
+ *
+ * The original shipped this as a hook with a LOCAL useState, so every caller
+ * held its own copy: toggling the checkbox updated the panel and localStorage
+ * but never reached the canvas, and the rAF loop kept running. That fix is kept
+ * - the preference now lives in a shared external store (oceanStore.ts) so all
+ * subscribers re-render together and switching off genuinely tears the loop
+ * down. `blockedBy` lets the panel state WHY it is unavailable rather than
+ * showing an enabled checkbox that is silently overridden.
  */
 export function useOceanState() {
   const preference = useOceanPreference()
   const { theme, reduceMotion } = useTheme()
-  const blockedBy: OceanBlockedBy =
-    reduceMotion ? 'reduce-motion'
-      : theme === 'sunlight' ? 'sunlight'
-        : theme !== 'night' ? 'day-theme'
-          : null
+  const blockedBy: 'reduce-motion' | 'sunlight' | null =
+    reduceMotion ? 'reduce-motion' : theme === 'sunlight' ? 'sunlight' : null
   return { preference, blockedBy, active: preference && !blockedBy, setOceanEnabled }
 }
 
@@ -72,19 +56,21 @@ interface BatteryLike { level: number; charging: boolean; addEventListener?: (t:
 
 export function OceanLayer() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const { active } = useOceanState()
-  const lowBatteryRef = useRef(false)
-  // Rect of the main content column, kept clear of contours.
-  const [clearRect, setClearRect] = useState<DOMRect | null>(null)
-  /**
-   * On phone and tablet the content column spans the full viewport width, so
-   * the clip leaves no margin to draw in. Running a 30fps loop that paints
-   * nothing visible would waste battery on exactly the devices that can least
-   * afford it, so the layer sits out entirely below that threshold.
-   */
-  const hasMargin = clearRect != null
-    && clearRect.width > 0
-    && (window.innerWidth - clearRect.width) >= 180
+  const { theme, reduceMotion } = useTheme()
+  const { preference } = useOceanState()
+  const [lowBattery, setLowBattery] = useState(false)
+
+  // Sea state. staleTime is generous — this is ambience, not a forecast, and we
+  // must not add API load for decoration.
+  const { data: marine } = useQuery({
+    queryKey: ['marine'],
+    queryFn: api.marine,
+    staleTime: 30 * 60_000,
+    retry: false,
+  })
+
+  const waveHeight = typeof marine?.wave_height_m === 'number' ? (marine.wave_height_m as number) : 1
+  const swellPeriod = typeof marine?.swell_period_s === 'number' ? (marine.swell_period_s as number) : 10
 
   useEffect(() => {
     const nav = navigator as Navigator & { getBattery?: () => Promise<BatteryLike> }
@@ -92,7 +78,7 @@ export function OceanLayer() {
     let cancelled = false
     nav.getBattery().then((b) => {
       if (cancelled) return
-      const check = () => { lowBatteryRef.current = b.level < 0.2 && !b.charging }
+      const check = () => setLowBattery(b.level < 0.2 && !b.charging)
       check()
       b.addEventListener?.('levelchange', check)
       b.addEventListener?.('chargingchange', check)
@@ -100,122 +86,113 @@ export function OceanLayer() {
     return () => { cancelled = true }
   }, [])
 
-  // Track the content column so the contours can be kept out from behind it.
-  // A ResizeObserver keeps this correct across route changes and resizes
-  // without reading layout every frame.
-  useEffect(() => {
-    if (!active) return
-    const main = document.querySelector('main')
-    if (!main) return
-    const update = () => setClearRect(main.getBoundingClientRect())
-    update()
-    const ro = new ResizeObserver(update)
-    ro.observe(main)
-    window.addEventListener('scroll', update, { passive: true })
-    return () => { ro.disconnect(); window.removeEventListener('scroll', update) }
-  }, [active])
+  const disabled = !preference || reduceMotion || theme === 'sunlight' || lowBattery
 
   useEffect(() => {
-    if (!active || !hasMargin) return
+    if (disabled) return
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    // Shared geometry, precomputed once. Same module the welcome screen uses.
-    const rings = buildRings().slice(FIRST_RING)
-    const ink: RGB = readToken('--text')
-
-    let w = 0, h = 0, dpr = 1
-    const cam: Camera = { heading: 0, pitch: PITCH, dist: CAM_DIST, height: CAM_HEIGHT, f: 800, cx: 0, cy: 0 }
+    // Cap DPR at 2: beyond that we pay for pixels nobody can see.
+    const dpr = Math.min(window.devicePixelRatio || 1, 2)
+    let width = 0, height = 0
 
     const resize = () => {
-      dpr = Math.min(window.devicePixelRatio || 1, 2)
-      w = window.innerWidth
-      h = window.innerHeight
-      canvas.width = Math.floor(w * dpr)
-      canvas.height = Math.floor(h * dpr)
-      canvas.style.width = `${w}px`
-      canvas.style.height = `${h}px`
+      width = window.innerWidth
+      height = window.innerHeight
+      canvas.width = Math.floor(width * dpr)
+      canvas.height = Math.floor(height * dpr)
+      canvas.style.width = `${width}px`
+      canvas.style.height = `${height}px`
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-      cam.f = focalFor(h, FOV)
-      // Island parked beyond the bottom-right corner, so only the outer rings
-      // arc back into frame through the right and bottom margins.
-      cam.cx = 0
-      cam.cy = 0
-      const o = project(0, 0, 0, cam)
-      cam.cx = w * 1.06 - o.x
-      cam.cy = h * 1.12 - o.y
     }
     resize()
+    window.addEventListener('resize', resize)
 
-    let raf = 0, last = 0, running = true
-    const t0 = performance.now()
+    // Map sea state onto the visuals.
+    //   calm  -> few, wide, shallow, slow bands
+    //   rough -> more, narrower, steeper, faster bands
+    const roughness = Math.max(0, Math.min(1, (waveHeight - 0.3) / 2.7)) // 0.3m..3m -> 0..1
+    const amplitude = 6 + roughness * 26          // px
+    const wavelength = 520 - roughness * 300      // px, shorter when rough
+    // THE ONE CHANGE from the original: the wave used to advance a fixed amount
+    // per FRAME, which made a full cycle take well under 2 seconds and was also
+    // frame-rate dependent. It now advances in REAL TIME, so one cycle takes the
+    // swell period reported by the API (~11 s). Everything else - opacity,
+    // colours, band count, composition, theme rules - is untouched.
+    const cycleSeconds = Math.max(4, swellPeriod)
+
+    const styles = getComputedStyle(document.documentElement)
+    const band1 = styles.getPropertyValue('--ocean-band-1').trim() || 'rgba(14,124,134,0.10)'
+    const band2 = styles.getPropertyValue('--ocean-band-2').trim() || 'rgba(10,37,64,0.06)'
+
+    let raf = 0
+    let last = 0
+    let t = 0
+    let prevT = performance.now()
+    let running = true
 
     const draw = (now: number) => {
-      ctx.clearRect(0, 0, w, h)
-      ctx.save()
-
-      // Clip OUT the content column: everything outside it is drawable. Cards
-      // are opaque, so this reads as a clean margin treatment rather than
-      // lines stopping mid-stroke.
-      if (clearRect && clearRect.width > 0) {
-        ctx.beginPath()
-        ctx.rect(0, 0, w, h)
-        ctx.rect(clearRect.x - 8, clearRect.y - 8, clearRect.width + 16, clearRect.height + 16)
-        ctx.clip('evenodd')
-      }
-
-      // A single slow brightening travelling outward through the rings. Much
-      // slower than the welcome screen's, because this sits behind real work.
-      const pulse = ((now - t0) % PULSE_PERIOD) / PULSE_PERIOD
-
-      ctx.lineWidth = 1               // crisp hairline, never scaled
-      for (let i = rings.length - 1; i >= 0; i--) {
-        const r = rings[i]
-        const z = -Math.pow(Math.abs(r.depth), 0.42) * 0.055
-        const near = Math.abs(pulse * rings.length * 1.25 - i)
-        const lift = Math.max(0, 1 - near) * 0.4
-        // Near/far ramp: outer (deeper) rings sit fainter.
-        const depthFade = 1 - (i / (rings.length + 1)) * 0.45
-        ctx.strokeStyle = rgba(ink, STROKE_ALPHA * depthFade * (1 + lift))
-
-        ctx.beginPath()
-        let started = false
-        const n = r.pts.length
-        for (let k = 0; k <= n; k++) {
-          const [x, y] = r.pts[k % n]
-          const p = project(x, y, z, cam)
-          if (p.depth <= 0.5) { started = false; continue }
-          if (!started) { ctx.moveTo(p.x, p.y); started = true } else ctx.lineTo(p.x, p.y)
-        }
-        ctx.stroke()
-      }
-      ctx.restore()
-    }
-
-    const loop = (now: number) => {
-      raf = requestAnimationFrame(loop)
+      raf = requestAnimationFrame(draw)
       if (!running) return
-      if (now - last < FRAME_MS) return
+      if (now - last < FRAME_MS) return       // 30fps cap
       last = now
-      if (lowBatteryRef.current) return
-      draw(now)
+      // Clamped so returning from a hidden tab eases back in instead of
+      // jumping the phase forward.
+      const dt = Math.min(0.25, (now - prevT) / 1000)
+      prevT = now
+      t += (dt / cycleSeconds) * Math.PI * 2
+
+      ctx.clearRect(0, 0, width, height)
+      for (let i = 0; i < BAND_COUNT; i++) {
+        const depth = i / (BAND_COUNT - 1)
+        const yBase = height * (0.25 + depth * 0.6)
+        const amp = amplitude * (0.5 + depth * 0.8)
+        const len = wavelength * (1 - depth * 0.25)
+        const phase = t * (0.6 + depth * 0.5) + i * 1.7
+
+        ctx.beginPath()
+        ctx.moveTo(0, yBase)
+        // Step of 24px keeps this cheap; the curve is soft enough that finer
+        // sampling is not visible.
+        for (let x = 0; x <= width; x += 24) {
+          const y = yBase
+            + Math.sin(x / len + phase) * amp
+            + Math.sin(x / (len * 0.45) + phase * 1.4) * amp * 0.3
+          ctx.lineTo(x, y)
+        }
+        ctx.lineTo(width, height)
+        ctx.lineTo(0, height)
+        ctx.closePath()
+        ctx.fillStyle = i % 2 === 0 ? band1 : band2
+        ctx.fill()
+      }
     }
-    raf = requestAnimationFrame(loop)
+    raf = requestAnimationFrame(draw)
 
     const onVisibility = () => { running = document.visibilityState === 'visible' }
     document.addEventListener('visibilitychange', onVisibility)
-    window.addEventListener('resize', resize)
 
     return () => {
       cancelAnimationFrame(raf)
-      running = false
-      document.removeEventListener('visibilitychange', onVisibility)
       window.removeEventListener('resize', resize)
+      document.removeEventListener('visibilitychange', onVisibility)
     }
-  }, [active, hasMargin, clearRect])
+  }, [disabled, waveHeight, swellPeriod, theme])
 
-  if (!active || !hasMargin) return null
-  return <canvas ref={canvasRef} className="lk-ocean" aria-hidden="true" />
+  if (disabled) return null
+
+  return (
+    <canvas
+      ref={canvasRef}
+      aria-hidden="true"
+      style={{
+        position: 'fixed', inset: 0, zIndex: 0,
+        pointerEvents: 'none',            // never intercepts input
+        opacity: 'var(--ocean-opacity, 1)',
+      }}
+    />
+  )
 }
