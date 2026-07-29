@@ -84,3 +84,18 @@ Image sizing: **1280 px longest side is kept** — reducing to 768 px measured *
 # conversational baseline (~40): backend/.venv/bin/python evaluation/run_all.py --provider hosted
 # real-photo benchmark (52):     backend/.venv/bin/python evaluation/species_benchmark.py
 ```
+
+## 8. Local tier — Gemma 4 E2B via Ollama: measured negative result (30 Jul 2026)
+
+**Setup.** Ollama 0.32.5 (user-space install), WSL2 Ubuntu, RTX 3060 Laptop 6 GB VRAM, 3.6 GB free system RAM. Model `gemma4:e2b-it-q4_K_M` — **7.2 GB on disk vs ~1.3 GB in the planning brief**; `nvidia-smi` showed 2 829 / 6 144 MiB resident while serving, i.e. partial CPU offload from the start.
+
+| Probe | Result | Wall clock |
+|---|---|---|
+| Negative control — identical prompt, **no image** | **PASS** — model replied "Please provide an image…"; the runtime is not silently dropping image parts and confabulating | 28.2 s |
+| Positive probe — `data/demo/octopus_cyanea_151112387.jpg`, cold | Vision **functional**: described real content (deep reddish-brown skin, wrinkled texture, clear blue water, rocky substrate) — but identified the animal as "marine mammal (likely a sea lion or seal)": a **confident misidentification of the flagship demo species** | 15.9 s |
+
+**Conclusion.** Local E2B vision inference works mechanically but is neither fast enough nor accurate enough for default use on team hardware: 15.9 s cold against the 10.1 s hosted median, and a false-confident error on the primary demo species against a hosted baseline of 0.865 top-1 / 2.1 % false-confident. The failure mode (confident, structured, wrong) is precisely the one this application must not ship.
+
+**Decision.** Hosted Gemma 4 26B A4B remains the default provider — a conclusion the AI workstream has since reached independently on the fine-tune path too: the targeted E2B QLoRA v2 adapter fixed `make_declaration` recall (0.455 → 1.000) but FAILED its pre-registered tool-accuracy gates and was REJECTED (docs/AI_STEP4_FINAL_REPORT.md, docs/AI_FINAL_HANDOFF.md). The offline story is carried by the browser text tier (offline assistant). `gemma_local.py` remains the honest `LocalUnavailable` stub from Task 1a. Future paths, in preference order: the `e2b-it-qat` quantisation-aware build, a fine-tune on Mauritian species imagery, or Jetson-class edge hardware.
+
+Still unmeasured from this session: model-list enumeration for this key (DNS starved during the model pull; not retried — see §6.1).
