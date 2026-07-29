@@ -4,13 +4,15 @@ import json
 import logging
 from datetime import date
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import (APIRouter, Depends, File, Form, HTTPException, Request,
+                     UploadFile)
 from fastapi.responses import FileResponse
 from sqlmodel import Session, select
 
 from app.core.config import get_settings
 from app.core.limitations import (MARINE_DISCLAIMER, MOCK_DISCLOSURE,
                                   PERMANENT_LIMITATION, RULE_VERIFY_NOTICE)
+from app.core.ratelimit import InMemoryRateLimiter
 from app.db.session import get_session
 from app.models.entities import (CatchAnalysis, CatchRecord, Declaration,
                                  SyncQueueItem, ToolTrace)
@@ -30,12 +32,31 @@ from app.tools.registry import ToolContext
 log = logging.getLogger(__name__)
 router = APIRouter()
 
+# The public demo URL will get probed; this is a cheap, single-instance
+# abuse guard, not a substitute for infra-level rate limiting.
+_analyse_limiter = InMemoryRateLimiter(limit=10, window_seconds=60.0)
+
 
 def _limitations(extra: list[str] | None = None) -> list[str]:
     out = [PERMANENT_LIMITATION]
     if extra:
         out.extend(extra)
     return out
+
+
+def _client_ip(request: Request) -> str:
+    """Best-effort client address behind a reverse proxy (e.g. Render).
+
+    `request.client.host` is the proxy's own address unless uvicorn is
+    launched with --forwarded-allow-ips for that proxy, which is not the
+    case here. Falling back to X-Forwarded-For gives real per-visitor
+    throttling in that deployment; a client can forge the header, but for
+    a demo-abuse guard (not an auth control) that's an acceptable trade-off.
+    """
+    fwd = request.headers.get("x-forwarded-for")
+    if fwd:
+        return fwd.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
 
 
 @router.get("/health")
@@ -73,17 +94,61 @@ def provider_status() -> dict:
     }
 
 
-@router.post("/api/analyse-catch", response_model=AnalyseCatchResponse)
+@router.post(
+    "/api/analyse-catch",
+    response_model=AnalyseCatchResponse,
+    summary="Analyse a catch photo and/or note (Gemma vision + text)",
+    description=("Rate-limited to 10 requests/minute per client address. Species suggestions are "
+                "*never* final — the response always requires human confirmation via "
+                "`/api/analyses/{analysis_id}/confirm` before any legal-status rule runs."),
+    responses={
+        200: {
+            "description": "Analysis result. Species suggestion pending human confirmation.",
+            "content": {"application/json": {"example": {
+                "analysis_id": "745de421-bcbd-4d6b-9550-58c1bce23a98",
+                "intent": "identify_catch",
+                "image_quality": {"status": "acceptable", "blur_score": 688.9, "brightness": 163.6, "warnings": []},
+                "species_suggestion": {"species_id": "octopus_cyanea", "morisyen": "ourite",
+                                       "english": "Day octopus", "scientific": "Octopus cyanea"},
+                "visible_characteristics": ["bulbous mantle", "mottled skin", "arms with suckers"],
+                "confidence_label": "high",
+                "species_confirmation_required": True,
+                "estimated_size_unverified_cm": None,
+                "measured_size_required": True,
+                "legal_check": {"status": "pending_confirmation", "rule": None, "source_id": None,
+                                "verification_status": None,
+                                "note": "Rule checking runs only after species confirmation with a measured length."},
+                "reply": ("Is this a Day octopus (ourite)? I can see the bulbous mantle and mottled skin. "
+                         "Please confirm if this is correct and provide its length in cm."),
+                "reply_morisyen": ("Eski sa enn ourite? Mo trouv so mant ek so laker. Dir mwa si sa mem "
+                                  "sa espis-la ek donn mwa so longer an cm."),
+                "recommended_next_step": "confirm_species",
+                "function_trace": [],
+                "provider": {"mode": "hosted", "provider_name": "google-genai", "model": "gemma-4-26b-a4b-it",
+                            "real_inference": True, "latency_ms": 27172},
+                "limitations": ["Lamer Konekte provides AI-assisted catch documentation and informational "
+                               "guidance. Species suggestions and regulatory checks must be confirmed "
+                               "against official sources and by the fisher or an authorised officer."],
+            }}},
+        },
+        429: {"description": "Rate limit exceeded (10 requests/minute per client address)."},
+    },
+)
 async def analyse_catch(
-    image: UploadFile | None = File(default=None),
-    note: str | None = Form(default=None),
-    language: str = Form(default="en"),
+    request: Request,
+    image: UploadFile | None = File(default=None, description="Catch photo (JPEG/PNG). Optional if a note is given."),
+    note: str | None = Form(default=None,
+                            description="Optional free-text note in Morisyen or English; narrows species candidates."),
+    language: str = Form(default="en", description="Reply language: 'en' or 'mfe' (Morisyen)."),
     latitude: float | None = Form(default=None),
     longitude: float | None = Form(default=None),
     fishing_area: str = Form(default=""),
-    provider_mode: str | None = Form(default=None),
+    provider_mode: str | None = Form(default=None, description="Override the default provider: hosted | local | mock."),
     session: Session = Depends(get_session),
 ) -> AnalyseCatchResponse:
+    if not _analyse_limiter.allow(_client_ip(request)):
+        raise HTTPException(429, "Too many analysis requests from this address — please wait a minute and try again.",
+                            headers={"Retry-After": "60"})
     settings = get_settings()
     if language not in ("en", "mfe"):
         language = "en"
@@ -172,7 +237,23 @@ def _persist_analysis(session: Session, analysis: CatchAnalysis, resp: AnalyseCa
     session.commit()
 
 
-@router.post("/api/analyses/{analysis_id}/confirm", response_model=ConfirmResponse)
+@router.post(
+    "/api/analyses/{analysis_id}/confirm",
+    response_model=ConfirmResponse,
+    summary="Confirm a species + measured length, and run the legal-status rule check",
+    responses={200: {"content": {"application/json": {"example": {
+        "catch_record_id": "b6b0e6a1-7c9e-4b3a-9b1a-3b6a2f9e0a11",
+        "species_id": "octopus_cyanea",
+        "legal_check": {"status": "allowed", "rule": "R-OCT-CLOSE-2016", "source_id": "S1",
+                        "verification_status": "provisional",
+                        "note": "No closure or size rule triggered on 2026-07-29. Verify against the latest official fisheries notice."},
+        "measured_length_cm": 42.0, "count": 1, "capture_date": "2026-07-29",
+        "limitations": ["Lamer Konekte provides AI-assisted catch documentation and informational guidance. "
+                       "Species suggestions and regulatory checks must be confirmed against official sources "
+                       "and by the fisher or an authorised officer.",
+                       "Verify against the latest official fisheries notice."],
+    }}}}},
+)
 def confirm_analysis(analysis_id: str, body: ConfirmRequest,
                      session: Session = Depends(get_session)) -> ConfirmResponse:
     """The ONLY place deterministic rule checking runs — after human confirmation,
@@ -216,7 +297,16 @@ def confirm_analysis(analysis_id: str, body: ConfirmRequest,
     )
 
 
-@router.get("/api/species")
+@router.get(
+    "/api/species",
+    summary="List the species catalogue (Morisyen + English + scientific names)",
+    responses={200: {"content": {"application/json": {"example": {"species": [
+        {"species_id": "octopus_cyanea", "scientific": "Octopus cyanea", "english": "Day octopus",
+         "morisyen": "ourite", "morisyen_status": "provisional",
+         "visible_characteristics": ["eight arms with suckers", "no fins or scales",
+                                     "colour-changing mottled skin", "bulbous mantle"]},
+    ]}}}}},
+)
 def list_species() -> dict:
     return {"species": [public_candidate(s) for s in load_catalogue()]}
 
@@ -229,13 +319,20 @@ def species_detail(species_id: str) -> dict:
     return public_candidate(sp)
 
 
-@router.get("/api/catches")
+@router.get(
+    "/api/catches",
+    summary="List saved catch records, most recent first",
+)
 def list_catches(limit: int = 50, session: Session = Depends(get_session)) -> dict:
     rows = session.exec(select(CatchRecord).order_by(CatchRecord.created_at.desc()).limit(min(limit, 200))).all()  # type: ignore[union-attr]
     return {"catches": [r.model_dump() for r in rows]}
 
 
-@router.post("/api/catches", response_model=ConfirmResponse)
+@router.post(
+    "/api/catches",
+    response_model=ConfirmResponse,
+    summary="Log a catch directly, bypassing photo analysis (manual / offline-sync entry)",
+)
 def create_catch(body: ConfirmRequest, session: Session = Depends(get_session)) -> ConfirmResponse:
     """Manual catch logging (offline flow) — same deterministic rule path as confirm."""
     if not get_species(body.confirmed_species_id):
@@ -279,16 +376,23 @@ def report_today(session: Session = Depends(get_session)) -> dict:
             "total_count": sum(r.count for r in rows), "by_species": by_species}
 
 
-@router.post("/api/declarations/prepare")
+@router.post(
+    "/api/declarations/prepare",
+    summary="Draft a declaration from saved catches in a date range (period_start/period_end are YYYY-MM-DD)",
+)
 def prepare_declaration(fisher_name: str = Form(default=""), fishing_area: str = Form(default=""),
-                        period_start: str = Form(...), period_end: str = Form(...),
+                        period_start: str = Form(..., description="YYYY-MM-DD, inclusive"),
+                        period_end: str = Form(..., description="YYYY-MM-DD, inclusive"),
                         session: Session = Depends(get_session)) -> dict:
     decl = declarations.prepare(session, fisher_name, fishing_area, period_start, period_end)
     return {"declaration_id": decl.id, "status": decl.status,
             "catches": json.loads(decl.catches_json), "mock_label": declarations.MOCK_LABEL}
 
 
-@router.post("/api/declarations/mock-submit")
+@router.post(
+    "/api/declarations/mock-submit",
+    summary="Mock-submit a declaration (demonstration only — never contacts a real government system)",
+)
 def mock_submit_declaration(declaration_id: str = Form(...), session: Session = Depends(get_session)) -> dict:
     decl = declarations.mock_submit(session, declaration_id)
     if not decl:
@@ -307,7 +411,21 @@ def declaration_pdf(declaration_id: str, session: Session = Depends(get_session)
     return FileResponse(path, media_type="application/pdf", filename=path.name)
 
 
-@router.get("/api/marine-conditions")
+@router.get(
+    "/api/marine-conditions",
+    summary="Current sea/wave conditions near a point (Open-Meteo; informational only)",
+    description=("Grand Baie, Mahebourg and Flic-en-Flac are pre-warmed into cache at server startup, "
+                "so requests near those towns return instantly instead of waiting on Open-Meteo."),
+    responses={200: {"content": {"application/json": {"example": {
+        "location": "-20.01,57.58", "source": "open-meteo",
+        "attribution": "Weather data by Open-Meteo.com (CC-BY 4.0)",
+        "disclaimer": ("Marine forecasts are informational and may be incomplete near the coast. "
+                      "Confirm conditions through official local marine advisories before travelling."),
+        "mock": False, "time": "2026-07-29T12:00", "wave_height_m": 0.9, "wave_direction_deg": 140,
+        "wave_period_s": 7.5, "swell_height_m": 1.3, "swell_direction_deg": 195, "swell_period_s": 11.4,
+        "sea_surface_temperature_c": 24.6, "stale": False, "cached": True,
+    }}}}},
+)
 def marine_conditions(latitude: float | None = None, longitude: float | None = None,
                       session: Session = Depends(get_session)) -> dict:
     data = get_marine_conditions(session, latitude, longitude)
@@ -390,6 +508,7 @@ def demo_reset(session: Session = Depends(get_session)) -> dict:
         for row in session.exec(select(model)).all():
             session.delete(row)
     session.commit()
+    _analyse_limiter.reset()
     return {"status": "reset", "date_simulated": False}
 
 

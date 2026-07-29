@@ -4,6 +4,7 @@ Informational only — never a safety decision."""
 from __future__ import annotations
 
 import json
+import logging
 from datetime import datetime, timedelta, timezone
 
 import httpx
@@ -13,8 +14,20 @@ from app.core.config import get_settings
 from app.core.limitations import MARINE_DISCLAIMER
 from app.models.entities import MarineForecastCache
 
+log = logging.getLogger(__name__)
+
 FALLBACK_LAT, FALLBACK_LON = -20.16, 57.50  # Mauritius west lagoon area (approximate)
 HOURLY_VARS = "wave_height,wave_direction,wave_period,swell_wave_height,swell_wave_direction,swell_wave_period,sea_surface_temperature"
+
+# Hero demo locations, pre-warmed at startup so the jury flow never waits on a
+# live Open-Meteo round-trip. Coordinates are approximate town centres, which
+# is all a "conditions near X" cache key needs — this is informational marine
+# context, not a navigation or safety-critical position.
+DEMO_LOCATIONS: list[tuple[str, float, float]] = [
+    ("Grand Baie", -20.0064, 57.5806),
+    ("Mahebourg", -20.4081, 57.7000),
+    ("Flic-en-Flac", -20.2760, 57.3644),
+]
 
 
 def _location_key(lat: float, lon: float) -> str:
@@ -112,3 +125,21 @@ def get_marine_conditions(session: Session, lat: float | None, lon: float | None
         **deterministic_mock(lat, lon),
     }
     return data
+
+
+def prewarm_demo_locations(session: Session) -> None:
+    """Fetch + cache marine conditions for DEMO_LOCATIONS at startup.
+
+    get_marine_conditions() already falls back to a stale cache or a
+    deterministic mock rather than raising, so this is defence in depth
+    against something unexpected (e.g. a DB hiccup) — one location failing
+    must never block the other two or crash app startup.
+    """
+    for name, lat, lon in DEMO_LOCATIONS:
+        t0 = datetime.now(timezone.utc)
+        try:
+            data = get_marine_conditions(session, lat, lon)
+            ms = int((datetime.now(timezone.utc) - t0).total_seconds() * 1000)
+            log.info("Marine cache pre-warmed for %s (source=%s, %d ms)", name, data.get("source"), ms)
+        except Exception:  # noqa: BLE001 - startup must never crash on this
+            log.warning("Marine cache pre-warm failed for %s", name, exc_info=True)

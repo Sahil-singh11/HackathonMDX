@@ -6,11 +6,13 @@ from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from sqlmodel import Session
 
 from app.api.routes import router
 from app.core.config import get_settings
 from app.core.logging import configure, new_request_id
-from app.db.session import init_db
+from app.db.session import get_engine, init_db
+from app.services.marine.client import prewarm_demo_locations
 
 log = logging.getLogger(__name__)
 
@@ -40,6 +42,8 @@ def create_app() -> FastAPI:
     @app.on_event("startup")
     def startup() -> None:
         init_db()
+        with Session(get_engine()) as session:
+            prewarm_demo_locations(session)
         log.info("Lamer Konekte backend started (provider default: %s)", settings.provider_mode)
 
     app.include_router(router)
