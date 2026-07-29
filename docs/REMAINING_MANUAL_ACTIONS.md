@@ -18,7 +18,19 @@
 
 ## HIGH VALUE (directly worth rubric points)
 
-6. **Kaggle CLI auth** (`pip install kaggle`, `~/.kaggle/kaggle.json`) → `scripts/kaggle_push_training.sh` → monitor → `evaluate_adapter.ipynb` → fill `training/results/` with real numbers (strict §18E acceptance). Owner: Dhanesh.
+6. **Training run — IN PROGRESS on Yuvine's machine.** When it finishes, three artefacts still say
+   "blocked" and MUST be corrected or we under-claim real work:
+   - `training/results/metrics.json` (`"status": "blocked"`), `comparison.csv`, `training_log_summary.md`
+     → real held-out numbers from `evaluate_adapter.ipynb`.
+   - `docs/MODEL_TRAINING_REPORT.md` → replace "NOT LAUNCHED (blocked)" with the actual run
+     (mode A or B, model, hyper-parameters, metrics) and the **§18E decision**.
+   - `kaggle/writeup.md`, the Dataset/training/evaluation paragraph → currently reads
+     *"Training launch was blocked in-sprint by missing Kaggle credentials"*. Replace with the real
+     outcome, then re-run `scripts/check_writeup_count.py` (limit 1,500).
+   §18E stands: integrate ONLY if held-out evaluation improves ≥1 target metric with no safety
+   regression. A documented "attempted, evaluated, not integrated" is full credit; a rushed
+   integration is not. **The public demo notebook does NOT need re-running** — it demonstrates the
+   hosted 26B multimodal path, which the E2B adapter does not replace.
 7. ~~Deploy public URL~~ — **DONE 29 Jul ~17:20**: **https://lamer-konekte.onrender.com** live on Render (Frankfurt, free tier). All 9 validation checks passed incl. real hosted inference through the public URL and zero key material in the served bundle. Auto-deploys on push to `main`; switch to manual deploys before the jury demo to freeze a known-good build.
 8. **Native Morisyen review** — complete `docs/MORISYEN_HUMAN_REVIEW.md`, upgrade name statuses, rebuild frontend. Owner: any native speaker on the team.
 
