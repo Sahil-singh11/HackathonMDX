@@ -58,7 +58,7 @@ response and on every UI surface.
 | Pillar | Status | Tier | `data_kind` | Data source |
 |---|---|---|---|---|
 | **Sustainable Fisheries & Aquaculture** | **live** | hosted + browser | n/a — see note | Open-Meteo Marine; local versioned rules catalogue |
-| **Marine Transport & Trade** | implemented, disabled *(PR #16)* | hosted | **`synthetic`** | aisstream.io — **no regional coverage**, see below |
+| **Marine Transport & Trade** | implemented, disabled | hosted | **`synthetic`** | aisstream.io — **no regional coverage**, see below |
 | **Sustainable Ocean Tourism** | implemented, disabled | hosted | `live` / `cached` / `sample` | Open-Meteo Marine |
 | **Ocean-Based Renewable Energy** | implemented, disabled | hosted | `live` / `cached` / `sample` | Open-Meteo Marine |
 | **Blue Finance** | declared | hosted | — | user-uploaded documents |
@@ -129,12 +129,22 @@ stays production.
 
 | | Measured | Source |
 |---|---|---|
-| `/health` cold boot, `main` | **852 ms** median (834–905, 10 runs) | PR #16 |
-| `/health` cold boot, +transport pillar | **872 ms** median (861–914, 10 runs) | PR #16 |
-| Backend suite (with transport) | **372 passed**, 0 network calls in the default tier | PR #16 |
+| `/health` cold boot, `main` today (all six pillars registered) | **895 ms** median (877–937, 10 runs) | re-measured 30 Jul, `45a728a` |
+| `/health` cold boot, before the transport pillar | **852 ms** median (834–905, 10 runs) | PR #16 |
+| Backend suite | **413 passed**, 0 network calls in the default tier | 30 Jul, `45a728a` |
 
-The transport pillar costs **+20 ms against 71 ms of run-to-run spread** — smaller than the
-noise. Readiness never waits on a model or a feed.
+Adding the transport pillar cost **+20 ms against 71 ms of run-to-run spread** — smaller
+than the noise it was measured in. Readiness never waits on a model or a feed: pillars
+register a descriptor at import and load their data on first request.
+
+Both figures are full **process** cold boot — interpreter start and uvicorn import included
+— which is what a load balancer waits for. It is not the same quantity as Task 1a's
+in-process `<500 ms` readiness figure, and the two should not be compared.
+
+Four tests fail on `main` and are **not** counted above: SHA-256 immutability checks over
+archived AI-training evidence, where a recorded digest does not match the committed bytes.
+Pre-existing, owned by the AI workstream, unrelated to any pillar. Recorded here because a
+suite count that quietly omits its failures is the kind of number this page exists to avoid.
 
 ---
 
@@ -174,12 +184,43 @@ every single response.
 - **Transport ETAs are self-reported by vessels over AIS.** Not port authority data, not a
   validated prediction. Terrestrial AIS is nearshore and incomplete: an empty brief means
   *nothing observed*, never *nothing there*.
-- **A known open issue, stated rather than buried:** the inference Protocol's `chat()` carries
-  the fisheries system instruction, so a non-fisheries pillar cannot yet get task-appropriate
-  prose from it. Asked for a port brief, the live model correctly refused and returned the
-  catch-assistant envelope; the transport pillar's output guard rejected it and fell back to a
-  deterministic summary that says why. Every non-fisheries pillar hits this. It needs a frozen
-  interface change and a decision-log entry — a sync-point decision, not a quiet patch.
+- **Transport narrative prose is not yet proven against the live model.** See below.
+
+---
+
+## One finding, opened and closed the same day
+
+**30 Jul 2026 — found.** The inference Protocol's `chat()` hardcoded the fisheries system
+instruction, which scopes the model to fisher assistance *and* orders it to always emit
+structured output. A live hosted call asking for a Port Louis arrivals brief came back:
+
+> `{"intent": "other", "reply": "I am an analysis engine for fishers, not a port officer.
+> I cannot write reports for maritime authorities.", "call": null}`
+
+A hard refusal, wrapped in JSON. Every non-fisheries pillar hit it.
+
+**The nastier half was ours.** The transport pillar's grounding guard checked for invented
+vessel identifiers and let that envelope through as `narrative_source: "model"` — a refusal
+about to be rendered to a port officer as a brief. That is precisely the failure this
+project exists to prevent.
+
+**30 Jul 2026 — resolved.** `chat()` gained an optional `system_instruction`, default `None`
+preserving the fisheries path byte-for-byte (decision log 17, PR #20). The guard now rejects
+structured output as well as invented identifiers. Both are pinned:
+
+| What | Where |
+|---|---|
+| The captured refusal, as a regression test | `tests/test_pillar_transport.py::test_narrative_grounding_rejects_the_assistant_envelope` |
+| Default-`None` behaviour is unchanged | `tests/test_provider_contract.py::test_chat_default_instruction_is_unchanged` |
+| A custom instruction replaces rather than appends | `tests/test_provider_contract.py::test_chat_custom_instruction_reaches_the_provider_call` |
+
+**Still unproven, and we will not pretend otherwise.** The fix is verified against mocks, not
+against the live model. Three live calls to this endpoint returned a transient 503, the
+refusal, and a 60 s timeout — so **no capture of real Gemma prose in the transport narrative
+exists yet**, and the committed API example shows the timeout rather than a success. The
+refusal mode is fixed; the end-to-end path is unconfirmed. Whoever picks this up should
+suspect the 60 s hosted ceiling before anything else: a two-paragraph brief is a heavier
+generation than the fisheries routes.
 
 ---
 
