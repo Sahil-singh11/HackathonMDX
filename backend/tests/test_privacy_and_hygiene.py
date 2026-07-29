@@ -27,12 +27,13 @@ def test_raw_media_dir_is_gitignored():
 
 
 def test_no_api_key_pattern_in_tracked_files():
+    needle = "AIza" + "Sy"  # built at runtime so this test file never matches itself
     tracked = subprocess.run(["git", "ls-files"], cwd=ROOT, capture_output=True, text=True).stdout.split()
     for rel in tracked:
         p = ROOT / rel
         if p.suffix in (".py", ".ts", ".tsx", ".json", ".md", ".txt", ".yml", ".yaml", ".toml", ".env"):
             text = p.read_text(errors="ignore")
-            assert "AIzaSy" not in text, f"potential Google API key in {rel}"
+            assert needle not in text, f"potential Google API key in {rel}"
 
 
 def test_coordinates_rounded_in_catch_records(client):

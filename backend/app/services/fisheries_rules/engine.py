@@ -24,6 +24,13 @@ def load_rules() -> list[dict]:
         return json.load(f)["rules"]
 
 
+def _with_notice(note: str) -> str:
+    note = (note or "").strip()
+    if RULE_VERIFY_NOTICE.lower() in note.lower():
+        return note
+    return f"{note} {RULE_VERIFY_NOTICE}".strip()
+
+
 def _in_window(d: date, mm_dd_from: str, mm_dd_to: str) -> bool:
     fm, fd = (int(x) for x in mm_dd_from.split("-"))
     tm, td = (int(x) for x in mm_dd_to.split("-"))
@@ -49,7 +56,7 @@ def check_confirmed_catch(species_id: str, measured_length_cm: float | None, cap
                 return LegalCheck(
                     status="closed_season", rule=r["rule_id"], source_id=r.get("source_id"),
                     verification_status=r.get("verification_status"),
-                    note=f"{r.get('note', '')} {RULE_VERIFY_NOTICE}".strip(),
+                    note=_with_notice(r.get("note", "")),
                 )
 
     for r in rules:
@@ -57,7 +64,7 @@ def check_confirmed_catch(species_id: str, measured_length_cm: float | None, cap
             if r.get("minimum_length_cm") is None or r.get("verification_status") == "unavailable":
                 return LegalCheck(status="unknown", rule=r["rule_id"], source_id=r.get("source_id"),
                                   verification_status=r.get("verification_status", "unavailable"),
-                                  note=f"{r.get('note', '')} {RULE_VERIFY_NOTICE}".strip())
+                                  note=_with_notice(r.get("note", "")))
             if measured_length_cm is None:
                 return LegalCheck(status="unknown", rule=r["rule_id"], source_id=r.get("source_id"),
                                   verification_status=r.get("verification_status"),
@@ -65,7 +72,7 @@ def check_confirmed_catch(species_id: str, measured_length_cm: float | None, cap
             if measured_length_cm < float(r["minimum_length_cm"]):
                 return LegalCheck(status="below_minimum_size", rule=r["rule_id"], source_id=r.get("source_id"),
                                   verification_status=r.get("verification_status"),
-                                  note=f"{r.get('note', '')} {RULE_VERIFY_NOTICE}".strip())
+                                  note=_with_notice(r.get("note", "")))
 
     # No rule blocked the catch. Only claim `allowed` when at least one evaluable rule existed.
     evaluable = [r for r in rules if r.get("verification_status") in ("provisional", "verified")]
@@ -76,4 +83,4 @@ def check_confirmed_catch(species_id: str, measured_length_cm: float | None, cap
                           note=f"No closure or size rule triggered on {capture_date.isoformat()}. {RULE_VERIFY_NOTICE}")
     return LegalCheck(status="unknown", rule=rules[0]["rule_id"], source_id=rules[0].get("source_id"),
                       verification_status=rules[0].get("verification_status", "unavailable"),
-                      note=f"{rules[0].get('note', '')} {RULE_VERIFY_NOTICE}".strip())
+                      note=_with_notice(rules[0].get("note", "")))
