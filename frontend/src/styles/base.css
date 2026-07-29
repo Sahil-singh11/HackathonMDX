@@ -1,0 +1,171 @@
+/* ============================================================================
+   Lamer Konekte — BASE LAYER
+   ----------------------------------------------------------------------------
+   LOAD ORDER IS LOAD-BEARING:   tokens.css -> base.css -> styles.css
+
+   base.css sits in the MIDDLE on purpose. The app already shipped pages styled
+   by styles.css; that file loads LAST so its rules win any collision here. That
+   ordering is what lets Phase 0 add a whole design foundation without moving a
+   single pixel on Home or Record-a-catch.
+
+   Consequently this file must never set a bare `body { font-family }`,
+   `body { background }` or anything else that would fight styles.css. What it
+   DOES own: things that did not exist before — the skip link, text scaling,
+   the shared aria-live region, and focus/motion defaults for NEW components.
+   ============================================================================ */
+
+/* ------------------------------------------------------------ reset-ish ---
+   Kept intentionally minimal. styles.css already sets box-sizing and body
+   margins; repeating them here is harmless and makes this file survive if
+   styles.css is ever retired.
+--------------------------------------------------------------------------- */
+/* Global-safe only: box-sizing is already declared identically in styles.css,
+   and text-size-adjust has no layout effect here. NOTHING else may be global.
+
+   Everything below is scoped to .lk-scope. That is not stylistic fussiness —
+   an earlier unscoped `button { font: inherit }` here silently shifted the
+   header's language pill, because `font:` is a shorthand that also sets
+   line-height, and .lang-switch declares font-size but not line-height. It
+   moved by a few pixels and broke the render-identically guarantee. Element
+   selectors in this file reach existing markup; keep them scoped. */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+/* Media defaults — prevents overflow on narrow phones. */
+.lk-scope img, .lk-scope svg, .lk-scope video, .lk-scope canvas { max-width: 100%; }
+.lk-scope img, .lk-scope video { height: auto; }
+
+/* Form controls should inherit type, not fall back to the UA's 13px sans. */
+.lk-scope button,
+.lk-scope input,
+.lk-scope select,
+.lk-scope textarea { font: inherit; color: inherit; }
+
+/* ------------------------------------------------------- text scaling ---
+   The a11y panel sets data-text-scale on <html>. Applied via font-size on the
+   root of the NEW component tree only (see .lk-scope below) so it cannot
+   reflow existing pages unexpectedly.
+------------------------------------------------------------------------- */
+html[data-text-scale='125'] { --text-scale: 1.25; }
+html[data-text-scale='150'] { --text-scale: 1.5; }
+
+/* --------------------------------------------------------- new-code scope ---
+   Opt-in wrapper. Anything inside .lk-scope gets the new typography and
+   semantic colours. Existing pages are NOT wrapped, so they are untouched.
+   The shell wraps new surfaces in this class.
+--------------------------------------------------------------------------- */
+.lk-scope {
+  font-family: var(--font-body);
+  font-size: calc(var(--fs-base) * var(--text-scale));
+  line-height: var(--lh-body);
+  color: var(--text);
+}
+.lk-scope h1, .lk-scope h2, .lk-scope h3 {
+  font-family: var(--font-display);
+  letter-spacing: var(--tracking-display);
+  line-height: var(--lh-tight);
+  margin: 0;
+}
+.lk-scope h1 { font-size: calc(var(--fs-lg) * var(--text-scale)); }
+.lk-scope h2 { font-size: calc(var(--fs-md) * var(--text-scale)); }
+.lk-scope h3 { font-size: calc(var(--fs-base) * var(--text-scale)); font-family: var(--font-body); font-weight: 600; letter-spacing: 0; }
+
+/* Data role — coordinates, timestamps, IDs, hashes, weights, certificate refs. */
+.lk-data,
+.lk-scope [data-role='data'] {
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+/* ------------------------------------------------------------- focus ---
+   Visible on everything, in every theme. :focus-visible so mouse users do not
+   get rings, keyboard users always do.
+------------------------------------------------------------------------- */
+.lk-scope :focus-visible,
+.lk-skip-link:focus-visible {
+  outline: var(--focus-ring-width) solid var(--accent);
+  outline-offset: var(--focus-ring-offset);
+  border-radius: var(--r-input);
+}
+
+/* ------------------------------------------------------- skip to content ---
+   First tab stop on every page. Visually hidden until focused.
+--------------------------------------------------------------------------- */
+.lk-skip-link {
+  position: absolute;
+  left: var(--sp-3);
+  top: -100px;
+  z-index: 100;
+  padding: var(--sp-3) var(--sp-4);
+  min-height: var(--touch-min);
+  display: inline-flex;
+  align-items: center;
+  background: var(--surface);
+  color: var(--text);
+  border: 2px solid var(--accent);
+  border-radius: var(--r-card);
+  font-family: var(--font-body);
+  font-weight: 600;
+  text-decoration: none;
+  transition: top var(--motion-fast) var(--ease-out);
+}
+.lk-skip-link:focus { top: var(--sp-3); }
+
+/* --------------------------------------------------------- sr-only ---
+   styles.css already defines .sr-only; this is the focusable variant plus a
+   namespaced alias so new components never depend on the legacy class.
+------------------------------------------------------------------------- */
+.lk-sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.lk-sr-only-focusable:not(:focus):not(:focus-within) {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ------------------------------------------------------------- motion ---
+   tokens.css already zeroes the duration variables under reduce-motion; this
+   is the belt-and-braces stop for anything that hardcodes an animation.
+   Scoped to .lk-scope so it cannot disable existing pages' transitions in a
+   way that changes their behaviour.
+------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .lk-scope *,
+  .lk-scope *::before,
+  .lk-scope *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+html[data-reduce-motion='on'] .lk-scope *,
+html[data-reduce-motion='on'] .lk-scope *::before,
+html[data-reduce-motion='on'] .lk-scope *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}
+
+/* Sunlight theme flattens everything: no gradients, no shadows, hard borders. */
+[data-theme='sunlight'] .lk-scope * {
+  box-shadow: none !important;
+  text-shadow: none !important;
+}

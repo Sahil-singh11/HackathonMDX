@@ -83,9 +83,15 @@
 }
 
 /* Dark-mode prep: flip the semantic tokens only. Brand colors, spacing and
-   radii stay constant. Not wired to a UI toggle yet — set data-theme="dark"
-   on <html> to activate. */
-[data-theme='dark'] {
+   radii stay constant.
+
+   PHASE 0: this block is now the "Night" theme. The [data-theme='night']
+   selector was ADDED alongside the original 'dark' rather than renaming it, so
+   anything already setting data-theme="dark" keeps working unchanged. These
+   are the LEGACY tokens (existing pages); the matching semantic tokens for new
+   components live in styles/tokens.css under the same theme name. */
+[data-theme='dark'],
+[data-theme='night'] {
   --bg-page-start: #0d1b2e;
   --bg-page-end: #0a1622;
   --surface-card: #14233b;

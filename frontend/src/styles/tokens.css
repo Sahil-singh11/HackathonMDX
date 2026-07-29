@@ -1,0 +1,368 @@
+/* ============================================================================
+   Lamer Konekte — DESIGN TOKENS.  FROZEN after Phase 0.
+   ----------------------------------------------------------------------------
+   Read this before adding anything:
+
+   1. This file is READ-ONLY for every developer, including Sahil, after the
+      Phase 0 commit. Need a variant? Wrap the primitive inside your own lane
+      folder. Need a token that does not exist? Ask — do not add it yourself.
+
+   2. This file is ADDITIVE. The app already shipped working pages built on an
+      earlier token set (--primary-navy, --accent-teal, --surface-card, …)
+      which lives in ../styles.css. Those tokens keep their ORIGINAL VALUES so
+      existing pages render identically. They are NOT aliased to the palette
+      below, because the two palettes are genuinely different colours — e.g.
+      --accent-teal #1b9aaa vs --lagoon #0E7C86 is a ΔE of ~12, a clearly
+      visible shift. Aliasing would have silently restyled Home and
+      Record-a-catch. See CLAUDE.md → "Two palettes, and why".
+
+   3. NEW code (components/ui, shell, ocean, a11y and the new lanes) consumes
+      ONLY the semantic names in this file — never a raw palette value, and
+      never a legacy token from styles.css.
+
+   Load order is deliberate:  tokens.css → base.css → styles.css
+   styles.css loads LAST so its existing rules win any collision, which is what
+   guarantees the no-visual-regression promise.
+   ============================================================================ */
+
+/* ---------------------------------------------------------------- fonts ---
+   Self-hosted, latin subset, so the app works with zero connectivity — a CDN
+   fetch would fail in exactly the offline scenario this app is built for.
+   All three families are SIL Open Font Licence 1.1. See public/fonts/LICENSE.md.
+   font-display: swap so text paints immediately on a slow phone.
+   Bricolage Grotesque and Public Sans are variable fonts (one file per family).
+--------------------------------------------------------------------------- */
+@font-face {
+  font-family: 'Bricolage Grotesque';
+  src: url('/fonts/bricolage-grotesque-var-latin.woff2') format('woff2-variations'),
+       url('/fonts/bricolage-grotesque-var-latin.woff2') format('woff2');
+  font-weight: 400 800;
+  font-stretch: 100%;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Public Sans';
+  src: url('/fonts/public-sans-var-latin.woff2') format('woff2-variations'),
+       url('/fonts/public-sans-var-latin.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('/fonts/ibm-plex-mono-400-latin.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('/fonts/ibm-plex-mono-500-latin.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('/fonts/ibm-plex-mono-600-latin.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* ------------------------------------------------------------- palette ---
+     Raw brand colours. NEVER consume these directly in a component — use the
+     semantic layer below, so themes can repoint them.
+  ------------------------------------------------------------------------ */
+  --abyss:  #0A2540;   /* deep navy   — primary dark surface */
+  --lagoon: #0E7C86;   /* teal        — primary interactive */
+  --foam:   #E8F1F2;   /* pale        — light background */
+  --coral:  #FF6B54;   /* accent      — primary action, used sparingly */
+  --sand:   #F5EFE6;   /* warm neutral— light-mode cards */
+  --kelp:   #1E4D4A;   /* deep green-teal — dark-mode secondary surface */
+
+  /* Supporting tints derived from the palette. Still not for direct use. */
+  --abyss-soft:  #123253;
+  --lagoon-soft: #0F9AA6;
+  --lagoon-deep: #0A5E66;
+  --coral-soft:  #FF8570;
+  --coral-deep:  #E0523C;
+
+  /* Status hues (shared across themes; per-theme overrides below) */
+  --hue-success: #1A7F4E;
+  --hue-warning: #B06A00;
+  --hue-danger:  #B3261E;
+
+  /* ------------------------------------------------- typography (roles) ---
+     Display: page titles and large numbers only.
+     Body:    all UI text.
+     Data:    coordinates, timestamps, catch IDs, ledger hashes, weights,
+              certificate refs — anything read aloud to an officer.
+     System fallbacks are first-class: if a woff2 fails to load the app still
+     reads correctly, it just loses the personality.
+  ------------------------------------------------------------------------ */
+  --font-display: 'Bricolage Grotesque', ui-sans-serif, system-ui, 'Segoe UI', sans-serif;
+  --font-body:    'Public Sans', ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-data:    'IBM Plex Mono', ui-monospace, 'Cascadia Code', Menlo, monospace;
+
+  /* Type scale — 12 / 14 / 16 / 20 / 28 / 40 / 56. Body never below 16. */
+  --fs-xs:   12px;   /* metadata only, never body copy */
+  --fs-sm:   14px;
+  --fs-base: 16px;   /* body floor */
+  --fs-md:   20px;
+  --fs-lg:   28px;
+  --fs-xl:   40px;
+  --fs-2xl:  56px;
+
+  --lh-tight: 1.2;
+  --lh-snug:  1.35;
+  --lh-body:  1.6;
+
+  --tracking-display: -0.02em;  /* Bricolage wants tight tracking at size */
+  --tracking-normal:  0;
+  --tracking-wide:    0.04em;
+
+  /* --------------------------------------------------- spacing / shape ---
+     4px base. NOTE: these are --sp-* deliberately. styles.css already owns
+     --space-1…9 on a slightly different ramp; colliding would restyle
+     existing pages.
+  ------------------------------------------------------------------------ */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --sp-8: 64px;
+
+  --r-input: 4px;
+  --r-card:  12px;
+  --r-chip:  999px;
+
+  /* Touch target floor — gloves, wet hands, a moving boat. */
+  --touch-min: 56px;
+
+  /* Motion. Every duration routes through here so the a11y panel and
+     prefers-reduced-motion can zero them in one place. */
+  --motion-fast: 120ms;
+  --motion-base: 180ms;
+  --motion-slow: 320ms;
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+
+  /* User text scaling (100 / 125 / 150%), driven by the a11y panel. */
+  --text-scale: 1;
+
+  /* Elevation */
+  --elev-1: 0 1px 2px rgba(10, 37, 64, 0.06);
+  --elev-2: 0 4px 16px rgba(10, 37, 64, 0.10);
+  --elev-3: 0 12px 32px rgba(10, 37, 64, 0.16);
+
+  /* Focus ring — 2px accent, 2px offset, on everything. */
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+}
+
+/* ==========================================================================
+   THEME: DAY (default light)
+   Foam/sand surfaces, navy text.
+   ========================================================================== */
+:root,
+[data-theme='day'] {
+  color-scheme: light;
+
+  --bg:             var(--foam);
+  --bg-alt:         var(--sand);
+  --surface:        #FFFFFF;
+  --surface-raised: var(--sand);
+  --surface-sunken: #DCE8EA;
+
+  --text:        var(--abyss);
+  --text-muted:  #4C6076;      /* 5.9:1 on --surface, 5.3:1 on --bg */
+  --text-invert: #FFFFFF;
+
+  /* --border is decorative (dividers, card hairlines).
+     --border-strong is for MEANINGFUL control edges — inputs, checkboxes,
+     toggles — and is tuned to clear WCAG 1.4.11 non-text contrast (3:1). */
+  --border:        #C9D8DB;
+  --border-strong: #5F7B82;   /* 4.52:1 on --surface */
+
+  --accent:          var(--lagoon);
+  --accent-hover:    var(--lagoon-deep);
+  --accent-contrast: #FFFFFF;   /* text on --accent */
+  --accent-quiet:    #DBEDEF;   /* tinted surface */
+
+  /* The coral brand hex is preserved EXACTLY as specified. Its label text is
+     dark, not white: white-on-coral measures 2.81:1 and fails the 4.5:1 floor,
+     whereas #2A0C06 on coral is 6.49:1. Brand kept, contrast fixed.
+     (styles.css still paints legacy buttons white-on-coral — pre-existing, left
+     untouched by the render-identically rule. Logged in CLAUDE.md.) */
+  --action:          var(--coral);      /* the sparing primary action */
+  --action-hover:    var(--coral-deep);
+  --action-contrast: #2A0C06;           /* 6.49:1 on --action */
+
+  --success: var(--hue-success);
+  --warning: var(--hue-warning);
+  --danger:  var(--hue-danger);
+  --success-quiet: #E3F3EA;
+  --warning-quiet: #FDF0DC;
+  --danger-quiet:  #FBE6E4;
+
+  --ocean-band-1: rgba(14, 124, 134, 0.10);
+  --ocean-band-2: rgba(10, 37, 64, 0.06);
+  --ocean-opacity: 1;
+}
+
+/* ==========================================================================
+   THEME: NIGHT (dark)
+   Abyss/kelp surfaces, foam text.
+
+   AMENDMENT 3 — this FOLDS the app's pre-existing dark-mode prep rather than
+   rebuilding it. styles.css already defines [data-theme='dark'] overrides for
+   the legacy tokens; that selector has been extended to also match
+   [data-theme='night'], so switching to Night restyles BOTH the legacy tokens
+   (existing pages) and the semantic tokens below (new components) in one go.
+   ========================================================================== */
+[data-theme='night'] {
+  color-scheme: dark;
+
+  --bg:             #071A2E;
+  --bg-alt:         var(--abyss);
+  --surface:        #0F2C46;
+  --surface-raised: var(--kelp);
+  --surface-sunken: #05131F;
+
+  --text:        var(--foam);
+  --text-muted:  #A8BFC4;      /* 7.3:1 on --surface */
+  --text-invert: var(--abyss);
+
+  --border:        #1F4460;
+  --border-strong: #6796B2;   /* 4.48:1 on --surface */
+
+  --accent:          var(--lagoon-soft);   /* lifted for contrast on dark */
+  --accent-hover:    #16B3C0;
+  --accent-contrast: #04212A;
+  --accent-quiet:    rgba(15, 154, 166, 0.16);
+
+  --action:          var(--coral-soft);
+  --action-hover:    var(--coral);
+  --action-contrast: #2A0C06;
+
+  --success: #4FCB8B;
+  --warning: #F0B357;
+  --danger:  #FF8F86;
+  --success-quiet: rgba(79, 203, 139, 0.15);
+  --warning-quiet: rgba(240, 179, 87, 0.15);
+  --danger-quiet:  rgba(255, 143, 134, 0.15);
+
+  --elev-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --elev-2: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --elev-3: 0 12px 32px rgba(0, 0, 0, 0.55);
+
+  --ocean-band-1: rgba(15, 154, 166, 0.14);
+  --ocean-band-2: rgba(232, 241, 242, 0.05);
+  --ocean-opacity: 1;
+}
+
+/* --- Night vision -------------------------------------------------------
+   Opt-in inside Night. Shifts accents to deep red and cuts blue light so the
+   eye's dark adaptation survives looking at the screen on a night crossing.
+------------------------------------------------------------------------- */
+[data-theme='night'][data-night-vision='on'] {
+  --bg:             #120404;
+  --bg-alt:         #1A0707;
+  --surface:        #1E0A0A;
+  --surface-raised: #2A0F0F;
+  --surface-sunken: #0A0202;
+
+  --text:        #FFC9BE;
+  --text-muted:  #C98D80;
+  --text-invert: #120404;
+
+  --border:        #4A1A16;
+  --border-strong: #A54B3C;   /* 3.33:1 on --surface */
+
+  --accent:          #FF6B54;
+  --accent-hover:    #FF8570;
+  --accent-contrast: #1A0505;
+  --accent-quiet:    rgba(255, 107, 84, 0.14);
+
+  --action:          #FF6B54;
+  --action-hover:    #FF8570;
+  --action-contrast: #1A0505;
+
+  --success: #E08A6B;
+  --warning: #FFA07A;
+  --danger:  #FF7060;
+
+  --ocean-band-1: rgba(255, 107, 84, 0.08);
+  --ocean-band-2: rgba(255, 107, 84, 0.04);
+}
+
+/* ==========================================================================
+   THEME: SUNLIGHT (extreme contrast, for direct equatorial sun on a deck)
+   Pure white, near-black text, 2px borders, no gradients, no ambient motion,
+   larger touch targets. A real ship-deck problem — a first-class theme, not a
+   filter over Day.
+   ========================================================================== */
+[data-theme='sunlight'] {
+  color-scheme: light;
+
+  --bg:             #FFFFFF;
+  --bg-alt:         #FFFFFF;
+  --surface:        #FFFFFF;
+  --surface-raised: #FFFFFF;
+  --surface-sunken: #F2F2F2;
+
+  --text:        #000000;      /* 21:1 */
+  --text-muted:  #1F1F1F;      /* 16.1:1 — still near-black, sun washes out grey */
+  --text-invert: #FFFFFF;
+
+  --border:        #000000;
+  --border-strong: #000000;
+
+  --accent:          #005F6B;
+  --accent-hover:    #00454E;
+  --accent-contrast: #FFFFFF;
+  --accent-quiet:    #FFFFFF;
+
+  --action:          #C22E14;   /* darkened coral — 5.3:1 on white */
+  --action-hover:    #9C2410;
+  --action-contrast: #FFFFFF;
+
+  --success: #056139;
+  --warning: #6B3F00;
+  --danger:  #A3120B;
+  --success-quiet: #FFFFFF;
+  --warning-quiet: #FFFFFF;
+  --danger-quiet:  #FFFFFF;
+
+  /* Flat: no elevation, no gradient, nothing that loses definition in glare. */
+  --elev-1: none;
+  --elev-2: none;
+  --elev-3: none;
+
+  --border-width-base: 2px;
+  --touch-min: 64px;
+
+  --ocean-opacity: 0;   /* ambient layer fully off */
+}
+
+/* ==========================================================================
+   Motion + contrast preferences (system level).
+   The a11y panel can also force these via [data-reduce-motion='on'].
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-base: 0ms;
+    --motion-slow: 0ms;
+  }
+}
+[data-reduce-motion='on'] {
+  --motion-fast: 0ms;
+  --motion-base: 0ms;
+  --motion-slow: 0ms;
+}

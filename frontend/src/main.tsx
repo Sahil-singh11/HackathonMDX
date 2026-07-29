@@ -3,6 +3,11 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App'
+// Load order is load-bearing. tokens defines the design system, base adds the
+// new-code layer, and styles.css (the pre-existing sheet) loads LAST so its
+// rules win any collision — that is what keeps existing pages pixel-identical.
+import './styles/tokens.css'
+import './styles/base.css'
 import './styles.css'
 
 const queryClient = new QueryClient({
