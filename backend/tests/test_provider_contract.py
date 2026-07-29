@@ -293,6 +293,33 @@ def test_chat_custom_instruction_reaches_the_provider_call(monkeypatch, hosted_k
     assert SYSTEM_INSTRUCTION not in seen["instruction"]
 
 
+def test_chat_timeout_defaults_to_the_deployment_ceiling_and_is_route_overridable(
+        monkeypatch, hosted_key):
+    """Decision log 18. Default None = GEMMA_TIMEOUT_SECONDS; a route may carry
+    its own without raising the ceiling for every other caller."""
+    fake = _FakeClient(text="ok")
+    seen: dict = {}
+    original = fake.models.generate_content
+
+    def capture(*, model, contents, config):
+        seen["timeout_ms"] = config.http_options.timeout
+        return original(model=model, contents=contents, config=config)
+
+    monkeypatch.setattr(fake.models, "generate_content", capture)
+    _patch_client(monkeypatch, fake)
+    provider = registry.get_provider(registry.GEMMA_HOSTED)
+
+    provider.chat("x")
+    assert seen["timeout_ms"] == get_settings().gemma_timeout_seconds * 1000
+
+    provider.chat("x", timeout_seconds=90)
+    assert seen["timeout_ms"] == 90_000
+
+    # An override must not leak into the next default call.
+    provider.chat("x")
+    assert seen["timeout_ms"] == get_settings().gemma_timeout_seconds * 1000
+
+
 def test_every_provider_accepts_the_optional_instruction():
     """Protocol conformance: the parameter is part of the contract now, so no
     provider may reject it — including the ones that ignore or raise on it."""
@@ -300,8 +327,9 @@ def test_every_provider_accepts_the_optional_instruction():
 
     for name in registry.CANONICAL:
         sig = inspect.signature(registry.get_provider(name).chat)
-        assert "system_instruction" in sig.parameters, name
-        assert sig.parameters["system_instruction"].default is None, name
+        for param in ("system_instruction", "timeout_seconds"):
+            assert param in sig.parameters, f"{name}.{param}"
+            assert sig.parameters[param].default is None, f"{name}.{param}"
 
     # The mock accepts it and keeps disclosing — it must never let a caller's
     # instruction talk it out of saying it is a mock.

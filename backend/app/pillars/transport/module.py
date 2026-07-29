@@ -291,7 +291,11 @@ class TransportPillar:
             # Transport-scoped instruction (decision log 17). Without it the
             # provider default is the fisheries catch-assistant prompt, under
             # which the live model refuses this task and answers in JSON.
-            text = (provider.chat(prompt, system_instruction=brief.SYSTEM_INSTRUCTION) or "").strip()
+            text = (provider.chat(
+                prompt,
+                system_instruction=brief.SYSTEM_INSTRUCTION,
+                timeout_seconds=get_settings().transport_narrative_timeout_seconds,
+            ) or "").strip()
         except Exception as exc:  # noqa: BLE001 — a model outage degrades, never 500s
             log.warning("transport: provider chat failed: %s", exc)
             return fallback, fallback, "deterministic_fallback", f"model call failed: {exc}", provider_name

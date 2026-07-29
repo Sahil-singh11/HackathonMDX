@@ -214,13 +214,22 @@ structured output as well as invented identifiers. Both are pinned:
 | Default-`None` behaviour is unchanged | `tests/test_provider_contract.py::test_chat_default_instruction_is_unchanged` |
 | A custom instruction replaces rather than appends | `tests/test_provider_contract.py::test_chat_custom_instruction_reaches_the_provider_call` |
 
-**Still unproven, and we will not pretend otherwise.** The fix is verified against mocks, not
-against the live model. Three live calls to this endpoint returned a transient 503, the
-refusal, and a 60 s timeout — so **no capture of real Gemma prose in the transport narrative
-exists yet**, and the committed API example shows the timeout rather than a success. The
-refusal mode is fixed; the end-to-end path is unconfirmed. Whoever picks this up should
-suspect the 60 s hosted ceiling before anything else: a two-paragraph brief is a heavier
-generation than the fisheries routes.
+**Still unproven, and we will not pretend otherwise.** The refusal fix is verified against
+mocks, not against the live model. **Four live calls to this endpoint have returned a
+transient 503, the refusal, a 60 s timeout and a 90 s timeout — no success.** So no capture
+of real Gemma prose in the transport narrative exists, and the committed API example shows a
+timeout rather than a success.
+
+The refusal mode is fixed and has not recurred. The obvious follow-up hypothesis — that the
+brief was simply too long — was **tested and rejected by its own experiment**: cutting it
+from two paragraphs to four sentences *and* raising the ceiling to 90 s still timed out
+(92.3 s wall), so the bump was reverted as net-harmful. The two cheapest explanations are now
+eliminated and the cause is genuinely unexplained. The full matrix, and the one diagnostic
+worth running next, are in `GEMMA_CAPABILITY_MATRIX.md` §11.
+
+**None of this touches what a port officer actually reads.** Arrivals, ETAs and congestion
+are computed deterministically and were never at risk; the narrative degrades to a mechanical
+summary that states why, on every response.
 
 ---
 
