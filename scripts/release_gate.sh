@@ -3,6 +3,9 @@
 set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
+# Venv layout differs by OS: bin/python (POSIX) vs Scripts/python.exe (Windows).
+if [ -x backend/.venv/bin/python ]; then PY=backend/.venv/bin/python;
+else PY=backend/.venv/Scripts/python.exe; fi
 FAIL=0
 say() { printf "%-46s %s\n" "$1" "$2"; }
 check() { if [ "$2" -eq 0 ]; then say "$1" "PASS"; else say "$1" "FAIL"; FAIL=1; fi; }
@@ -19,7 +22,7 @@ git check-ignore .env >/dev/null 2>&1; check ".env is gitignored" $?
 git ls-files | grep -qE '^data/raw/|^data/audio/|\.wav$|\.mp3$'; check "no raw/audio media tracked" $((! $?))
 
 # 8 image licences: every tracked media file must have redistribution yes in the manifest
-backend/.venv/bin/python - <<'EOF'
+"$PY" - <<'EOF'
 import csv, subprocess, sys
 rows = {r["path"]: r for r in csv.DictReader(open("data/manifests/species_images.csv"))}
 tracked = subprocess.run(["git", "ls-files", "data/demo"], capture_output=True, text=True).stdout.split()
@@ -39,13 +42,13 @@ git ls-files | grep -qE '\.sqlite3$|\.gguf$|\.safetensors$|node_modules/|__pycac
 grep -q "Lamer Konekte" README.md; check "README present and branded" $?
 
 # 15 tests
-(cd backend && .venv/bin/python -m pytest tests -q >/dev/null 2>&1); check "backend test suite" $?
+(cd backend && "../$PY" -m pytest tests -q >/dev/null 2>&1); check "backend test suite" $?
 
 # 16 frontend build
 (cd frontend && npm run build >/dev/null 2>&1); check "frontend production build" $?
 
 # 17 notebooks valid
-backend/.venv/bin/python - <<'EOF'
+"$PY" - <<'EOF'
 import json, pathlib, sys
 try:
     for p in pathlib.Path("kaggle/notebooks").glob("*.ipynb"):
@@ -56,7 +59,7 @@ EOF
 check "notebook JSON validity" $?
 
 # 18 writeup word count
-backend/.venv/bin/python scripts/check_writeup_count.py >/dev/null; check "writeup <= 1500 words" $?
+"$PY" scripts/check_writeup_count.py >/dev/null; check "writeup <= 1500 words" $?
 
 # key not in built frontend
 ! grep -rq "AIza" frontend/dist 2>/dev/null; check "no key material in frontend dist" $?

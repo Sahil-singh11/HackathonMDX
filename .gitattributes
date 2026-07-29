@@ -1,0 +1,10 @@
+# Checksummed evidence files must never be rewritten by EOL normalisation.
+# On Windows, core.autocrlf turned the archived v1 files CRLF on checkout, which
+# broke their SHA-256s (content was verified identical after LF-normalisation).
+# `-text` tells git to leave these bytes exactly as committed.
+training/archive/** -text
+training/data/*.jsonl -text
+training/data/*.sha256 -text
+training/data/v2_challenge_manifest.json -text
+training/data/external_test_manifest.json -text
+evaluation/cases/morisyen_cases.json -text

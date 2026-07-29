@@ -44,10 +44,15 @@ def _columns(engine) -> set[str]:
 def test_fresh_clone_boot_creates_the_column():
     with tempfile.TemporaryDirectory() as td:
         engine = create_engine(f"sqlite:///{Path(td) / 'fresh.sqlite3'}")
-        from app.models import entities  # noqa: F401 — register tables
-        SQLModel.metadata.create_all(engine)
-        ensure_catchrecord_analysis_provider(engine)
-        assert "analysis_provider" in _columns(engine)
+        try:
+            from app.models import entities  # noqa: F401 — register tables
+            SQLModel.metadata.create_all(engine)
+            ensure_catchrecord_analysis_provider(engine)
+            assert "analysis_provider" in _columns(engine)
+        finally:
+            # Windows: the pooled SQLite connection must be closed before
+            # TemporaryDirectory can unlink the db file.
+            engine.dispose()
 
 
 def test_existing_db_boot_adds_the_column_and_keeps_rows():
@@ -62,14 +67,17 @@ def test_existing_db_boot_adds_the_column_and_keeps_rows():
             conn.commit()
         assert "analysis_provider" not in _columns(engine)
 
-        ensure_catchrecord_analysis_provider(engine)
+        try:
+            ensure_catchrecord_analysis_provider(engine)
 
-        assert "analysis_provider" in _columns(engine)
-        with engine.connect() as conn:
-            row = conn.execute(text(
-                "SELECT species_id, analysis_provider FROM catchrecord WHERE id='r1'")).one()
-        assert row[0] == "octopus_cyanea"
-        assert row[1] is None  # pre-migration rows honestly record no provider
+            assert "analysis_provider" in _columns(engine)
+            with engine.connect() as conn:
+                row = conn.execute(text(
+                    "SELECT species_id, analysis_provider FROM catchrecord WHERE id='r1'")).one()
+            assert row[0] == "octopus_cyanea"
+            assert row[1] is None  # pre-migration rows honestly record no provider
+        finally:
+            engine.dispose()
 
 
 def test_migration_is_idempotent():
@@ -78,15 +86,21 @@ def test_migration_is_idempotent():
         with engine.connect() as conn:
             conn.exec_driver_sql(LEGACY_CATCHRECORD_DDL)
             conn.commit()
-        ensure_catchrecord_analysis_provider(engine)
-        ensure_catchrecord_analysis_provider(engine)  # second run must be a no-op
-        assert "analysis_provider" in _columns(engine)
+        try:
+            ensure_catchrecord_analysis_provider(engine)
+            ensure_catchrecord_analysis_provider(engine)  # second run must be a no-op
+            assert "analysis_provider" in _columns(engine)
+        finally:
+            engine.dispose()
 
 
 def test_migration_noop_before_table_exists():
     with tempfile.TemporaryDirectory() as td:
         engine = create_engine(f"sqlite:///{Path(td) / 'empty.sqlite3'}")
-        ensure_catchrecord_analysis_provider(engine)  # must not raise
+        try:
+            ensure_catchrecord_analysis_provider(engine)  # must not raise
+        finally:
+            engine.dispose()
 
 
 # ------------------------------------------------------------------ header

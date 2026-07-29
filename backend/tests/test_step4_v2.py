@@ -105,17 +105,27 @@ def test_v1_archive_exists_with_manifest_and_checksums():
 
 
 def test_v1_archive_checksums_still_verify():
+    """Content immutability, tolerant of git EOL rewriting.
+
+    On Windows, core.autocrlf rewrote the archived files CRLF on checkout, breaking the
+    raw byte hashes while the CONTENT was untouched (verified: LF-normalising every
+    flagged file reproduced its recorded digest exactly). So a file passes if either its
+    raw bytes or its LF-normalised bytes match — a real edit still fails both.
+    .gitattributes now marks the archive `-text` so fresh checkouts keep the exact bytes.
+    """
     lines = (ARCHIVE / "CHECKSUMS.sha256").read_text(encoding="utf-8").splitlines()
     checked = 0
     for line in lines:
         if not line.strip():
             continue
         digest, name = line.split("  ", 1)
-        p = (ARCHIVE / name) if not name.startswith("../") else (ARCHIVE / name)
-        p = p.resolve()
+        p = (ARCHIVE / name).resolve()
         if not p.exists():
             continue
-        assert hashlib.sha256(p.read_bytes()).hexdigest() == digest, f"{name} changed"
+        raw = p.read_bytes()
+        ok = (hashlib.sha256(raw).hexdigest() == digest
+              or hashlib.sha256(raw.replace(b"\r\n", b"\n")).hexdigest() == digest)
+        assert ok, f"{name} CONTENT changed (not just line endings)"
         checked += 1
     assert checked >= 10
 
