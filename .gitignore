@@ -1,0 +1,63 @@
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+kaggle.json
+service-account*.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+htmlcov/
+.coverage
+
+# Node / frontend
+node_modules/
+frontend/dist/
+frontend/dev-dist/
+frontend/.vite/
+frontend/playwright-report/
+frontend/test-results/
+
+# Databases and local state
+*.sqlite3
+*.db
+storage/
+!storage/.gitkeep
+
+# Media that must not be committed (privacy / licence)
+data/raw/
+data/audio/
+*.wav
+*.mp3
+*.m4a
+uploads/
+tmp_uploads/
+
+# Model weights — never commit
+*.gguf
+*.safetensors
+*.bin
+*.pt
+*.onnx
+training/adapters/*
+!training/adapters/.gitkeep
+models/
+
+# Kaggle outputs kept out of the public repo
+kaggle/outputs/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log
