@@ -182,7 +182,9 @@ function Invoke-StopAll {
     foreach ($name in @('backend', 'frontend')) {
         $pidFile = Join-Path $RunDir "$name.pid"
         if (Test-Path $pidFile) {
-            $raw = (Get-Content $pidFile -Raw).Trim()
+            # A failed startup can leave a pid file empty; Get-Content -Raw then
+            # returns $null and .Trim() explodes. Coerce through [string] first.
+            $raw = ([string](Get-Content $pidFile -Raw)).Trim()
             if ($raw -match '^\d+$') {
                 $procId = [int]$raw
                 if (Get-Process -Id $procId -ErrorAction SilentlyContinue) {
@@ -235,20 +237,35 @@ function Initialize-Backend {
         }
         Push-Location (Join-Path $Root 'backend')
         try {
-            & $sys -m venv .venv
+            & $sys -m venv .venv 2>&1 | Out-Host
             if ($LASTEXITCODE -ne 0) { Die "could not create the virtualenv." }
         } finally { Pop-Location }
         $py = Get-VenvPython
         if (-not $py) { Die "venv created but no interpreter found inside it." }
     }
-    # Cheap import probe: cheaper than pip install every run, and correct because
-    # a half-installed venv fails here rather than at uvicorn startup.
+    # Probe imports, but ALSO re-run pip whenever requirements.txt is newer than
+    # the last install we did. The fixed three-module probe missed a teammate
+    # adding pypdf to requirements.txt: everything probed fine and uvicorn then
+    # crash-looped on the missing import. A stamp file records the requirements
+    # hash at last successful install; a changed hash forces a re-install.
+    $reqFile  = Join-Path $Root 'backend\requirements.txt'
+    $stamp    = Join-Path $Root 'backend\.venv\.requirements.stamp'
+    $reqHash  = (Get-FileHash $reqFile -Algorithm SHA256).Hash
+    $stale    = $true
+    if (Test-Path $stamp) { if ((Get-Content $stamp -Raw).Trim() -eq $reqHash) { $stale = $false } }
     & $py -c "import fastapi, uvicorn, sqlmodel" 2>$null | Out-Null
-    if ($LASTEXITCODE -ne 0) {
-        Say 'backend' 'installing dependencies (first run only)'
+    if ($LASTEXITCODE -ne 0 -or $stale) {
+        if ($stale) { Say 'backend' 'requirements.txt changed - syncing dependencies' }
+        else        { Say 'backend' 'installing dependencies (first run only)' }
         Push-Location (Join-Path $Root 'backend')
         try {
-            & $py -m pip install --disable-pip-version-check -r requirements.txt
+            # `| Out-Host`: a PowerShell function returns EVERY uncaptured
+            # pipeline value, so without this pip's progress lines are appended
+            # to the function's return value and the caller's $py becomes an
+            # array — which Start-Process then rejects with a baffling
+            # "Cannot convert System.Object[]" error. Out-Host keeps the
+            # output visible but off the pipeline.
+            & $py -m pip install --disable-pip-version-check -r requirements.txt 2>&1 | Out-Host
         } finally { Pop-Location }
         # Re-probe rather than trusting pip's exit code. A flaky network can
         # leave pip reporting success after retries while a package is still
@@ -268,6 +285,7 @@ To install by hand:
   backend\.venv\Scripts\python.exe -m pip install -r backend\requirements.txt
 "@
         }
+        Set-Content -Path $stamp -Value $reqHash -Encoding ascii
     }
     return $py
 }
@@ -280,7 +298,7 @@ function Initialize-Frontend {
         Say 'frontend' 'installing node_modules (first run only, ~1 min)'
         Push-Location (Join-Path $Root 'frontend')
         try {
-            npm install --no-audit --no-fund
+            npm install --no-audit --no-fund 2>&1 | Out-Host
             if ($LASTEXITCODE -ne 0) { Die "npm install failed." }
         } finally { Pop-Location }
     }
