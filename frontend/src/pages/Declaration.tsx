@@ -28,7 +28,7 @@ export default function Declaration() {
   const catches = (draft?.catches as Record<string, unknown>[] | undefined) ?? []
 
   return (
-    <>
+    <div className="declaration-layout">
       <div className="card">
         <h2>{t('decl.title')}</h2>
         <p className="small">{t('decl.subtitle')}</p>
@@ -45,38 +45,46 @@ export default function Declaration() {
         {prepareMut.isError && <p className="banner danger">{t('common.error')}</p>}
       </div>
 
-      {draft && (
-        <div className="card">
-          <h3>{String(draft.mock_label)}</h3>
-          {catches.length === 0 && <p className="small">{t('history.empty')}</p>}
-          {catches.map((c, i) => (
-            <div className="list-row" key={i}>
-              <div><strong>{String(c.species_id)}</strong> × {String(c.count)}
-                <div className="sub">{String(c.capture_date)}{c.measured_length_cm ? ` · ${c.measured_length_cm} cm` : ''}</div>
-              </div>
-              <span className={`legal-${String(c.legal_status)}`}>{String(c.legal_status)}</span>
-            </div>
-          ))}
-          <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.7rem', flexWrap: 'wrap' }}>
-            <a className="primary" style={{ flex: 1 }}
-              href={`/api/declarations/${String(draft.declaration_id)}/pdf`} target="_blank" rel="noreferrer">
-              {t('decl.pdf')}
-            </a>
-            <button className="secondary" style={{ flex: 1 }} disabled={submitMut.isPending}
-              onClick={() => submitMut.mutate()}>
-              {t('decl.submitMock')}
-            </button>
+      <div className="declaration-preview">
+        {!draft && !receipt && (
+          <div className="card declaration-empty">
+            <p className="small">{t('decl.subtitle')}</p>
           </div>
-        </div>
-      )}
+        )}
 
-      {receipt && (
-        <div className="card">
-          <h3>{t('decl.receipt')}</h3>
-          <p className="mono" style={{ fontSize: '1.2rem' }}>{String(receipt.mock_receipt_id)}</p>
-          <p className="banner mockline">{String(receipt.notice)}</p>
-        </div>
-      )}
-    </>
+        {draft && (
+          <div className="card">
+            <h3>{String(draft.mock_label)}</h3>
+            {catches.length === 0 && <p className="small">{t('history.empty')}</p>}
+            {catches.map((c, i) => (
+              <div className="list-row" key={i}>
+                <div><strong>{String(c.species_id)}</strong> × {String(c.count)}
+                  <div className="sub">{String(c.capture_date)}{c.measured_length_cm ? ` · ${c.measured_length_cm} cm` : ''}</div>
+                </div>
+                <span className={`legal-${String(c.legal_status)}`}>{String(c.legal_status)}</span>
+              </div>
+            ))}
+            <div style={{ display: 'flex', gap: 'var(--space-3)', marginTop: 'var(--space-4)', flexWrap: 'wrap' }}>
+              <a className="primary" style={{ flex: 1 }}
+                href={`/api/declarations/${String(draft.declaration_id)}/pdf`} target="_blank" rel="noreferrer">
+                {t('decl.pdf')}
+              </a>
+              <button className="secondary" style={{ flex: 1 }} disabled={submitMut.isPending}
+                onClick={() => submitMut.mutate()}>
+                {t('decl.submitMock')}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {receipt && (
+          <div className="card">
+            <h3>{t('decl.receipt')}</h3>
+            <p className="mono" style={{ fontSize: '1.2rem' }}>{String(receipt.mock_receipt_id)}</p>
+            <p className="banner mockline">{String(receipt.notice)}</p>
+          </div>
+        )}
+      </div>
+    </div>
   )
 }
