@@ -1,9 +1,10 @@
 # Gemma 4 Hosted Capability Matrix — `gemma-4-26b-a4b-it`
 
-**Consolidation only — zero new API calls.** Every row cites where the number was measured;
-nothing here is asserted from memory or vendor docs alone. This is Task 1b's capability
-matrix assembled from evidence that already exists in this repository. Anything not
-measured says so explicitly.
+**Consolidation, plus exactly one live call.** Sections 1–5 are consolidation only — zero new
+API calls, every row citing where the number was measured, nothing asserted from memory or
+vendor docs alone. **§6 is the one exception**: a single pre-approved `client.models.list()`
+enumeration run on 30 Jul 2026 to close the last open item of Task 1b step 1. Anything still
+not measured says so explicitly (§7).
 
 - SDK: `google-genai` 2.14.0 · API path: `client.models.generate_content`
 - Primary evidence: `docs/AI_PRODUCTION_CONFIG_DECISION.md` (110 instrumented requests,
@@ -67,16 +68,59 @@ times** — the Step-1 "unreliable enums" finding was an artifact of a thinner s
 Image sizing: **1280 px longest side is kept** — reducing to 768 px measured *slower*
 (6 483 vs 6 281/5 250 ms) with no accuracy gain; 1024 vs 1280 inconclusive (§2).
 
-## 6. Explicitly NOT measured (each would need live calls — ask before spending quota)
+## 6. Model availability for this key — ENUMERATED (30 Jul 2026)
 
-1. **Model-list enumeration for this key** (`client.models.list()`) — the brief's 1b step 1. One cheap call; never run.
-2. Other Gemma 4 variants (E2B/E4B/12B/31B) via the hosted API with this key.
-3. Audio input on any hosted variant.
-4. Long-context behaviour (family docs claim 128K on edge variants; our prompts are ≤ a few thousand tokens).
+Task 1b step 1, finally run: one pre-approved `client.models.list()` call, `google-genai`
+2.14.0, **1 399 ms**, **56 models** returned. The brief's instruction was *discover, don't
+assume* — this is the discovery, and it corrects two things this document previously had to
+leave open.
+
+**Gemma models exposed to this key: exactly two.**
+
+| Model ID | Input tokens | Output tokens | Supported actions |
+|---|---|---|---|
+| `models/gemma-4-26b-a4b-it` | **262 144** | 32 768 | `generateContent`, `countTokens` |
+| `models/gemma-4-31b-it` | **262 144** | 32 768 | `generateContent`, `countTokens` |
+
+Full list by family: gemini 40 · gemma 2 · veo 3 · imagen 3 · deep 3 · lyria 2 · nano 1 ·
+antigravity 1 · aqa 1.
+
+Three findings that matter:
+
+1. **No hosted E2B or E4B variant exists on this key.** Nothing matching `e2b`, `e4b`, `nano`
+   or `edge` is in the Gemma family here (the one `nano-*` hit is `nano-banana-pro-preview`,
+   an image model). The edge tier was therefore *never* reachable through the hosted API — it
+   could only ever have been served locally, which is exactly what §8 measured and rejected.
+   This retires the "try E2B/E4B hosted" idea rather than leaving it as an untried option.
+2. **`gemma-4-31b-it` is available and was never evaluated.** It is the only untried Gemma
+   upgrade path on this key. Its behaviour is **not measured** — see §7.
+3. **Context window is 262 144 tokens (256K) input**, not the 128K that family documentation
+   suggested for edge variants. Production prompts are ≤ a few thousand tokens, so the
+   headroom is ~2 orders of magnitude. This is a declared limit from the API, not a
+   behavioural measurement: quality at depth is untested (§7).
+
+Neither model advertises any action beyond `generateContent` / `countTokens` — no batch,
+cache, or embedding action is declared for Gemma on this key.
+
+```bash
+# reproduce (one call, ~1.4 s, negligible quota):
+#   python -c "import google.genai as g,os;print([m.name for m in g.Client(api_key=os.environ['GEMINI_API_KEY']).models.list() if 'gemma' in m.name])"
+```
+
+## 7. Explicitly NOT measured (each would need live calls — ask before spending quota)
+
+1. ~~Model-list enumeration for this key~~ — **done, §6.**
+2. **`gemma-4-31b-it`** — confirmed available (§6), behaviour never probed: no accuracy,
+   latency, structured-output or function-calling numbers. The one open upgrade path.
+3. Audio input on either hosted Gemma variant.
+4. Long-context *behaviour*. The 256K input limit is now a known declared figure (§6), but
+   quality at depth is untested — and per §8 the edge tier is a closed negative result, so
+   the "what fits on-device" question is moot. See §9.
 5. Interactions API behaviour for this model.
-6. Batch/caching endpoints.
+6. Batch/caching endpoints — not declared for Gemma on this key (§6), so likely unavailable
+   rather than merely unprobed.
 
-## 7. Re-verification one-liners (each spends quota — get approval first)
+## 8. Re-verification one-liners (each spends quota — get approval first)
 
 ```bash
 # live gates (10 checks):        GEMINI_API_KEY=... backend/.venv/bin/python backend/scripts/run_gemma_gates.py
@@ -85,7 +129,7 @@ Image sizing: **1280 px longest side is kept** — reducing to 768 px measured *
 # real-photo benchmark (52):     backend/.venv/bin/python evaluation/species_benchmark.py
 ```
 
-## 8. Local tier — Gemma 4 E2B via Ollama: measured negative result (30 Jul 2026)
+## 9. Local tier — Gemma 4 E2B via Ollama: measured negative result (30 Jul 2026)
 
 **Setup.** Ollama 0.32.5 (user-space install), WSL2 Ubuntu, RTX 3060 Laptop 6 GB VRAM, 3.6 GB free system RAM. Model `gemma4:e2b-it-q4_K_M` — **7.2 GB on disk vs ~1.3 GB in the planning brief**; `nvidia-smi` showed 2 829 / 6 144 MiB resident while serving, i.e. partial CPU offload from the start.
 
@@ -98,4 +142,4 @@ Image sizing: **1280 px longest side is kept** — reducing to 768 px measured *
 
 **Decision.** Hosted Gemma 4 26B A4B remains the default provider — a conclusion the AI workstream has since reached independently on the fine-tune path too: the targeted E2B QLoRA v2 adapter fixed `make_declaration` recall (0.455 → 1.000) but FAILED its pre-registered tool-accuracy gates and was REJECTED (docs/AI_STEP4_FINAL_REPORT.md, docs/AI_FINAL_HANDOFF.md). The offline story is carried by the browser text tier (offline assistant). `gemma_local.py` remains the honest `LocalUnavailable` stub from Task 1a. Future paths, in preference order: the `e2b-it-qat` quantisation-aware build, a fine-tune on Mauritian species imagery, or Jetson-class edge hardware.
 
-Still unmeasured from this session: model-list enumeration for this key (DNS starved during the model pull; not retried — see §6.1).
+**Follow-up, resolved.** Model-list enumeration — deferred from this session because DNS was starved during the model pull — has since been run: see §6. It confirms the conclusion above from a second direction, because **no hosted E2B/E4B variant is exposed to this key at all**. Local serving was the only way to reach the edge tier, and it failed on accuracy. The remaining untried Gemma path on this key is `gemma-4-31b-it` (§7.2), which is a *larger* hosted model — not an edge one.
