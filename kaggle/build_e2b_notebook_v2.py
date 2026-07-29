@@ -1067,7 +1067,7 @@ metrics = {
     "tuned_internal": tuned_summary,
     "untuned_external": untuned_ext_summary,
     "tuned_external": tuned_ext_summary,
-    "acceptance_gate": GATE,
+    "acceptance_gate": GATE_A,
 }
 metrics["dataset_version"] = "v2"
 metrics["test_sets"] = {"internal_v1_34": len(test_rows),
@@ -1127,7 +1127,10 @@ card = f\"\"\"# Model card — Lamer Konekte E2B router adapter
 - Dataset: Lamer Konekte AI Instructions v1 — {len(train_rows)}/{len(val_rows)}/{len(test_rows)} train/val/test,
   split by semantic family; 32-case Morisyen benchmark held out as immutable external test
 - Training ran: {train_result is not None}
-- Acceptance gate: {GATE.get("ACCEPTED")}
+- Gate A (full router): {GATE_A.get("ACCEPTED")}
+- Gate B (hybrid): {GATE_B.get("ACCEPTED")}
+- Decision: {DECISION}
+- Fast-path intents: {FAST_PATH_INTENTS}
 
 ## Intended use
 Optional specialised router for Morisyen intent classification, function selection and

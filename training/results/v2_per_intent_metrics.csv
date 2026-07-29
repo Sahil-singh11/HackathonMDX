@@ -1,0 +1,6 @@
+intent,support,tp,precision,recall,f1
+identify_catch,7,5,1.0,0.7143,0.8333
+weather_query,6,4,0.6667,0.6667,0.6667
+log_catch,8,7,0.875,0.875,0.875
+make_declaration,11,11,1.0,1.0,1.0
+other,2,2,0.5,1.0,0.6667
