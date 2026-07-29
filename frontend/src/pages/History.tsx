@@ -24,14 +24,18 @@ export default function History() {
             <div className="value">{catches.length}</div>
           </div>
         </div>
-        {catches.length === 0 && <p className="small" style={{ marginTop: '0.7rem' }}>{t('history.empty')}</p>}
+      </div>
+      {catches.length === 0 && <p className="small">{t('history.empty')}</p>}
+      <div className="catch-grid">
         {catches.map((c) => (
-          <div className="list-row" key={String(c.id)}>
-            <div>
-              <strong>{String(c.species_id)}</strong> × {String(c.count)}
-              <div className="sub">{String(c.capture_date)}{c.measured_length_cm ? ` · ${c.measured_length_cm} cm` : ''}{c.fishing_area ? ` · ${c.fishing_area}` : ''}</div>
+          <div className="card catch-card" key={String(c.id)}>
+            <div className="list-row" style={{ border: 0, padding: 0 }}>
+              <div>
+                <strong>{String(c.species_id)}</strong> × {String(c.count)}
+                <div className="sub">{String(c.capture_date)}{c.measured_length_cm ? ` · ${c.measured_length_cm} cm` : ''}{c.fishing_area ? ` · ${c.fishing_area}` : ''}</div>
+              </div>
+              <span className={`legal-${String(c.legal_status)}`}>{t(`catch.rule.${String(c.legal_status)}`)}</span>
             </div>
-            <span className={`legal-${String(c.legal_status)}`}>{t(`catch.rule.${String(c.legal_status)}`)}</span>
           </div>
         ))}
       </div>

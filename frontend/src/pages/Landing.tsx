@@ -17,18 +17,18 @@ export default function Landing() {
           <span className="tagline">{t('app.tagline')}</span>
         </div>
       </header>
-      <main>
+      <main className="narrow">
         <div className="card">
           <h2>{t('landing.welcome')}</h2>
           <p>{t('landing.intro')}</p>
           <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
             <legend className="small" style={{ fontWeight: 700 }}>{t('landing.chooseLanguage')}</legend>
-            <div style={{ display: 'flex', gap: '0.6rem', margin: '0.5rem 0' }}>
+            <div style={{ display: 'flex', gap: 'var(--space-3)', margin: 'var(--space-2) 0' }}>
               <button className="secondary" aria-pressed={language === 'mfe'}
-                style={language === 'mfe' ? { borderColor: 'var(--coral)', background: '#fff4f2' } : undefined}
+                style={language === 'mfe' ? { borderColor: 'var(--primary-coral)', color: 'var(--primary-coral)', background: 'var(--surface-coral-tint)' } : undefined}
                 onClick={() => setLanguage('mfe')}>Kreol Morisien</button>
               <button className="secondary" aria-pressed={language === 'en'}
-                style={language === 'en' ? { borderColor: 'var(--coral)', background: '#fff4f2' } : undefined}
+                style={language === 'en' ? { borderColor: 'var(--primary-coral)', color: 'var(--primary-coral)', background: 'var(--surface-coral-tint)' } : undefined}
                 onClick={() => setLanguage('en')}>English</button>
             </div>
           </fieldset>
