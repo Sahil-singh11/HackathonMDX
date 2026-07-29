@@ -42,6 +42,26 @@ class DocumentNotFound(Exception):
     pass
 
 
+# Finance-scoped instruction (decision log 17, same fix as transport's
+# brief.SYSTEM_INSTRUCTION). Without this, chat()'s default is the fisheries
+# catch-assistant prompt, which scopes the model to fisher assistance — a
+# live call analysing the "partial" sample document returned no parseable
+# JSON three times in a row under that default, even after strengthening
+# _build_prompt()'s own JSON-only instruction. Root cause: a document-
+# extraction task under a fisheries-scoped system prompt, not a document the
+# model genuinely can't read. Passing this replaces (never appends to) the
+# provider's default per the frozen chat() contract in app/inference/base.py.
+SYSTEM_INSTRUCTION = (
+    "You are a document-extraction assistant for financial disclosure analysis. "
+    "You read bond and ESG framework documents and extract stated facts. You are not a "
+    "fisheries or catch-identification assistant, and this task has nothing to do with fishing. "
+    "Always respond in exactly the JSON format the user's instructions request — never refuse, "
+    "never add prose or markdown outside the JSON, and never decide or state whether a document "
+    "or project is eligible, compliant, or acceptable; you only extract what the text says, "
+    "verbatim where quoting."
+)
+
+
 def _build_prompt(pages: list[str]) -> str:
     numbered = "\n\n".join(f"--- PAGE {i + 1} ---\n{text}" for i, text in enumerate(pages))
     return (
@@ -121,7 +141,7 @@ class BlueFinancePillar:
         label = bundle.payload.get("label", "document")
 
         provider = inference_registry.get_provider(inference_registry.resolve_name())
-        raw_response = provider.chat(_build_prompt(pages), language="en")
+        raw_response = provider.chat(_build_prompt(pages), language="en", system_instruction=SYSTEM_INSTRUCTION)
 
         fields = fields_from_model_json(raw_response, pages)
         findings = check_criteria(fields, load_criteria())
