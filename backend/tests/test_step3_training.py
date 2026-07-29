@@ -344,3 +344,73 @@ def test_validation_reports_exist_and_passed():
         path = results / name
         assert path.exists(), f"{name} missing — run the validators"
         assert json.loads(path.read_text(encoding="utf-8"))["passed"] is True, name
+
+
+# --------------------------------------------------------------- fine-tuned router provider
+
+def test_router_provider_is_not_available_without_an_accepted_adapter():
+    """It must refuse, not silently degrade, when no accepted adapter exists."""
+    from app.providers import finetuned_router as fr
+    status = fr.readiness()
+    assert isinstance(status.available, bool)
+    assert status.reason, "unavailability must always carry a reason"
+    if not status.available:
+        assert status.real_inference is False
+
+
+def test_router_provider_never_claims_out_of_scope_responsibility():
+    from app.providers import finetuned_router as fr
+    d = fr.readiness().as_dict()
+    for forbidden in ("authoritative_species_identification", "legal_decisions",
+                      "verified_measurement", "marine_safety", "official_ministry_submission"):
+        assert forbidden in d["never_responsible_for"]
+    assert set(d["scope"]) == {"intent_classification", "function_selection",
+                               "argument_generation", "offline_routing"}
+
+
+def test_router_route_raises_rather_than_falling_back_silently():
+    from app.providers import finetuned_router as fr
+    with pytest.raises(fr.RouterUnavailable):
+        fr.route("Ki lamer pe fer zordi?")
+
+
+def test_router_uses_the_frozen_compact_prompt_verbatim():
+    from app.providers import finetuned_router as fr
+    msgs = fr.build_messages("Mo finn gagn enn pwason.")
+    assert msgs[0]["role"] == "system"
+    assert msgs[0]["content"] == COMPACT_ROUTER_PROMPT
+    assert "Fisher message:" in msgs[1]["content"]
+
+
+def test_router_validation_rejects_unknown_intent_and_tool():
+    from app.providers import finetuned_router as fr
+    out = fr.validate_route({"intent": "species_identification", "tool": "unrestricted_tool",
+                             "arguments": {"x": 1}})
+    assert out["intent"] == "other"
+    assert out["tool"] is None
+    assert any("intent:" in r for r in out["rejected"])
+    assert any("tool:" in r for r in out["rejected"])
+
+
+def test_router_validation_accepts_a_legitimate_route():
+    from app.providers import finetuned_router as fr
+    out = fr.validate_route({"intent": "weather_query", "tool": "get_marine_conditions",
+                             "arguments": {"location_name": "Tamarin"}})
+    assert out["intent"] == "weather_query"
+    assert out["tool"] == "get_marine_conditions"
+    assert out["rejected"] == []
+
+
+def test_router_validation_handles_unparseable_output_safely():
+    from app.providers import finetuned_router as fr
+    out = fr.validate_route(None)
+    assert out["intent"] == "other"
+    assert out["tool"] is None
+    assert out["needs_more_information"] is True
+
+
+def test_router_is_not_a_default_provider_mode():
+    """The dispatcher must not route to it implicitly."""
+    from app.schemas.analysis import ProviderMode
+    import typing
+    assert set(typing.get_args(ProviderMode)) == {"hosted", "local", "mock"}

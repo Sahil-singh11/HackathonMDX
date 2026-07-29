@@ -519,7 +519,7 @@ else:
 md("## 9. Attach LoRA adapters (target modules discovered, not hardcoded)")
 
 code("""
-from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
+from peft import LoraConfig, get_peft_model
 
 # Discover the real projection module names for THIS architecture rather than assuming
 # Gemma 2/3 naming.
@@ -539,10 +539,30 @@ print("LoRA target modules:", TARGET_MODULES)
 """)
 
 code("""
-if USE_4BIT:
-    model = prepare_model_for_kbit_training(model, use_gradient_checkpointing=True)
+# NOT prepare_model_for_kbit_training(): it upcasts every non-4bit fp16 parameter to
+# fp32, which for this checkpoint's large embedding / per-layer tables is ~8.75 GiB and
+# OOMs a 14.6 GiB T4. We take what that helper gives us, minus the ruinous cast:
+#   - gradient checkpointing
+#   - inputs requiring grad (needed for checkpointing with a frozen base)
+#   - fp32 for NORM layers only (tiny, and the part that matters for stability)
+import gc as _gc
+
+model.config.use_cache = False
 model.gradient_checkpointing_enable()
 model.enable_input_require_grads()
+
+n_norm = 0
+for _name, _module in model.named_modules():
+    if "norm" in _name.lower() and hasattr(_module, "weight") and _module.weight is not None:
+        if _module.weight.dtype in (torch.float16, torch.bfloat16):
+            _module.to(torch.float32)
+            n_norm += 1
+for _p in model.parameters():
+    _p.requires_grad = False       # base stays frozen; LoRA adds the trainable params
+
+torch.cuda.empty_cache(); _gc.collect()
+print(f"upcast {n_norm} norm modules to fp32 (embeddings left in {COMPUTE_DTYPE})")
+print("VRAM after prep: %.2f GiB allocated" % (torch.cuda.memory_allocated() / 1024**3))
 
 lora = LoraConfig(
     r=16, lora_alpha=32, lora_dropout=0.05, bias="none",
@@ -595,6 +615,7 @@ print("train", len(train_ds), "val", len(val_ds))
 code("""
 torch.cuda.empty_cache(); gc.collect()
 torch.cuda.reset_peak_memory_stats()
+print("VRAM before smoke test: %.2f GiB allocated" % (torch.cuda.memory_allocated() / 1024**3))
 
 SMOKE_OK = False
 try:
