@@ -1,0 +1,260 @@
+/* ============================================================================
+   UI PRIMITIVES.  FROZEN after Phase 0 — read-only for everyone.
+   Need a variant? Wrap the primitive in your own lane folder. Never edit here.
+
+   Every rule is scoped under .lk-* class names and consumes ONLY semantic
+   tokens from styles/tokens.css. No raw palette values, no legacy tokens, no
+   hex literals — so all three themes work for free.
+   ============================================================================ */
+
+/* ------------------------------------------------------------------ Button */
+.lk-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
+  min-height: var(--touch-min); padding: var(--sp-3) var(--sp-5);
+  border-radius: var(--r-card); border: 2px solid transparent;
+  font-family: var(--font-body); font-size: calc(var(--fs-base) * var(--text-scale));
+  font-weight: 600; line-height: 1.2; text-align: center; text-decoration: none;
+  cursor: pointer; transition: background var(--motion-fast) var(--ease-out),
+    border-color var(--motion-fast) var(--ease-out), transform var(--motion-fast) var(--ease-out);
+}
+.lk-btn:disabled, .lk-btn[aria-disabled='true'] { opacity: 0.5; cursor: not-allowed; }
+.lk-btn:not(:disabled):active { transform: scale(0.98); }
+.lk-btn--block { width: 100%; }
+
+.lk-btn--primary { background: var(--action); color: var(--action-contrast); }
+.lk-btn--primary:not(:disabled):hover { background: var(--action-hover); }
+
+.lk-btn--secondary { background: transparent; color: var(--accent); border-color: var(--accent); }
+.lk-btn--secondary:not(:disabled):hover { background: var(--accent-quiet); }
+
+.lk-btn--ghost { background: transparent; color: var(--text); padding-inline: var(--sp-3); }
+.lk-btn--ghost:not(:disabled):hover { background: var(--surface-sunken); }
+
+.lk-btn--danger { background: var(--danger); color: var(--text-invert); }
+.lk-btn--danger:not(:disabled):hover { filter: brightness(0.92); }
+
+/* -------------------------------------------------------------------- Card */
+.lk-card {
+  background: var(--surface); color: var(--text);
+  border: 1px solid var(--border); border-radius: var(--r-card);
+  box-shadow: var(--elev-1); padding: var(--sp-4);
+}
+.lk-card--raised { background: var(--surface-raised); box-shadow: var(--elev-2); }
+.lk-card--flush { padding: 0; overflow: hidden; }
+.lk-card__header { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); margin-bottom: var(--sp-3); }
+.lk-card__title { font-family: var(--font-display); font-size: calc(var(--fs-md) * var(--text-scale)); line-height: var(--lh-tight); letter-spacing: var(--tracking-display); margin: 0; }
+
+/* ---------------------------------------------------------------- StatTile */
+.lk-stat { display: flex; flex-direction: column; gap: var(--sp-1); min-width: 0; }
+.lk-stat__label { font-size: calc(var(--fs-sm) * var(--text-scale)); color: var(--text-muted); font-weight: 500; }
+.lk-stat__value { font-family: var(--font-data); font-size: calc(var(--fs-md) * var(--text-scale)); font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+.lk-stat__hint { font-size: calc(var(--fs-sm) * var(--text-scale)); color: var(--text-muted); }
+.lk-stat--emphasis .lk-stat__value { font-size: calc(var(--fs-lg) * var(--text-scale)); color: var(--accent); }
+
+/* ------------------------------------------------------------------- Badge */
+.lk-badge {
+  display: inline-flex; align-items: center; gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-3); border-radius: var(--r-chip);
+  font-size: calc(var(--fs-sm) * var(--text-scale)); font-weight: 600; line-height: 1.3;
+  border: 1px solid transparent; white-space: nowrap;
+}
+.lk-badge--neutral { background: var(--surface-sunken); color: var(--text); border-color: var(--border); }
+.lk-badge--accent  { background: var(--accent-quiet); color: var(--accent); border-color: var(--accent); }
+.lk-badge--success { background: var(--success-quiet); color: var(--success); border-color: var(--success); }
+.lk-badge--warning { background: var(--warning-quiet); color: var(--warning); border-color: var(--warning); }
+.lk-badge--danger  { background: var(--danger-quiet);  color: var(--danger);  border-color: var(--danger); }
+
+/* ----------------------------------------------------------------- Divider */
+.lk-divider { border: 0; border-top: 1px solid var(--border); margin: var(--sp-4) 0; }
+.lk-divider--tight { margin: var(--sp-2) 0; }
+
+/* --------------------------------------------------- FormField / controls */
+.lk-field { display: flex; flex-direction: column; gap: var(--sp-2); }
+.lk-field__label { font-size: calc(var(--fs-base) * var(--text-scale)); font-weight: 600; color: var(--text); }
+.lk-field__req { color: var(--danger); margin-left: var(--sp-1); }
+.lk-field__hint { font-size: calc(var(--fs-sm) * var(--text-scale)); color: var(--text-muted); }
+.lk-field__error { font-size: calc(var(--fs-sm) * var(--text-scale)); color: var(--danger); font-weight: 600; display: flex; align-items: center; gap: var(--sp-1); }
+
+.lk-input, .lk-textarea, .lk-select {
+  width: 100%; min-height: var(--touch-min); padding: var(--sp-3);
+  background: var(--surface); color: var(--text);
+  border: 2px solid var(--border-strong); border-radius: var(--r-input);
+  font-family: var(--font-body); font-size: calc(var(--fs-base) * var(--text-scale));
+  transition: border-color var(--motion-fast) var(--ease-out);
+}
+.lk-input::placeholder, .lk-textarea::placeholder { color: var(--text-muted); opacity: 1; }
+.lk-input:hover, .lk-textarea:hover, .lk-select:hover { border-color: var(--accent); }
+.lk-input[aria-invalid='true'], .lk-textarea[aria-invalid='true'], .lk-select[aria-invalid='true'] { border-color: var(--danger); }
+.lk-input:disabled, .lk-textarea:disabled, .lk-select:disabled { opacity: 0.5; cursor: not-allowed; }
+.lk-textarea { min-height: calc(var(--touch-min) * 1.6); resize: vertical; line-height: var(--lh-body); }
+.lk-select { appearance: none; padding-right: var(--sp-7); cursor: pointer; }
+.lk-select-wrap { position: relative; display: block; }
+.lk-select-wrap__icon { position: absolute; right: var(--sp-3); top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--text-muted); }
+
+/* Data-entry fields that hold identifiers/measurements read the mono role. */
+.lk-input--data { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+
+/* -------------------------------------------------------------------- Chip */
+.lk-chip {
+  display: inline-flex; align-items: center; gap: var(--sp-2);
+  min-height: var(--touch-min); padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--r-chip); border: 2px solid var(--border-strong);
+  background: var(--surface); color: var(--text);
+  font-family: var(--font-body); font-size: calc(var(--fs-base) * var(--text-scale)); font-weight: 500;
+  cursor: pointer; transition: background var(--motion-fast) var(--ease-out), border-color var(--motion-fast) var(--ease-out);
+}
+.lk-chip:hover { border-color: var(--accent); }
+/* Selected state carries BOTH colour and a check icon — colour is never the
+   only signal (a11y floor). */
+.lk-chip[aria-pressed='true'], .lk-chip[data-selected='true'] {
+  background: var(--accent-quiet); border-color: var(--accent); color: var(--accent); font-weight: 600;
+}
+.lk-chip:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* --------------------------------------------------------- Checkbox / Radio */
+.lk-choice {
+  display: flex; align-items: flex-start; gap: var(--sp-3);
+  min-height: var(--touch-min); padding: var(--sp-2) 0; cursor: pointer;
+}
+.lk-choice input { width: 24px; height: 24px; margin: 0; flex-shrink: 0; accent-color: var(--accent); cursor: pointer; }
+.lk-choice__text { display: flex; flex-direction: column; gap: 2px; }
+.lk-choice__label { font-size: calc(var(--fs-base) * var(--text-scale)); color: var(--text); }
+.lk-choice__hint { font-size: calc(var(--fs-sm) * var(--text-scale)); color: var(--text-muted); }
+.lk-choice input:disabled ~ .lk-choice__text { opacity: 0.5; }
+
+/* ------------------------------------------------------------ Sheet / Modal */
+.lk-sheet-backdrop {
+  position: fixed; inset: 0; z-index: 60;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex; align-items: flex-end; justify-content: center;
+  animation: lk-fade var(--motion-base) var(--ease-out);
+}
+@media (min-width: 768px) { .lk-sheet-backdrop { align-items: center; } }
+.lk-sheet {
+  background: var(--surface); color: var(--text);
+  width: 100%; max-width: 640px; max-height: 90vh; overflow-y: auto;
+  border-radius: var(--r-card) var(--r-card) 0 0;
+  padding: var(--sp-5);
+  padding-bottom: calc(var(--sp-5) + env(safe-area-inset-bottom));
+  box-shadow: var(--elev-3);
+  animation: lk-slide-up var(--motion-base) var(--ease-out);
+}
+@media (min-width: 768px) { .lk-sheet { border-radius: var(--r-card); padding-bottom: var(--sp-5); } }
+.lk-sheet__header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-3); margin-bottom: var(--sp-4); }
+.lk-sheet__title { font-family: var(--font-display); font-size: calc(var(--fs-md) * var(--text-scale)); line-height: var(--lh-tight); margin: 0; }
+@keyframes lk-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes lk-slide-up { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+/* ------------------------------------------------------------------- Toast */
+.lk-toast-region {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(var(--sp-5) + env(safe-area-inset-bottom));
+  z-index: 70; display: flex; flex-direction: column; gap: var(--sp-2);
+  width: calc(100% - var(--sp-8)); max-width: 480px; pointer-events: none;
+}
+.lk-toast {
+  pointer-events: auto; display: flex; align-items: flex-start; gap: var(--sp-3);
+  background: var(--surface); color: var(--text);
+  border: 2px solid var(--border); border-left-width: 6px; border-radius: var(--r-card);
+  box-shadow: var(--elev-3); padding: var(--sp-3) var(--sp-4);
+  animation: lk-slide-up var(--motion-base) var(--ease-out);
+}
+.lk-toast--success { border-left-color: var(--success); }
+.lk-toast--warning { border-left-color: var(--warning); }
+.lk-toast--danger  { border-left-color: var(--danger); }
+.lk-toast--info    { border-left-color: var(--accent); }
+.lk-toast__body { flex: 1; min-width: 0; font-size: calc(var(--fs-base) * var(--text-scale)); }
+
+/* ----------------------------------------------------------------- Tooltip */
+.lk-tooltip-wrap { position: relative; display: inline-flex; }
+.lk-tooltip {
+  position: absolute; bottom: calc(100% + var(--sp-2)); left: 50%; transform: translateX(-50%);
+  z-index: 50; white-space: nowrap;
+  background: var(--text); color: var(--surface);
+  padding: var(--sp-1) var(--sp-3); border-radius: var(--r-input);
+  font-size: calc(var(--fs-sm) * var(--text-scale));
+  box-shadow: var(--elev-2);
+}
+
+/* ---------------------------------------------------------------- Skeleton */
+.lk-skeleton {
+  background: var(--surface-sunken); border-radius: var(--r-input);
+  position: relative; overflow: hidden;
+}
+.lk-skeleton::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, var(--surface), transparent);
+  animation: lk-shimmer 1.4s infinite;
+}
+@keyframes lk-shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+.lk-skeleton--text { height: 1em; margin: 0.25em 0; }
+
+/* -------------------------------------------------------------- EmptyState */
+.lk-empty {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  gap: var(--sp-3); padding: var(--sp-7) var(--sp-4);
+}
+.lk-empty__icon { color: var(--accent); }
+.lk-empty__title { font-family: var(--font-display); font-size: calc(var(--fs-md) * var(--text-scale)); margin: 0; }
+.lk-empty__body { color: var(--text-muted); max-width: 42ch; margin: 0; }
+
+/* ----------------------------------------------------------------- Spinner */
+.lk-spinner {
+  width: 1.25em; height: 1.25em; border-radius: 50%;
+  border: 2px solid var(--border); border-top-color: var(--accent);
+  animation: lk-spin 700ms linear infinite; flex-shrink: 0;
+}
+@keyframes lk-spin { to { transform: rotate(360deg); } }
+
+/* ---------------------------------------------------------- ProgressStages */
+.lk-stages { display: flex; flex-direction: column; gap: var(--sp-2); }
+.lk-stage { display: flex; align-items: center; gap: var(--sp-3); font-size: calc(var(--fs-base) * var(--text-scale)); color: var(--text-muted); }
+.lk-stage__dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--border-strong); flex-shrink: 0; }
+.lk-stage--active { color: var(--accent); font-weight: 600; }
+.lk-stage--active .lk-stage__dot { background: var(--accent); border-color: var(--accent); }
+.lk-stage--done { color: var(--success); }
+.lk-stage--done .lk-stage__dot { background: var(--success); border-color: var(--success); }
+
+/* ------------------------------------------------------------------- Table */
+.lk-table-wrap { width: 100%; overflow-x: auto; }
+.lk-table { width: 100%; border-collapse: collapse; font-size: calc(var(--fs-base) * var(--text-scale)); }
+.lk-table th, .lk-table td { text-align: left; padding: var(--sp-3); border-bottom: 1px solid var(--border); vertical-align: top; }
+.lk-table th { color: var(--text-muted); font-weight: 600; font-size: calc(var(--fs-sm) * var(--text-scale)); white-space: nowrap; }
+.lk-table td[data-role='data'], .lk-table td.lk-data { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+.lk-table__sort {
+  display: inline-flex; align-items: center; gap: var(--sp-1);
+  background: none; border: 0; padding: var(--sp-1); margin: calc(var(--sp-1) * -1);
+  color: inherit; font: inherit; font-weight: 600; cursor: pointer; border-radius: var(--r-input);
+}
+.lk-table__sort:hover { color: var(--accent); }
+.lk-table tbody tr:hover { background: var(--surface-sunken); }
+
+/* Under 768px the table becomes cards. Each cell exposes its header via a
+   data-label attribute so the card view stays readable. */
+@media (max-width: 767px) {
+  .lk-table--cards thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .lk-table--cards tr {
+    display: block; margin-bottom: var(--sp-3); padding: var(--sp-3);
+    border: 1px solid var(--border); border-radius: var(--r-card); background: var(--surface);
+  }
+  .lk-table--cards td { display: flex; justify-content: space-between; gap: var(--sp-3); border: 0; padding: var(--sp-2) 0; }
+  .lk-table--cards td::before {
+    content: attr(data-label); font-weight: 600; color: var(--text-muted);
+    font-size: calc(var(--fs-sm) * var(--text-scale)); flex-shrink: 0;
+  }
+}
+
+/* -------------------------------------------------------------------- Tabs */
+.lk-tabs { display: flex; gap: var(--sp-1); border-bottom: 2px solid var(--border); overflow-x: auto; }
+.lk-tab {
+  min-height: var(--touch-min); padding: var(--sp-3) var(--sp-4);
+  background: none; border: 0; border-bottom: 3px solid transparent; margin-bottom: -2px;
+  color: var(--text-muted); font-family: var(--font-body);
+  font-size: calc(var(--fs-base) * var(--text-scale)); font-weight: 600; cursor: pointer; white-space: nowrap;
+}
+.lk-tab:hover { color: var(--text); }
+.lk-tab[aria-selected='true'] { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* -------------------------------------------------------------- Pagination */
+.lk-pagination { display: flex; align-items: center; justify-content: center; gap: var(--sp-2); flex-wrap: wrap; }
+.lk-pagination__status { font-size: calc(var(--fs-sm) * var(--text-scale)); color: var(--text-muted); font-family: var(--font-data); }

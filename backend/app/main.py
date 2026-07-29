@@ -7,6 +7,7 @@ from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from sqlmodel import Session
 
 from app.api.routes import router
@@ -61,7 +62,43 @@ def create_app() -> FastAPI:
 
     dist = Path(__file__).resolve().parents[2] / "frontend" / "dist"
     if dist.exists():
-        app.mount("/", StaticFiles(directory=dist, html=True), name="frontend")
+        # SPA fallback. StaticFiles(html=True) serves index.html for "/" but
+        # returns a JSON 404 for any deeper client-side route, so opening
+        # /sea, /authority or /verify/<id> directly used to fail. That is fatal
+        # for /verify/<id> in particular: it is the QR-code landing page, so a
+        # buyer scanning a certificate arrives by deep link every time. (It only
+        # appeared to work in the browser because the service worker served a
+        # cached index.html once the PWA had been visited at least once.)
+        #
+        # Unknown paths therefore fall through to index.html and let the router
+        # decide. Real 404s for missing API routes are unaffected: the API
+        # router is registered above this mount and wins.
+        class SPAStaticFiles(StaticFiles):
+            async def get_response(self, path: str, scope):  # type: ignore[override]
+                try:
+                    return await super().get_response(path, scope)
+                except StarletteHTTPException as exc:
+                    # StaticFiles RAISES 404 rather than returning it, so this
+                    # has to be caught, not status-checked.
+                    if exc.status_code != 404:
+                        raise
+                    # Never mask a missing asset or a missing API route as the
+                    # app shell - a broken image, script or endpoint must still
+                    # report 404, or debugging becomes guesswork. Only
+                    # extensionless non-API paths (i.e. client routes) fall
+                    # through to the SPA.
+                    if "." in Path(path).name:
+                        raise
+                    # NOTE: on Windows StaticFiles hands us OS-native separators
+                    # ("api\\does-not-exist"), so a startswith("api/") check
+                    # passes on Linux and silently fails on every dev machine.
+                    # Compare the first path segment instead.
+                    parts = Path(path).parts
+                    if parts and parts[0].lower() in {"api", "health", "docs", "redoc", "openapi.json"}:
+                        raise
+                    return await super().get_response("index.html", scope)
+
+        app.mount("/", SPAStaticFiles(directory=dist, html=True), name="frontend")
     return app
 
 

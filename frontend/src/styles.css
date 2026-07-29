@@ -117,6 +117,69 @@
   --banner-mockline-text: #c9d2de;
 }
 
+/* Sunlight theme, LEGACY tokens.
+   Added in Phase 0 so the extreme-contrast theme actually works on the pages
+   that shipped before the design system existed. Without this block, choosing
+   Sunlight restyled only the new components and left every existing page in
+   Day colours — a half-working accessibility feature.
+
+   This is purely additive: Day remains the default, so it cannot change how
+   anything renders unless the user explicitly picks Sunlight. */
+[data-theme='sunlight'] {
+  --bg-page-start: #ffffff;
+  --bg-page-end: #ffffff;
+  --surface-card: #ffffff;
+  --surface-card-border: #000000;
+  --surface-stat: #ffffff;
+  --surface-input: #ffffff;
+  --surface-nav: #ffffff;
+  --text-primary: #000000;
+  --text-secondary: #1f1f1f;
+  --text-heading: #000000;
+  --text-label: #000000;
+  --border-subtle: #000000;
+  --shadow-card: none;
+  --shadow-nav: none;
+
+  /* Brand hues darkened only as far as the contrast floor requires. */
+  --primary-navy: #000000;
+  --primary-navy-2: #000000;
+  --accent-teal: #005f6b;
+  --accent-teal-text: #004751;
+  --primary-coral: #c22e14;
+  --primary-coral-light: #c22e14;
+  --surface-mint: #ffffff;
+  --surface-coral-tint: #ffffff;
+  --surface-coral-wash: #ffffff;
+  --ok: #056139;
+  --warn: #6b3f00;
+  --bad: #a3120b;
+
+  --banner-info-bg: #ffffff;
+  --banner-info-border: #000000;
+  --banner-info-text: #000000;
+  --banner-warn-bg: #ffffff;
+  --banner-warn-border: #6b3f00;
+  --banner-warn-text: #000000;
+  --banner-danger-bg: #ffffff;
+  --banner-danger-border: #a3120b;
+  --banner-danger-text: #000000;
+  --banner-mockline-bg: #ffffff;
+  --banner-mockline-border: #000000;
+  --banner-mockline-text: #000000;
+}
+/* Glare kills soft edges: flatten gradients and shadows on legacy surfaces too. */
+[data-theme='sunlight'] .card,
+[data-theme='sunlight'] .stat,
+[data-theme='sunlight'] .bento-card,
+[data-theme='sunlight'] .stat-chip,
+[data-theme='sunlight'] .banner { box-shadow: none; border: 2px solid #000; }
+[data-theme='sunlight'] .hero-banner,
+[data-theme='sunlight'] .bento-feature,
+[data-theme='sunlight'] button.primary,
+[data-theme='sunlight'] a.primary { background-image: none; }
+[data-theme='sunlight'] .hero-banner { background-color: #000; }
+
 * { box-sizing: border-box; }
 html, body, #root { margin: 0; min-height: 100%; }
 body {

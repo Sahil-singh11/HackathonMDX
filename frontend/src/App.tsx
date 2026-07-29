@@ -1,9 +1,34 @@
-import { useQuery } from '@tanstack/react-query'
-import { Anchor, BookOpen, Camera, Home, Waves } from 'lucide-react'
+/**
+ * Router + app root.  FROZEN after Phase 0 — nobody edits this file again.
+ *
+ * Every route is registered here pointing at its final file location, so the
+ * three lanes never have to touch a shared file. If you need a new route, ask
+ * Sahil; do not add it yourself.
+ *
+ * ROUTE MAP
+ *   Sahil    /            Home            (pages/Dashboard)
+ *            /sea         Sea conditions  (pages/Marine)
+ *            /demo        Demo controls
+ *            /privacy     Privacy
+ *            /about       Impact & about
+ *   Dhanesh  /record      Record a catch  (pages/CatchFlow)
+ *            /log         Catch log       (pages/History)
+ *            /queue       Offline queue
+ *   Shirish  /declaration Declaration
+ *            /authority   Authority dashboard      (stub)
+ *            /verify/:id  Certificate verification (stub)
+ *            /proof       Technical proof — check against /verify/:id before
+ *                         building anything new; the two overlap.
+ *
+ * Legacy paths (/marine, /catch, /history) redirect to the new IA names so any
+ * bookmark, QR code or demo script that already exists keeps working.
+ *
+ * Fisher routes render inside <FisherShell> (ambient ocean layer + tab bar).
+ * /authority and /verify render inside <PlainShell>: no fisher chrome and no
+ * ambient animation — they are a working tool and a public proof page.
+ */
 import { useEffect } from 'react'
-import { NavLink, Route, Routes, useLocation } from 'react-router-dom'
-import { api } from './api/client'
-import { useT } from './i18n'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import About from './pages/About'
 import CatchFlow from './pages/CatchFlow'
 import Dashboard from './pages/Dashboard'
@@ -15,13 +40,51 @@ import Marine from './pages/Marine'
 import Privacy from './pages/Privacy'
 import Proof from './pages/Proof'
 import Queue from './pages/Queue'
+import { AuthorityStub, VerifyStub } from './pages/stubs'
+import { FisherShell, PlainShell } from './components/shell'
 import { useAppStore } from './store/app'
 
-export default function App() {
-  const t = useT()
+/**
+ * Form-heavy pages read better in a narrower column than dashboards do, so they
+ * cap at 720px instead of 960px. Route names changed in Phase 0 — keep this list
+ * in sync or those pages silently stretch to full dashboard width.
+ */
+const NARROW_ROUTES = ['/record', '/demo', '/queue', '/privacy', '/about']
+
+/** Fisher-side routes, wrapped in the full shell. */
+function FisherRoutes() {
   const location = useLocation()
-  const { language, setLanguage, onboarded, online, setOnline } = useAppStore()
-  const { data: config } = useQuery({ queryKey: ['config'], queryFn: api.config })
+  const isNarrow = NARROW_ROUTES.includes(location.pathname)
+  return (
+    <FisherShell narrow={isNarrow}>
+      <div key={location.pathname} className="page-transition">
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/sea" element={<Marine />} />
+          <Route path="/record" element={<CatchFlow />} />
+          <Route path="/log" element={<History />} />
+          <Route path="/declaration" element={<Declaration />} />
+          <Route path="/queue" element={<Queue />} />
+          <Route path="/proof" element={<Proof />} />
+          <Route path="/demo" element={<DemoControls />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/about" element={<About />} />
+
+          {/* Legacy paths kept alive so existing links do not 404. */}
+          <Route path="/marine" element={<Navigate to="/sea" replace />} />
+          <Route path="/catch" element={<Navigate to="/record" replace />} />
+          <Route path="/history" element={<Navigate to="/log" replace />} />
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
+    </FisherShell>
+  )
+}
+
+export default function App() {
+  const { onboarded, setOnline } = useAppStore()
+  const location = useLocation()
 
   useEffect(() => {
     const up = () => setOnline(true)
@@ -31,77 +94,25 @@ export default function App() {
     return () => { window.removeEventListener('online', up); window.removeEventListener('offline', down) }
   }, [setOnline])
 
+  // The shore-side surfaces are reachable WITHOUT onboarding: an officer or a
+  // buyer scanning a QR code is not a fisher, and must never be asked to pick a
+  // fishing area before they can see a certificate.
+  const isShoreSide = location.pathname.startsWith('/authority')
+    || location.pathname.startsWith('/verify')
+
+  if (isShoreSide) {
+    return (
+      <PlainShell>
+        <Routes>
+          <Route path="/authority/*" element={<AuthorityStub />} />
+          <Route path="/verify/:id" element={<VerifyStub />} />
+          <Route path="/verify" element={<VerifyStub />} />
+        </Routes>
+      </PlainShell>
+    )
+  }
+
   if (!onboarded) return <Landing />
 
-  const narrowRoutes = ['/catch', '/demo', '/queue', '/privacy', '/about']
-  const isNarrow = narrowRoutes.includes(location.pathname)
-
-  const navItems = [
-    { to: '/', end: true, icon: Home, label: t('nav.dashboard') },
-    { to: '/marine', end: false, icon: Waves, label: t('nav.marine') },
-    { to: '/catch', end: false, icon: Camera, label: t('nav.catch') },
-    { to: '/history', end: false, icon: BookOpen, label: t('nav.history') },
-    { to: '/declaration', end: false, icon: Anchor, label: t('nav.declaration') },
-  ]
-
-  return (
-    <div className="app-shell">
-      <header className="topbar">
-        <img src="/icon.svg" alt="" aria-hidden="true" />
-        <div>
-          <h1>{t('app.name')}</h1>
-          <span className="tagline">{t('app.tagline')}</span>
-        </div>
-        <div className="spacer" />
-        {config?.date_simulated && (
-          <span className="badge sim" role="status">{t('common.simulatedDate')} {config.current_date}</span>
-        )}
-        {!online && <span className="badge offline" role="status">{t('common.offline').split(' — ')[0]}</span>}
-        <button
-          className="lang-switch"
-          onClick={() => setLanguage(language === 'en' ? 'mfe' : 'en')}
-          aria-label={t('common.language')}
-        >
-          {language === 'en' ? 'MFE' : 'EN'}
-        </button>
-      </header>
-
-      <div className="app-body">
-        <nav className="side-nav" aria-label="Main">
-          {navItems.map((item) => (
-            <NavLink key={item.to} to={item.to} end={item.end}
-              className={({ isActive }) => (isActive ? 'active' : '')}>
-              <item.icon size={20} aria-hidden="true" /><span>{item.label}</span>
-            </NavLink>
-          ))}
-        </nav>
-
-        <main className={isNarrow ? 'narrow' : undefined}>
-          <div key={location.pathname} className="page-transition">
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/marine" element={<Marine />} />
-              <Route path="/catch" element={<CatchFlow />} />
-              <Route path="/history" element={<History />} />
-              <Route path="/declaration" element={<Declaration />} />
-              <Route path="/queue" element={<Queue />} />
-              <Route path="/proof" element={<Proof />} />
-              <Route path="/demo" element={<DemoControls />} />
-              <Route path="/privacy" element={<Privacy />} />
-              <Route path="/about" element={<About />} />
-            </Routes>
-          </div>
-        </main>
-      </div>
-
-      <nav className="bottom-nav" aria-label="Main">
-        {navItems.map((item) => (
-          <NavLink key={item.to} to={item.to} end={item.end} aria-label={item.label}
-            className={({ isActive }) => (isActive ? 'active' : '')}>
-            <item.icon size={22} aria-hidden="true" /><span>{item.label}</span>
-          </NavLink>
-        ))}
-      </nav>
-    </div>
-  )
+  return <FisherRoutes />
 }

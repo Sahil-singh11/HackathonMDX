@@ -1,0 +1,52 @@
+/* Fisher app shell — Sahil's lane.
+   Additive only: the existing .topbar/.bottom-nav/.side-nav rules in styles.css
+   still own the layout. These classes add the Phase 0 controls without
+   restyling what was already there. */
+
+.lk-shell-actions { display: flex; align-items: center; gap: var(--sp-2); flex-shrink: 0; }
+
+/* The two Phase 0 controls (theme, a11y) cost horizontal room, which pushed the
+   wordmark onto two lines at 390px. Keep it on one line and let it ellipsis
+   instead — a wrapped title made the header look broken on the most common
+   phone width. */
+.topbar h1 { white-space: nowrap; }
+.topbar > div:not(.lk-shell-actions):not(.spacer) { min-width: 0; overflow: hidden; }
+/* Below ~420px three controls plus the wordmark is genuinely tight. Shrink the
+   wordmark a little rather than clip it — the app name is the one thing on the
+   header that must always be readable. */
+@media (max-width: 420px) {
+  .topbar h1 { font-size: 0.95rem; }
+  .lk-shell-actions { gap: var(--sp-1); }
+}
+
+/* Header icon buttons (theme, accessibility). Sized to the touch floor and
+   styled to sit on the navy topbar in every theme. */
+.lk-header-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 48px; min-height: 48px; padding: var(--sp-2);
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: var(--r-chip);
+  color: #fff; cursor: pointer;
+  transition: background var(--motion-fast) var(--ease-out);
+}
+.lk-header-btn:hover { background: rgba(255, 255, 255, 0.26); }
+.lk-header-btn:focus-visible { outline: var(--focus-ring-width) solid #fff; outline-offset: var(--focus-ring-offset); }
+
+/* In Sunlight the topbar must be hard-edged and maximally legible. */
+[data-theme='sunlight'] .lk-header-btn {
+  background: #fff; color: #000; border: 2px solid #000;
+}
+
+/* Content wrapper for NEW surfaces. Sits above the ambient canvas (z-index 0)
+   without creating a stacking context that would trap the fixed nav. */
+.lk-content { position: relative; z-index: 1; }
+
+/* Authority/verify surfaces: quiet, static, no fisher chrome. */
+.lk-plain-main {
+  position: relative; z-index: 1;
+  max-width: 1200px; margin: 0 auto;
+  padding: var(--sp-5) var(--sp-4);
+  padding-left: max(var(--sp-4), env(safe-area-inset-left));
+  padding-right: max(var(--sp-4), env(safe-area-inset-right));
+}

@@ -3,6 +3,8 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App'
+import { AnnounceProvider } from './lib/announce'
+import { ThemeProvider } from './theme'
 // Load order is load-bearing. tokens defines the design system, base adds the
 // new-code layer, and styles.css (the pre-existing sheet) loads LAST so its
 // rules win any collision — that is what keeps existing pages pixel-identical.
@@ -17,9 +19,13 @@ const queryClient = new QueryClient({
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
+      <ThemeProvider>
+        <AnnounceProvider>
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
+        </AnnounceProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   </React.StrictMode>,
 )
