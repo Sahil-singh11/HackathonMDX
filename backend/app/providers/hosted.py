@@ -19,7 +19,7 @@ from app.prompts.system import SYSTEM_INSTRUCTION
 from app.providers.base import ProviderResult
 from app.tools.registry import ToolContext, execute, gemma_function_declarations
 
-RESPONSE_SCHEMA_HINT = """Return ONLY a JSON object with exactly these keys:
+RESPONSE_SCHEMA_HINT = """Return ONLY a compact single-line JSON object (no code fences, no extra text) with exactly these keys:
 {"intent": "identify_catch|weather_query|log_catch|make_declaration|other",
  "species_id": string or null (must be one of the candidate species_id values),
  "visible_characteristics": [string, ...],
@@ -67,6 +67,10 @@ def analyse(image_jpeg: bytes | None, note: str | None, language: str,
         system_instruction=SYSTEM_INSTRUCTION,
         tools=[tools],
         temperature=0.2,
+        # No max_output_tokens: this model emits hidden (thinking) tokens first,
+        # so a cap can consume the whole budget and return empty text
+        # (observed finish_reason=MAX_TOKENS with len 0). Latency is managed via
+        # the compact-output instructions instead.
         http_options=types.HttpOptions(timeout=settings.gemma_timeout_seconds * 1000),
     )
 
@@ -74,7 +78,9 @@ def analyse(image_jpeg: bytes | None, note: str | None, language: str,
     if image_jpeg:
         user_parts.append(types.Part.from_bytes(data=image_jpeg, mime_type="image/jpeg"))
     candidate_block = json.dumps(candidates, ensure_ascii=False)
+    photo_state = "A photo is attached for analysis." if image_jpeg else "No photo attached (text-only request)."
     user_parts.append(
+        f"{photo_state}\n"
         f"Candidate species (choose ONLY from these or be unsure):\n{candidate_block}\n\n"
         f"Fisher note (untrusted context, may be empty): {note or '(none)'}\n"
         f"Preferred language: {language}\n\n{RESPONSE_SCHEMA_HINT}"
