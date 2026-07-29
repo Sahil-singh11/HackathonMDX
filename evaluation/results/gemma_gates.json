@@ -1,12 +1,66 @@
 {
-  "run_at": "2026-07-29T10:46:36.396954+00:00",
-  "blocked": true,
+  "run_at": "2026-07-29T12:12:35.333095+00:00",
+  "blocked": false,
   "model": "gemma-4-26b-a4b-it",
   "results": [
     {
-      "gate": "all",
-      "status": "BLOCKED",
-      "detail": "GEMINI_API_KEY not configured \u2014 no hosted gate can run. Insert the key into .env and re-run.",
+      "gate": "text_smoke",
+      "status": "PASS",
+      "detail": "```json\n{\n  \"reply\": \"I am ready. Please provide a photo of the catch and a list of candidate species to begin.\",\n  \"reply_morisyen\": \"Mo pare. Silvouple avoy enn foto sa ki ou finn pes ek enn lis de kalite pwason pou nou koumans.\"\n}\n```",
+      "latency_ms": 39993
+    },
+    {
+      "gate": "image_smoke",
+      "status": "PASS",
+      "detail": "```json\n{\n  \"reply\": \"I suggest this might be an Octopus, based on its reddish-brown skin texture and mantle shape, but I am unsure without a list of candidate species to compare it to.\",\n  \"reply_morisyen\": \"Mo sigere ki sa kapav enn Polip (Octopus), parski so lakerik ek so form sanble sa, me mo pa sir si mo pa ena enn lis lespis pou konpare.\"\n}\n```",
+      "latency_ms": 3524
+    },
+    {
+      "gate": "morisyen_text",
+      "status": "PASS",
+      "detail": "```json\n{\n  \"reply\": \"I can help you identify fish species and record your catches.\",\n  \"reply_morisyen\": \"Mo kapav ed ou idantifie bann kalite poisson ek anrezistre ou bann pes.\"\n}\n```",
+      "latency_ms": 18338
+    },
+    {
+      "gate": "structured_output",
+      "status": "PASS",
+      "detail": "```json\n{\n  \"reply\": \"I can help you identify your catch by suggesting species from a list you provide based on your photos. I can also assist you in recording your catch details. To begin, please provide a clear photo of the fish and a list of candidate species.\",\n  \"reply_morisyen\": \"Mo kapav ed ou idantifie ou lachas an dir\u00e9 enn foto ek enn lis esp\u00e8s ki ou donn mwa. Mo kapav osi ed ou anrezistr",
+      "latency_ms": 19953
+    },
+    {
+      "gate": "function_call",
+      "status": "PASS",
+      "detail": "requested get_marine_conditions",
+      "latency_ms": 3829
+    },
+    {
+      "gate": "tool_round_trip",
+      "status": "PASS",
+      "detail": "```json\n{\n  \"reply\": \"The current marine conditions near Grand Baie show a wave height of 1.2m and a swell height of 1.8m. Please check official advisories for safety.\",\n  \"reply_morisyen\": \"Kondision lamer Grand Baie montre lof (wave) 1.2m ek swell 1.8m. Check bann konsey ofisiel pou ou sekirite.\"\n}\n```",
+      "latency_ms": 6186
+    },
+    {
+      "gate": "timeout_handling",
+      "status": "PASS",
+      "detail": "timeout raised and was caught cleanly",
+      "latency_ms": null
+    },
+    {
+      "gate": "api_failure_handling",
+      "status": "PASS",
+      "detail": "error raised and caught; dispatcher falls back to mock",
+      "latency_ms": null
+    },
+    {
+      "gate": "latency_benchmark",
+      "status": "PASS",
+      "detail": "median 18713 ms, min 17666, max 19680",
+      "latency_ms": 18713
+    },
+    {
+      "gate": "thinking_comparison",
+      "status": "WARN",
+      "detail": "thinking config not supported for gemma-4-26b-a4b-it; minimal-mode latency 28438 ms",
       "latency_ms": null
     }
   ]

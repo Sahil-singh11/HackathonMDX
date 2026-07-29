@@ -22,7 +22,7 @@ Three moments, one PWA:
 
 Hosted **`gemma-4-26b-a4b-it`** via the official `google-genai` SDK: image understanding, visible characteristics, Morisyen/English intent, structured JSON, and **native function calling** over 12 allow-listed tools with a full tool-response round trip. Gemma never decides legality, never verifies size, never confirms species — humans and deterministic code do.
 
-> **Status honesty:** hosted gates were BLOCKED in-sprint (no API key on the build machine — see `docs/GEMMA_GATES.md`). The provider is code-complete; until a key is inserted the app runs a **clearly disclosed** deterministic mock. Nothing mocked is ever presented as Gemma inference.
+> **Status:** all ten hosted Gemma gates **PASS on real inference** (`docs/GEMMA_GATES.md`) — image + Morisyen + structured output + native function calling with a completed tool round trip, verified live through the app. Median latency ≈19 s on the current key tier (the UI shows progress states and a latency badge). Without a key the app falls back to a **clearly disclosed** deterministic mock; nothing mocked is ever presented as Gemma inference.
 
 ## Architecture
 

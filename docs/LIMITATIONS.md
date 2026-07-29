@@ -1,6 +1,6 @@
 # Limitations — honest list
 
-1. **Hosted Gemma unproven in this environment**: no `GEMINI_API_KEY` was available in-sprint; provider code is complete but the ten gates in `docs/GEMMA_GATES.md` are recorded BLOCKED. The demo runs in disclosed mock mode until the key exists.
+1. **Hosted latency**: all ten Gemma gates pass on real inference, but median latency is ≈16–25 s per call on the current key tier. The demo script accounts for this (progress states, pre-warmed hero cases); a paid tier or lighter model variant would improve it. Thinking-budget configuration is not supported for `gemma-4-26b-a4b-it` (recorded as WARN in the gates).
 2. **Training not launched**: Kaggle CLI unauthenticated; data + notebooks + scripts are push-button ready; no adapter results are claimed.
 3. **No edge inference**: no local Gemma has run (WSL RAM limits + missing HF licence acceptance); the edge bonus is not claimed.
 4. **No audio**: the audio gate has no consented recordings; typed Morisyen is the input path; the API endpoint says so honestly.

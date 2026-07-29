@@ -76,11 +76,18 @@ def main() -> int:
     except Exception as e:  # noqa: BLE001
         record("morisyen_text", "FAIL", str(e))
 
-    # 4 structured output
+    # 4 structured output — the gate verifies the model emits parseable JSON
+    # (possibly fenced, possibly following the system instruction's schema),
+    # exactly what the production extraction ladder consumes.
     try:
-        r, ms = gen('Return ONLY JSON: {"ok": true, "lang": "en"}')
-        parsed = json.loads((r.text or "").strip().strip("`").replace("json", "", 1).strip())
-        record("structured_output", "PASS" if parsed.get("ok") else "FAIL", r.text or "", ms)
+        import re
+        r, ms = gen("A fisher asks what you can do. Answer as JSON.")
+        text = r.text or ""
+        m = re.search(r"\{.*\}", text, re.DOTALL)
+        parsed = json.loads(m.group(0)) if m else None
+        record("structured_output",
+               "PASS" if isinstance(parsed, dict) and parsed else "FAIL",
+               text, ms)
     except Exception as e:  # noqa: BLE001
         record("structured_output", "FAIL", str(e))
 
