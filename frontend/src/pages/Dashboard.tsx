@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import {
-  Anchor, BookOpen, Calendar, Camera, CloudOff, Fish, Info, ShieldCheck,
-  SlidersHorizontal, Thermometer, Waves, Wrench,
+  Anchor, BookOpen, Calendar, Camera, CloudOff, Compass, Fish, Info, Scale,
+  ShieldCheck, SlidersHorizontal, Thermometer, Waves, Wrench,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -88,7 +88,14 @@ export default function Dashboard() {
   const heroDate = formatNiceDate(config?.current_date ?? new Date().toISOString().slice(0, 10))
   const recentThree = catches.slice(0, 3)
 
+  // /assistant and /pillars lead deliberately: they are features, not utility
+  // pages, and this grid is the only way to reach either one on a phone (the
+  // tab bar is full at five, and seven targets would break the 56px touch
+  // floor at 360px). Desktop also surfaces them in the side nav. See the
+  // secondaryNavItems comment in components/shell.
   const toolButtons = [
+    { to: '/assistant', icon: Scale, label: t('assistant.title') },
+    { to: '/pillars', icon: Compass, label: t('pillars.title') },
     { to: '/queue', icon: CloudOff, label: t('nav.queue'), badge: queuedCount > 0 ? queuedCount : undefined },
     { to: '/proof', icon: Wrench, label: t('nav.proof') },
     { to: '/demo', icon: SlidersHorizontal, label: t('nav.demo') },
@@ -183,8 +190,11 @@ export default function Dashboard() {
       </div>
 
       <div className="card">
+        {/* h2, not h3: the shell wordmark is this page's h1, so a section
+            heading at h3 skipped a level (h1 -> h3). The empty-state title
+            below is h3 because it sits INSIDE this section. */}
         <div className="recent-activity-header">
-          <h3>{t('dashboard.recentActivity')}</h3>
+          <h2>{t('dashboard.recentActivity')}</h2>
           {catches.length > 0 && <Link to="/history">{t('dashboard.viewAll')}</Link>}
         </div>
 
@@ -194,7 +204,7 @@ export default function Dashboard() {
               <div className="empty-state-arc" aria-hidden="true" />
               <Fish size={64} strokeWidth={1.5} aria-hidden="true" />
             </div>
-            <h2>{t('dashboard.readyWhenYouAre')}</h2>
+            <h3>{t('dashboard.readyWhenYouAre')}</h3>
             <p className="bento-sub">{t('dashboard.emptyStateBody')}</p>
             <Link to="/catch" className="primary">{t('dashboard.recordFirstCatch')}</Link>
           </div>
