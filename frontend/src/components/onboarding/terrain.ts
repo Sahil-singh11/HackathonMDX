@@ -63,51 +63,77 @@ export function project(x: number, y: number, z: number, c: Camera): P2 {
  * Anticlockwise from Cap Malheureux (north).
  */
 const COAST_DEG: Array<[number, number]> = [
-  [57.614, -19.984], // Cap Malheureux (northern tip)
+  // --- north: Cap Malheureux is a distinct narrow point, not a curve ---
+  [57.614, -19.983], // Cap Malheureux
+  [57.630, -19.990],
   [57.646, -19.997], // Grand Gaube
-  [57.679, -20.028],
+  [57.668, -20.012],
+  [57.686, -20.037],
+  [57.700, -20.066],
   [57.706, -20.093], // Roches Noires
+  [57.724, -20.111],
   [57.739, -20.128], // Poste Lafayette
-  [57.775, -20.176],
-  [57.782, -20.205], // Belle Mare
+  // --- east: flatter, straighter coast ---
+  [57.762, -20.156],
+  [57.780, -20.192], // Belle Mare
+  [57.792, -20.214],
   [57.796, -20.238], // Trou d'Eau Douce
-  [57.788, -20.288],
-  [57.771, -20.336],
-  [57.752, -20.375],
+  [57.802, -20.262],
+  [57.808, -20.290], // Pointe du Diable, easternmost
+  [57.796, -20.318],
+  [57.778, -20.348],
+  [57.760, -20.378],
+  [57.744, -20.404],
   [57.731, -20.428], // Pointe d'Esny
-  [57.717, -20.443], // Blue Bay
-  [57.699, -20.428],
-  [57.700, -20.407], // Mahebourg (Grand Port notch)
-  [57.672, -20.418],
-  [57.641, -20.451],
-  [57.606, -20.484],
-  [57.556, -20.507],
-  [57.518, -20.517], // Souillac (south coast)
-  [57.474, -20.510],
-  [57.436, -20.503],
-  [57.400, -20.494],
-  [57.383, -20.499], // Baie du Cap
-  [57.348, -20.487],
-  [57.319, -20.470],
-  [57.313, -20.457], // Le Morne Brabant (south-west)
-  [57.327, -20.436],
-  [57.343, -20.410],
-  [57.355, -20.376],
+  [57.722, -20.440],
+  [57.717, -20.449], // Blue Bay
+  // --- south-east: the Grand Port bay cuts deep inland at Mahebourg ---
+  [57.706, -20.442],
+  [57.700, -20.428],
+  [57.700, -20.407], // Mahebourg, head of the bay
+  [57.688, -20.417],
+  [57.676, -20.432],
+  [57.660, -20.448],
+  [57.638, -20.462],
+  // --- south coast ---
+  [57.606, -20.481],
+  [57.570, -20.502],
+  [57.540, -20.514],
+  [57.518, -20.520], // Souillac
+  [57.486, -20.516],
+  [57.452, -20.508],
+  [57.420, -20.500],
+  [57.396, -20.494], // Baie du Cap
+  // --- south-west: Le Morne juts out on a narrow neck ---
+  [57.370, -20.496],
+  [57.350, -20.492],
+  [57.336, -20.480],
+  [57.322, -20.472],
+  [57.307, -20.462], // Le Morne Brabant, the tip
+  [57.311, -20.448],
+  [57.326, -20.443], // back along the neck
+  [57.340, -20.446],
+  [57.352, -20.436],
+  // --- west ---
+  [57.360, -20.408],
+  [57.366, -20.376],
   [57.366, -20.325], // Tamarin
+  [57.363, -20.296],
   [57.363, -20.274], // Flic en Flac
-  [57.372, -20.245],
-  [57.386, -20.222],
-  [57.410, -20.199],
-  [57.448, -20.180],
-  [57.478, -20.170],
-  [57.498, -20.161], // Port Louis
-  [57.512, -20.135],
+  [57.374, -20.244],
+  [57.390, -20.221],
+  [57.402, -20.208], // Albion
+  [57.428, -20.190],
+  [57.462, -20.176],
+  [57.490, -20.168],
+  [57.500, -20.161], // Port Louis
+  [57.512, -20.132],
   [57.520, -20.100],
   [57.526, -20.062], // Pointe aux Piments
-  [57.545, -20.038],
-  [57.566, -20.020],
+  [57.548, -20.036],
+  [57.568, -20.020],
   [57.580, -20.013], // Grand Baie
-  [57.596, -19.996],
+  [57.598, -19.996],
 ]
 
 /** Named places, projected into the scene beside the island. */
@@ -115,7 +141,7 @@ export const PLACES: Array<{ name: string; lon: number; lat: number }> = [
   { name: 'Port Louis', lon: 57.498, lat: -20.161 },
   { name: 'Grand Baie', lon: 57.580, lat: -20.013 },
   { name: 'Mahebourg', lon: 57.700, lat: -20.407 },
-  { name: 'Le Morne', lon: 57.313, lat: -20.457 },
+  { name: 'Le Morne', lon: 57.307, lat: -20.462 },
   { name: "Trou d'Eau Douce", lon: 57.796, lat: -20.238 },
 ]
 
@@ -182,7 +208,7 @@ function resample(loop: Array<[number, number]>, n: number): Array<[number, numb
   return out
 }
 
-const RING_POINTS = 64
+const RING_POINTS = 84
 
 /**
  * Builds every ring once. Deeper rings blend toward a circle, because past the
@@ -206,19 +232,6 @@ export function buildRings(): Ring[] {
       gap: depth === -20 ? [30, 36] : undefined,
     }
   })
-}
-
-/** The EEZ: a vast faint ring far out on the deep plane. */
-export const EEZ_SCALE = 15
-export function buildEez(): Array<[number, number]> {
-  const pts: Array<[number, number]> = []
-  for (let i = 0; i < RING_POINTS; i++) {
-    const a = (i / RING_POINTS) * Math.PI * 2
-    // Slightly non-circular so it reads as a boundary, not a compass circle.
-    const r = EEZ_SCALE * (1 + Math.sin(a * 2 + 0.6) * 0.06)
-    pts.push([Math.sin(a) * r, -Math.cos(a) * r])
-  }
-  return pts
 }
 
 /** Drifting motes for depth perception. Deterministic, so the scene is stable. */

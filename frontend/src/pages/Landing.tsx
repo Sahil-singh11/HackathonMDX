@@ -27,6 +27,17 @@ const FIX = '20°10′S  57°30′E'
 
 const DEPART_MS = 340
 
+/**
+ * Real Mauritian landing sites, offered as a native <datalist>. This SUGGESTS
+ * and never restricts: the input stays free text, so a fisher working from a
+ * spot that is not on the list is not blocked by it.
+ */
+const LANDING_SITES = [
+  'Grand Baie', 'Grand Gaube', 'Trou aux Biches', 'Port Louis', 'Albion',
+  'Le Morne', 'Souillac', 'Mahébourg', "Trou d'Eau Douce", 'Poste Lafayette',
+  'Cap Malheureux', 'Bain Boeuf', 'Tamarin', 'Black River', "Poudre d'Or",
+]
+
 export default function Landing() {
   const t = useT()
   const { language, setLanguage, setProfile, setOnboarded } = useAppStore()
@@ -83,7 +94,6 @@ export default function Landing() {
 
           <section className="lk-fix" ref={panelRef}>
             <span className="lk-fix__ticks" aria-hidden="true" />
-            <span className="lk-fix__cross" aria-hidden="true" />
 
             <h2 className="lk-fix__welcome">{t('landing.welcome')}</h2>
             <p className="lk-fix__intro">{t('landing.intro')}</p>
@@ -113,6 +123,8 @@ export default function Landing() {
               </div>
             </fieldset>
 
+            <hr className="lk-fix__divider" />
+
             <div className="lk-field-stack">
               <div>
                 <label className="lk-onboard-label" htmlFor="lk-name">{t('landing.profileName')}</label>
@@ -122,7 +134,11 @@ export default function Landing() {
               <div>
                 <label className="lk-onboard-label" htmlFor="lk-area">{t('landing.area')}</label>
                 <input className="lk-onboard-input" id="lk-area" value={area}
+                  list="lk-landing-sites" autoComplete="off"
                   onChange={(e) => setArea(e.target.value)} placeholder="Grand Baie, Mahébourg…" />
+                <datalist id="lk-landing-sites">
+                  {LANDING_SITES.map((sIte) => <option key={sIte} value={sIte} />)}
+                </datalist>
               </div>
             </div>
 

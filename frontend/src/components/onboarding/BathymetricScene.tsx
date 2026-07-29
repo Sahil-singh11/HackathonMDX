@@ -24,9 +24,9 @@
  */
 import { useEffect, useRef } from 'react'
 import { useTheme } from '../../theme'
-import { inkForSky, rgba } from './chart'
+import { inkForSky, luminance, rgba } from './chart'
 import {
-  EEZ_SCALE, PLACES, buildEez, buildMotes, buildRings, lonLatToWorld,
+  PLACES, buildMotes, buildRings, lonLatToWorld,
   paletteForHour, project, type Camera, type Ring,
 } from './terrain'
 
@@ -35,18 +35,23 @@ const ENTRY_MS = 1200
 const PULSE_PERIOD = 8000
 
 // Camera constants (see the plan table).
-const BASE_PITCH = -30 * Math.PI / 180
-const ENTRY_PITCH = -18 * Math.PI / 180
+// 62 degrees: steep enough that the coastline reads as Mauritius, shallow
+// enough that the stacked contours still recede. A full 90 would flatten them
+// into concentric rings and kill the depth entirely.
+const BASE_PITCH = -62 * Math.PI / 180
+const ENTRY_PITCH = -48 * Math.PI / 180
 // The island has radius 1. Sitting far back is what makes it read as SMALL
 // against a vast zone - the whole point of the theme. At the previous 1.55 the
 // island filled half the frame, saying the opposite.
-const BASE_DIST = 6.2
-const ENTRY_DIST = 2.9
-const CAM_HEIGHT = 2.2
+const BASE_DIST = 2.5
+const ENTRY_DIST = 1.2
+const BASE_HEIGHT = 5.5
+const ENTRY_HEIGHT = 2.6
 // Near-plane cull. Points closer than this project to enormous coordinates and
 // knot the deep rings where they pass behind the viewer.
 const NEAR = 0.5
-const FOV = 55 * Math.PI / 180
+// Longer lens = weaker perspective, so near contours do not balloon.
+const FOV = 38 * Math.PI / 180
 const ORBIT_HEADING = 8 * Math.PI / 180   // max mouse influence
 const ORBIT_PITCH = 5 * Math.PI / 180
 const LERP = 0.05
@@ -67,7 +72,6 @@ export function BathymetricScene() {
 
     /* ---------------------------------------- geometry: built ONCE, never in the loop */
     const rings = buildRings()
-    const eez = buildEez()
     const motes = buildMotes()
     const places = PLACES.map((p) => ({ ...p, w: lonLatToWorld(p.lon, p.lat) }))
 
@@ -82,9 +86,17 @@ export function BathymetricScene() {
     // 1.22:1. Pick whichever semantic ink actually wins against the paper.
     document.documentElement.style.setProperty('--onboard-ink', rgba(inkForSky(pal.paper), 1))
 
+    // The CARD has the same problem the masthead had: its surface follows the
+    // THEME while the paper behind it follows the CLOCK. In Day at night-time
+    // hours that produced a bright cream slab against a near-black scene -
+    // visually loud, and bad for night vision. Publish what the scene actually
+    // is, and let CSS pick the panel treatment from tokens.
+    document.documentElement.setAttribute(
+      'data-scene', luminance(pal.paper) < 0.18 ? 'dark' : 'light')
+
     let w = 0, h = 0, dpr = 1
     const cam: Camera = {
-      heading: 0, pitch: BASE_PITCH, dist: BASE_DIST, height: CAM_HEIGHT,
+      heading: 0, pitch: BASE_PITCH, dist: BASE_DIST, height: BASE_HEIGHT,
       f: 800, cx: 0, cy: 0,
     }
 
@@ -100,7 +112,7 @@ export function BathymetricScene() {
       cam.f = (h / 2) / Math.tan(FOV / 2)
       // Island right of centre on wide screens so the card takes the left and
       // the deep contours cascade across the rest of the frame.
-      cam.cx = w >= 900 ? w * 0.63 : w * 0.5
+      cam.cx = w >= 900 ? w * 0.62 : w * 0.5
       cam.cy = 0
     }
 
@@ -113,7 +125,7 @@ export function BathymetricScene() {
       cam.cy = 0
       const o = project(0, 0, 0, cam)
       // Island high in the frame so the deep rings sweep past the bottom edge.
-      cam.cy = (w >= 900 ? h * 0.40 : h * 0.26) - o.y
+      cam.cy = (w >= 900 ? h * 0.48 : h * 0.30) - o.y
     }
     resize()
 
@@ -236,67 +248,139 @@ export function BathymetricScene() {
       ctx.globalAlpha = 1
     }
 
-    const drawEez = (entry: number) => {
-      const local = Math.min(1, Math.max(0, (entry - 0.45) / 0.4))
+    /**
+     * EEZ annotation.
+     *
+     * The ring itself is deliberately NOT drawn. At this camera the boundary is
+     * ~15 island radii out, so it lands thousands of pixels off-frame; the only
+     * way to show it as a closed arc would be to shrink it until it implied the
+     * zone is roughly four times the island, which is false by three orders of
+     * magnitude. A single dashed line crossing empty space read as a rendering
+     * artifact, so it is stated as an annotation instead of drawn dishonestly.
+     *
+     * Figure is F9 in research/VERIFIED_FACTS.md, verbatim from the Ministry of
+     * Blue Economy. It includes the Chagos region, which is why nothing here
+     * characterises sovereignty.
+     */
+    const drawEezNote = (entry: number) => {
+      const local = Math.min(1, Math.max(0, (entry - 0.55) / 0.4))
       if (local <= 0) return
+      // Wide screens only. At phone widths it lands behind the card and bleeds
+      // through as noise, and there is no clear space to move it to.
+      if (w < 900) return
+      const right = w - 40
+      const top = h - 108
+      ctx.textAlign = 'right'
+      ctx.globalAlpha = 0.30 * local
       ctx.strokeStyle = rgba(pal.ink, 1)
-      ctx.setLineDash([10, 14])
-      strokeLoop(eez, -0.62, 0.20 * local, 1.0)
-      ctx.setLineDash([])
+      ctx.lineWidth = 1
+      ctx.beginPath()
+      ctx.moveTo(right - 250, top - 14)
+      ctx.lineTo(right, top - 14)
+      ctx.stroke()
 
-      // Label it on the ring itself. The figure is registered as F9 in
-      // research/VERIFIED_FACTS.md, sourced verbatim from the Ministry of Blue
-      // Economy; it includes the Chagos region, which is why the app never
-      // characterises sovereignty anywhere.
-      const p = project(0, -EEZ_SCALE * 1.0, -0.62, cam)
-      if (p.depth > NEAR) {
-        ctx.globalAlpha = 0.5 * local
-        ctx.fillStyle = rgba(pal.ink, 1)
-        ctx.font = `500 13px ${monoFont}`
-        ctx.textAlign = 'center'
-        ctx.fillText('EXCLUSIVE ECONOMIC ZONE  ·  2.3 MILLION KM²', p.x, p.y - 10)
-        ctx.globalAlpha = 1
+      ctx.fillStyle = rgba(pal.ink, 1)
+      ctx.globalAlpha = 0.62 * local
+      ctx.font = `600 12px ${monoFont}`
+      ctx.fillText('EXCLUSIVE ECONOMIC ZONE', right, top + 6)
+      ctx.globalAlpha = 0.86 * local
+      ctx.font = `600 26px ${monoFont}`
+      ctx.fillText('2 300 000 km²', right, top + 38)
+      ctx.globalAlpha = 0.42 * local
+      ctx.font = `500 11px ${monoFont}`
+      ctx.fillText('EXTENDS FAR BEYOND THIS FRAME', right, top + 58)
+      ctx.globalAlpha = 1
+      ctx.textAlign = 'center'
+    }
+
+    /** Records placed label boxes so nothing overlaps anything else. */
+    let boxes: Array<[number, number, number, number]> = []
+    const fits = (x: number, y: number, wd: number, ht: number) => {
+      const pad = 6
+      for (const [bx, by, bw, bh] of boxes) {
+        if (x - wd / 2 - pad < bx + bw / 2 && x + wd / 2 + pad > bx - bw / 2
+          && y - ht - pad < by + 2 && y + pad > by - bh) return false
       }
+      return true
     }
 
     const drawLabels = (entry: number) => {
       const local = Math.min(1, Math.max(0, (entry - 0.62) / 0.35))
       if (local <= 0) return
+      boxes = []
       ctx.textAlign = 'center'
+      ctx.textBaseline = 'alphabetic'
 
-      // Depth labels sit ON their ring and scale with distance.
-      for (const r of rings) {
-        if (!r.label) continue
-        const z = -Math.pow(Math.abs(r.depth), 0.42) * 0.055
-        const idx = Math.floor(r.pts.length * 0.62)
-        const [x, y] = r.pts[idx]
-        const p = project(x, y, z, cam)
-        if (p.depth <= NEAR) continue
-        const size = Math.max(8, Math.min(15, (cam.f / p.depth) * 0.014))
-        ctx.globalAlpha = 0.42 * local
-        ctx.fillStyle = rgba(pal.ink, 1)
-        ctx.font = `500 ${size}px ${monoFont}`
-        ctx.fillText(r.label, p.x, p.y - 4)
-      }
-
-      // Real places near the island. Once the island is small these collide
-      // into an unreadable smudge, so drop any label too close to one already
-      // placed - better to show three legible names than five overlapping.
-      const placed: Array<[number, number]> = []
+      // Place labels first - they matter more than depth figures, so they win
+      // the space. Each sits OUTSIDE the coastline in open water with a
+      // hairline leader back to its actual location, rather than on the island
+      // where it was previously unreadable.
       for (const pl of places) {
         const p = project(pl.w[0], pl.w[1], 0, cam)
         if (p.depth <= NEAR) continue
-        if (placed.some(([px, py]) => Math.hypot(px - p.x, py - p.y) < 92)) continue
-        placed.push([p.x, p.y])
-        const size = Math.max(9, Math.min(13, (cam.f / p.depth) * 0.012))
-        ctx.globalAlpha = 0.62 * local
-        ctx.fillStyle = rgba(pal.ink, 1)
+        // Push outward, away from the island centre.
+        const c = project(0, 0, 0, cam)
+        const dx = p.x - c.x, dy = p.y - c.y
+        const len = Math.max(1, Math.hypot(dx, dy))
+        const off = 46
+        const lx = p.x + (dx / len) * off
+        const ly = p.y + (dy / len) * off
+
+        const size = 13
         ctx.font = `500 ${size}px ${monoFont}`
-        ctx.fillText(pl.name, p.x, p.y - 7)
-        ctx.globalAlpha = 0.8 * local
+        const tw = ctx.measureText(pl.name).width
+        if (!fits(lx, ly, tw, size)) continue
+        boxes.push([lx, ly, tw, size])
+
+        ctx.globalAlpha = 0.34 * local
+        ctx.strokeStyle = rgba(pal.ink, 1)
+        ctx.lineWidth = 1
         ctx.beginPath()
-        ctx.arc(p.x, p.y, 1.6, 0, Math.PI * 2)
+        ctx.moveTo(p.x, p.y)
+        ctx.lineTo(lx - (dx / len) * 8, ly - (dy / len) * 8)
+        ctx.stroke()
+
+        ctx.globalAlpha = 0.9 * local
+        ctx.fillStyle = rgba(pal.ink, 1)
+        ctx.beginPath()
+        ctx.arc(p.x, p.y, 2, 0, Math.PI * 2)
         ctx.fill()
+        ctx.fillText(pl.name, lx, ly + 4)
+      }
+
+      // Depth labels sit ON their ring, offset PERPENDICULAR to the line so the
+      // stroke never runs through the text. Any that would collide is skipped.
+      for (const r of rings) {
+        if (!r.label) continue
+        const z = -Math.pow(Math.abs(r.depth), 0.42) * 0.055
+        const n = r.pts.length
+        // Try a few positions around the ring and take the first clear one.
+        for (const frac of [0.30, 0.42, 0.18, 0.55, 0.70]) {
+          const i = Math.floor(n * frac)
+          const [x, y] = r.pts[i]
+          const [nx, ny] = r.pts[(i + 1) % n]
+          const a = project(x, y, z, cam)
+          const b = project(nx, ny, z, cam)
+          if (a.depth <= NEAR || b.depth <= NEAR) continue
+          // Perpendicular to the tangent, pushed outward.
+          const tx = b.x - a.x, ty = b.y - a.y
+          const tl = Math.max(1, Math.hypot(tx, ty))
+          const px = -ty / tl, py = tx / tl
+          const c = project(0, 0, 0, cam)
+          const sign = ((a.x - c.x) * px + (a.y - c.y) * py) >= 0 ? 1 : -1
+          const lx = a.x + px * 13 * sign
+          const ly = a.y + py * 13 * sign
+
+          const size = 12
+          ctx.font = `500 ${size}px ${monoFont}`
+          const tw = ctx.measureText(r.label).width
+          if (!fits(lx, ly, tw, size)) continue
+          boxes.push([lx, ly, tw, size])
+          ctx.globalAlpha = 0.6 * local
+          ctx.fillStyle = rgba(pal.ink, 1)
+          ctx.fillText(r.label, lx, ly + 4)
+          break
+        }
       }
       ctx.globalAlpha = 1
     }
@@ -327,11 +411,12 @@ export function BathymetricScene() {
       // Camera dollies back and up during entry.
       const e = easeOut(Math.min(1, entry))
       cam.dist = ENTRY_DIST + (BASE_DIST - ENTRY_DIST) * e
+      cam.height = ENTRY_HEIGHT + (BASE_HEIGHT - ENTRY_HEIGHT) * e
       cam.pitch = (ENTRY_PITCH + (BASE_PITCH - ENTRY_PITCH) * e) + curP
       cam.heading = drift + curH
       recentre()
 
-      drawEez(entry)
+      drawEezNote(entry)
       // Far rings first, near rings last.
       for (let i = rings.length - 1; i >= 0; i--) drawRing(rings[i], t, entry, i)
       drawIsland(entry)
@@ -357,6 +442,7 @@ export function BathymetricScene() {
       return () => {
         window.removeEventListener('resize', still)
         document.documentElement.style.removeProperty('--onboard-ink')
+        document.documentElement.removeAttribute('data-scene')
       }
     }
 
@@ -394,6 +480,7 @@ export function BathymetricScene() {
       window.removeEventListener('resize', resize)
       document.removeEventListener('visibilitychange', onVis)
       document.documentElement.style.removeProperty('--onboard-ink')
+      document.documentElement.removeAttribute('data-scene')
     }
   }, [theme, reduceMotion])
 
