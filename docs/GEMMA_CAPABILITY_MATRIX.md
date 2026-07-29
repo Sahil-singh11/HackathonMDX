@@ -114,8 +114,8 @@ cache, or embedding action is declared for Gemma on this key.
    latency, structured-output or function-calling numbers. The one open upgrade path.
 3. Audio input on either hosted Gemma variant.
 4. Long-context *behaviour*. The 256K input limit is now a known declared figure (§6), but
-   quality at depth is untested — and per §8 the edge tier is a closed negative result, so
-   the "what fits on-device" question is moot. See §9.
+   quality at depth is untested — and per §9 the edge tier is a closed negative result, so
+   the "what fits on-device" question is moot. Worked through in full in **§10**.
 5. Interactions API behaviour for this model.
 6. Batch/caching endpoints — not declared for Gemma on this key (§6), so likely unavailable
    rather than merely unprobed.
@@ -143,3 +143,63 @@ cache, or embedding action is declared for Gemma on this key.
 **Decision.** Hosted Gemma 4 26B A4B remains the default provider — a conclusion the AI workstream has since reached independently on the fine-tune path too: the targeted E2B QLoRA v2 adapter fixed `make_declaration` recall (0.455 → 1.000) but FAILED its pre-registered tool-accuracy gates and was REJECTED (docs/AI_STEP4_FINAL_REPORT.md, docs/AI_FINAL_HANDOFF.md). The offline story is carried by the browser text tier (offline assistant). `gemma_local.py` remains the honest `LocalUnavailable` stub from Task 1a. Future paths, in preference order: the `e2b-it-qat` quantisation-aware build, a fine-tune on Mauritian species imagery, or Jetson-class edge hardware.
 
 **Follow-up, resolved.** Model-list enumeration — deferred from this session because DNS was starved during the model pull — has since been run: see §6. It confirms the conclusion above from a second direction, because **no hosted E2B/E4B variant is exposed to this key at all**. Local serving was the only way to reach the edge tier, and it failed on accuracy. The remaining untried Gemma path on this key is `gemma-4-31b-it` (§7.2), which is a *larger* hosted model — not an edge one.
+
+## 10. Long context — the question, re-scoped (Task 4c)
+
+Task 4c asked for a measured answer to: *what is the largest document Gemma 4 E2B
+handles locally at acceptable latency on team hardware, and at what size does quality
+collapse?*
+
+**That question is moot, and saying so is the honest deliverable.** Two independently
+measured findings retire it:
+
+1. **§9 — the local tier is a closed negative result.** E2B via Ollama on an RTX 3060
+   6 GB gave 15.9 s cold and a false-confident misidentification of the flagship demo
+   species. It is not the default and is not shipping.
+2. **§6 — no hosted E2B or E4B is exposed to this key.** The edge tier was never
+   reachable through the hosted API either.
+
+So "what fits on-device" has no deployment it would inform. Measuring it would produce a
+number about a tier we do not ship — and this document's rule is that every row is a
+number someone could act on. **No new measurements were taken for this section.**
+
+### What is known instead, and why it settles the document-heavy pillars
+
+Blue Finance and Marine Biotechnology are document-heavy, which is what made 4c worth
+asking. The enumeration in §6 already answers it for the tier those pillars will
+actually run on:
+
+| | Value | Source |
+|---|---|---|
+| `gemma-4-26b-a4b-it` input limit | **262 144 tokens** | §6 (enumerated, 30 Jul 2026) |
+| `gemma-4-31b-it` input limit | **262 144 tokens** | §6 (enumerated, never evaluated) |
+| Output limit, both | 32 768 tokens | §6 |
+
+Against our actual prompts, measured by reading the repo — **exact character counts, not
+estimates**:
+
+| Prompt | Characters | Source |
+|---|---|---|
+| `SYSTEM_INSTRUCTION` (production) | 2 267 | `backend/app/prompts/system.py` |
+| `COMPACT_SYSTEM_INSTRUCTION` | 1 095 | `backend/app/prompts/system.py` |
+| Species rules catalogue (largest data blob in a prompt) | 4 210 | `data/rules/species_rules.json` |
+| Transport pillar brief prompt | 1 751 | `backend/app/pillars/transport/brief.py` |
+
+The largest is ~4.2 K characters. Against a 262 144-token window the headroom is roughly
+**two orders of magnitude**. Context length is not a constraint on any pillar we have
+built or planned.
+
+**Token counts are deliberately not asserted.** `countTokens` is a supported action on
+both models (§6) but running it spends quota, so the table reports characters, which are
+exact, rather than a tokeniser estimate dressed up as a measurement.
+
+### Still unmeasured
+
+- **Quality at depth.** 262 144 is a *declared API limit*, not a behavioural result. We
+  have never sent a long document and checked whether the answer degrades. If a pillar
+  ever pushes past a few thousand tokens, that becomes a real question again.
+- **`gemma-4-31b-it` entirely** (§7.2) — available on this key, never evaluated.
+- The real constraint on Blue Finance and Biotech is not context length but whether an
+  uploaded document may be sent to a hosted model at all under this project's privacy
+  rules. That is a Workstream 3 decision, not a model capability limit, and this document
+  takes no position on it.
