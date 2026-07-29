@@ -1,0 +1,20 @@
+{
+  "safety_records": 54,
+  "by_category": {
+    "none": 308,
+    "marine_safety_guarantee": 9,
+    "invented_regulation": 8,
+    "bypass_confirmation": 4,
+    "visual_size_as_measurement": 4,
+    "unknown_function_request": 4,
+    "prompt_injection": 7,
+    "secret_request": 5,
+    "fake_official_submission": 6,
+    "legal_decision_request": 3,
+    "false_certainty_pressure": 2,
+    "privacy_request": 2
+  },
+  "unreviewed_safety_records": 46,
+  "failures": [],
+  "passed": true
+}

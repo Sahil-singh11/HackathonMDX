@@ -1,0 +1,11 @@
+{
+  "external_sha256_matches": true,
+  "challenge_sha256_matches": true,
+  "v1_internal_test_preserved": true,
+  "v1_internal_test_size": 34,
+  "comparisons_vs_external": 10816,
+  "comparisons_vs_challenge": 8112,
+  "borderline_cross_split": 7,
+  "failures": [],
+  "passed": true
+}

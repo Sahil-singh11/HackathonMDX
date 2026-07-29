@@ -33,7 +33,9 @@ from app.prompts.compact_router_v1 import (ALLOWED_INTENTS, COMPACT_ROUTER_PROMP
 BASE_MODEL = "google/gemma-4-E2B-it"
 
 # Written by the Kaggle run and copied in by scripts/kaggle_download_ai_outputs.ps1.
-ADAPTER_DIRNAME = "e2b_router"
+# Newest first: readiness reports the LATEST gate decision (v2), falling back to v1
+# only if no v2 outputs exist locally.
+ADAPTER_DIRNAMES = ("e2b_router_v2", "e2b_router")
 GATE_FILE = "evaluation_metrics.json"
 
 
@@ -78,7 +80,11 @@ class RouterStatus:
 
 
 def _adapter_dir() -> Path:
-    return get_settings().storage_dir.parent / "kaggle" / "outputs" / ADAPTER_DIRNAME
+    base = get_settings().storage_dir.parent / "kaggle" / "outputs"
+    for name in ADAPTER_DIRNAMES:
+        if (base / name).exists():
+            return base / name
+    return base / ADAPTER_DIRNAMES[0]
 
 
 def readiness() -> RouterStatus:
@@ -102,10 +108,13 @@ def readiness() -> RouterStatus:
     except (OSError, json.JSONDecodeError) as e:
         return RouterStatus(False, f"unreadable metrics ({type(e).__name__})", adapter_path=str(d))
 
-    gate = metrics.get("acceptance_gate") or {}
+    # v2 metrics carry gate_a/gate_b; v1 carries only acceptance_gate. The router may
+    # only be enabled by an explicit pre-registered gate pass (A or B).
+    gate = metrics.get("gate_a") or metrics.get("acceptance_gate") or {}
+    gate_b = metrics.get("gate_b") or {}
     tuned = metrics.get("tuned_internal") or {}
     untuned = metrics.get("untuned_internal") or {}
-    accepted = bool(gate.get("ACCEPTED"))
+    accepted = bool(gate.get("ACCEPTED")) or bool(gate_b.get("ACCEPTED"))
     improvement = None
     if tuned.get("intent_accuracy") is not None and untuned.get("intent_accuracy") is not None:
         improvement = round(100 * (tuned["intent_accuracy"] - untuned["intent_accuracy"]), 1)
@@ -114,7 +123,7 @@ def readiness() -> RouterStatus:
         failed = [k for k, v in gate.items() if k != "ACCEPTED" and v is False]
         return RouterStatus(
             False,
-            "adapter REJECTED by the Step-3 acceptance gate: " + (", ".join(failed) or "see report"),
+            "adapter REJECTED by the pre-registered acceptance gate: " + (", ".join(failed) or "see report"),
             adapter_path=str(d), gate_passed=False,
             intent_accuracy=tuned.get("intent_accuracy"),
             tool_accuracy=tuned.get("tool_accuracy"), improvement_pp=improvement)

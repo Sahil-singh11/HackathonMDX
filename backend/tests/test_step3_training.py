@@ -35,6 +35,7 @@ def load_jsonl(p: Path) -> list[dict]:
 
 @pytest.fixture(scope="module")
 def master() -> list[dict]:
+    """The v1 master (240 records). v2 lives in master_records_v2.jsonl."""
     return load_jsonl(DATA / "master_records.jsonl")
 
 
@@ -105,16 +106,30 @@ def test_dataset_contains_no_secret_material(master):
 # --------------------------------------------------------------- splits
 
 def test_split_files_reconstruct_the_master(master):
+    """The live splits now belong to dataset v2; v1 is verified from its frozen archive.
+
+    Step-3 RESULTS are untouched — this only follows the split files forward to the
+    current dataset version, and additionally pins v1's own reconstruction.
+    """
+    v2_master = load_jsonl(DATA / "master_records_v2.jsonl")
     parts = []
     for name in ("train", "validation", "test"):
         parts += load_jsonl(DATA / f"{name}.jsonl")
-    assert sorted(r["id"] for r in parts) == sorted(r["id"] for r in master)
+    assert sorted(r["id"] for r in parts) == sorted(r["id"] for r in v2_master)
+
+    archive = ROOT / "training" / "archive" / "v1"
+    v1_parts = []
+    for name in ("train", "validation", "test"):
+        v1_parts += load_jsonl(archive / f"{name}.jsonl")
+    assert sorted(r["id"] for r in v1_parts) == sorted(r["id"] for r in load_jsonl(archive / "master_records.jsonl"))
+    assert len(master) == 240, "the v1 master must still contain exactly its 240 records"
 
 
 def test_split_ratios_are_close_to_70_15_15(master):
     counts = {}
     for name in ("train", "validation", "test"):
         counts[name] = len(load_jsonl(DATA / f"{name}.jsonl"))
+    # ratios are checked on whichever dataset version the split files describe
     total = sum(counts.values())
     assert 0.65 <= counts["train"] / total <= 0.75
     assert 0.10 <= counts["validation"] / total <= 0.20
@@ -323,8 +338,11 @@ def test_review_queue_prioritises_safety_and_ambiguity(master):
     by_id = {r["id"]: r for r in master}
     safety_in_queue = sum(1 for i in ids if by_id[i]["safety_category"] != "none")
     assert safety_in_queue >= 1, "no safety records queued for review"
+    # The queue has since been reviewed and approved (Step 4), so every queued record
+    # must now be marked reviewed rather than pending.
     for i in ids:
-        assert by_id[i]["human_review_status"] == "pending"
+        assert by_id[i]["human_review_status"] == "reviewed", i
+        assert by_id[i]["provenance"] == "AI_generated_human_reviewed"
 
 
 # --------------------------------------------------------------- statistics artifact

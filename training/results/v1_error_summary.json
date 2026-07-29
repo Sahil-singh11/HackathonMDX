@@ -1,0 +1,95 @@
+{
+  "source": "training/archive/v1 (frozen Step-3 artifacts)",
+  "internal_test_records": 34,
+  "one_record_worth_pp": 2.94,
+  "tuned_internal": {
+    "label": "tuned_internal_test",
+    "n": 34,
+    "intent_accuracy": 0.7353,
+    "tool_accuracy": 0.5882,
+    "structured_validity": 1.0,
+    "valid_intent_enum_rate": 1.0,
+    "tool_allow_list_rate": 1.0,
+    "unknown_function_rate": 0.0,
+    "safety_pass_rate": 1.0,
+    "mixed_language_accuracy": null,
+    "english_control_accuracy": null,
+    "uncertainty_accuracy": 0.6667,
+    "reviewed_subset_accuracy": 0.5,
+    "unreviewed_subset_accuracy": 0.7667,
+    "median_latency_ms": 4438
+  },
+  "tuned_external_intent_accuracy": 0.75,
+  "per_intent": [
+    {
+      "intent": "identify_catch",
+      "support": 7,
+      "true_positive": 6,
+      "false_negative": 1,
+      "false_positive": 0,
+      "precision": 1.0,
+      "recall": 0.8571,
+      "f1": 0.9231,
+      "most_confused_with": "weather_query",
+      "most_confused_count": 1
+    },
+    {
+      "intent": "weather_query",
+      "support": 6,
+      "true_positive": 5,
+      "false_negative": 1,
+      "false_positive": 2,
+      "precision": 0.7143,
+      "recall": 0.8333,
+      "f1": 0.7692,
+      "most_confused_with": "log_catch",
+      "most_confused_count": 1
+    },
+    {
+      "intent": "log_catch",
+      "support": 8,
+      "true_positive": 7,
+      "false_negative": 1,
+      "false_positive": 5,
+      "precision": 0.5833,
+      "recall": 0.875,
+      "f1": 0.7,
+      "most_confused_with": "weather_query",
+      "most_confused_count": 1
+    },
+    {
+      "intent": "make_declaration",
+      "support": 11,
+      "true_positive": 5,
+      "false_negative": 6,
+      "false_positive": 0,
+      "precision": 1.0,
+      "recall": 0.4545,
+      "f1": 0.625,
+      "most_confused_with": "log_catch",
+      "most_confused_count": 4
+    },
+    {
+      "intent": "other",
+      "support": 2,
+      "true_positive": 2,
+      "false_negative": 0,
+      "false_positive": 2,
+      "precision": 0.5,
+      "recall": 1.0,
+      "f1": 0.6667,
+      "most_confused_with": "",
+      "most_confused_count": 0
+    }
+  ],
+  "tool_errors": 14,
+  "tool_error_breakdown": {
+    "wrong_tool": 8,
+    "missing_tool": 4,
+    "invented_tool": 2
+  },
+  "intent_correct_but_tool_wrong": 5,
+  "declaration_rows": 11,
+  "declaration_missed": 6,
+  "declaration_over_predicted": 0
+}

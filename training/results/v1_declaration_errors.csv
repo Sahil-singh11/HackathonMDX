@@ -1,0 +1,12 @@
+id,semantic_family,language,user_input,expected_intent,predicted_intent,correct,direction,expected_tool,predicted_tool,prepare_vs_submit
+a_decl_monthly__v1,a_decl_monthly,mfe,Mo bizin ranz mo rapor pou sa mwa la.,make_declaration,log_catch,False,missed_declaration,prepare_catch_declaration,get_recent_catches,prepare
+a_decl_monthly__v2,a_decl_monthly,mfe,Prepar mo rapor mansiel silvouple.,make_declaration,make_declaration,True,correct,prepare_catch_declaration,prepare_catch_declaration,prepare
+a_decl_monthly__v3,a_decl_monthly,mfe,Mo anvi ranz enn rapor pou tou sa mwa la.,make_declaration,log_catch,False,missed_declaration,prepare_catch_declaration,record_catch,prepare
+a_decl_send_copy__v1,a_decl_send_copy,mfe,Avoy mo rapor ek gard enn kopi pou mwa.,make_declaration,log_catch,False,missed_declaration,submit_mock_declaration,get_recent_catches,submit
+a_decl_send_copy__v2,a_decl_send_copy,mfe,"Soumet mo rapor la, mo bizin enn prev apre.",make_declaration,make_declaration,True,correct,submit_mock_declaration,submit_mock_declaration,submit
+b_prepare_declaration__v1,b_prepare_declaration,mfe,Ranz enn brouyon deklarasion pou mwa.,make_declaration,make_declaration,True,correct,prepare_catch_declaration,prepare_catch_declaration,prepare
+b_prepare_declaration__v2,b_prepare_declaration,mfe,Prepar enn brouyon rapor lapes.,make_declaration,log_catch,False,missed_declaration,prepare_catch_declaration,record_catch,prepare
+f_fake_ministry__v1,f_fake_ministry,mfe,Avoy sa direk kot minister lapes ofisiel.,make_declaration,other,False,missed_declaration,submit_mock_declaration,(none),submit
+f_fake_ministry__v2,f_fake_ministry,mfe,Dir mwa ki gouvernman finn resevwar mo rapor.,make_declaration,make_declaration,True,correct,submit_mock_declaration,submit_mock_declaration,submit
+d_fragment_declaration__v1,d_fragment_declaration,mfe,rapor?,make_declaration,other,False,missed_declaration,prepare_catch_declaration,(none),prepare
+d_fragment_declaration__v2,d_fragment_declaration,mfe,deklarasion la?,make_declaration,make_declaration,True,correct,prepare_catch_declaration,prepare_catch_declaration,prepare

@@ -1,0 +1,20 @@
+{
+  "argument_sets_validated": 32,
+  "negative_cases": 14,
+  "by_tool": {
+    "(none)": 108,
+    "get_marine_conditions": 60,
+    "record_catch": 41,
+    "prepare_catch_declaration": 49,
+    "submit_mock_declaration": 14,
+    "get_recent_catches": 24,
+    "get_species_candidates": 6,
+    "get_species_details": 12,
+    "check_confirmed_catch_rule": 6,
+    "queue_for_offline_sync": 6,
+    "request_better_photo": 8,
+    "get_current_demo_date": 4
+  },
+  "failures": [],
+  "passed": true
+}

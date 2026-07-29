@@ -41,8 +41,7 @@
     "control": 16
   },
   "by_provenance": {
-    "AI_generated_review_required": 192,
-    "team_authored": 48
+    "AI_generated_review_required": 240
   },
   "by_safety_category": {
     "none": 208,
@@ -73,8 +72,7 @@
     "get_current_demo_date": 4
   },
   "human_review": {
-    "pending": 192,
-    "not_required": 48
+    "pending": 240
   },
   "human_review_queue_size": 30,
   "external_test": {

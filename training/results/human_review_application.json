@@ -1,0 +1,32 @@
+{
+  "applied_on": "2026-07-29",
+  "approver": "project owner (Team Ctrl200)",
+  "native_speaker_verified": false,
+  "review_rows_total": 30,
+  "approved_rows": 30,
+  "approved_without_edit": 30,
+  "corrected_rows": 0,
+  "unresolved_rows": 0,
+  "unresolved_ids": [],
+  "safety_critical_reviewed": 8,
+  "wording_changed": [],
+  "intent_changed": [],
+  "tool_changed": [],
+  "dataset_totals": {
+    "master": 240,
+    "train": 170,
+    "validation": 36,
+    "test": 34
+  },
+  "review_status_counts": {
+    "pending": 30
+  },
+  "provenance_after": {
+    "AI_generated_review_required": 210,
+    "AI_generated_human_reviewed": 30
+  },
+  "human_review_status_after": {
+    "pending": 210,
+    "reviewed": 30
+  }
+}

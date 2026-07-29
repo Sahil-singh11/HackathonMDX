@@ -1,0 +1,34 @@
+{
+  "run": "lamer-konekte-e2b-qlora-v2",
+  "dataset_version": "v2",
+  "decision": "REJECTED",
+  "fast_path_intents": [
+    "make_declaration"
+  ],
+  "gate_a_accepted": false,
+  "gate_b_accepted": false,
+  "tuned_external_intent_accuracy": 0.7812,
+  "tuned_challenge_intent_accuracy": 0.7083,
+  "base_model": "google/gemma-4-E2B-it",
+  "training_ran": true,
+  "accepted": false,
+  "untuned_intent_accuracy": 0.0,
+  "tuned_intent_accuracy": 0.8529,
+  "kaggle_kernel": "yuvineappadu/lamer-konekte-e2b-qlora-router-v2",
+  "kernel_version_complete": 4,
+  "gpu": "Tesla T4",
+  "training_seconds": 552.3,
+  "peak_vram_gib": 9.21,
+  "best_epoch": 3,
+  "best_eval_loss": 0.0577,
+  "eval_loss_by_epoch": [
+    0.0878,
+    0.0663,
+    0.0577
+  ],
+  "trainable_params": 12079104,
+  "seed": 20260729,
+  "v1_internal_intent_accuracy": 0.7353,
+  "internal_median_latency_ms": 4571,
+  "challenge_median_latency_ms": 4508
+}
