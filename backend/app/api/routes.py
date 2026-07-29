@@ -15,8 +15,9 @@ from app.core.limitations import (MARINE_DISCLAIMER, MOCK_DISCLOSURE,
 from app.core.ratelimit import InMemoryRateLimiter
 from app.pillars.routes import reset_limiters as _reset_pillar_limiters
 from app.db.session import get_session
-from app.models.entities import (CatchAnalysis, CatchRecord, Declaration,
-                                 LedgerEntry, SyncQueueItem, ToolTrace)
+from app.models.entities import (AisPosition, CatchAnalysis, CatchRecord,
+                                 Declaration, LedgerEntry, SyncQueueItem,
+                                 ToolTrace)
 from app.providers.capabilities import all_capabilities
 from app.providers.dispatcher import analyse as provider_analyse
 from app.schemas.analysis import (AnalyseCatchResponse, ConfirmRequest,
@@ -732,7 +733,13 @@ def demo_reset(session: Session = Depends(get_session)) -> dict:
     demo_date.set_simulated_date(session, None)
     # LedgerEntry must be cleared alongside CatchRecord: a chain left pointing at
     # deleted records would report "broken" forever after a demo reset.
-    for model in (CatchRecord, CatchAnalysis, Declaration, LedgerEntry, SyncQueueItem, ToolTrace):
+    # AisPosition is swept too (Task 4b, deliberate): /api/demo/reset exists to
+    # make the demo repeatable, and a transport brief still showing vessels from
+    # a previous run would have no other way to be cleared. Nothing is lost —
+    # with the collector running the rolling window refills from the live feed
+    # within seconds, and otherwise it re-seeds on the next request.
+    for model in (CatchRecord, CatchAnalysis, Declaration, LedgerEntry, SyncQueueItem,
+                  ToolTrace, AisPosition):
         for row in session.exec(select(model)).all():
             session.delete(row)
     session.commit()

@@ -1,0 +1,120 @@
+{
+  "_README": "CONSTRUCTED FROM SCHEMA — NOT A CAPTURE. Every message below was written by hand against the documented aisstream.io v0 message format. No vessel, MMSI, name, position or timestamp here was ever received from a real AIS receiver, and none of it describes any real ship. It exists so the Marine Transport & Trade pillar can be built, tested and reviewed before a live feed is available. Anything served from this file is labelled data_kind='synthetic' end to end — in the API payload's provenance block and on every UI surface that renders it. If you are reading this because the endpoint showed you 'synthetic', that label is correct and this file is why.",
+  "_schema_source": "aisstream.io v0 stream (wss://stream.aisstream.io/v0/stream). Envelope: {MessageType, MetaData, Message:{<MessageType>:{...}}}. MetaData.time_utc uses Go's time.String() layout. Field names and casing mirror the documented payloads so the same normaliser parses live messages unchanged — see backend/app/pillars/transport/ais.py.",
+  "_data_kind": "synthetic",
+  "_reference_utc": "2026-07-30T08:00:00Z",
+  "_rebasing": "The loader shifts every timestamp by a single constant delta so the newest message lands at 'now', preserving the exact relative spacing between messages. Absolute instants are therefore not meaningful; the gaps between them are. AIS ETAs carry no year (Month/Day/Hour/Minute only), so they resolve against the rebased clock exactly as they would against a live one — that resolution is real logic, not a fixture shim.",
+  "_deliberate_gaps": "Two vessels (645890123, 646123450) send PositionReport with no ShipStaticData. That is the normal case on a real feed, not an omission: static data is broadcast far less often than position, so a vessel is frequently visible with no name, type, destination or ETA. They are here to keep the code honest about what it does not know.",
+  "messages": [
+    {
+      "MessageType": "PositionReport",
+      "MetaData": {"MMSI": 645123456, "ShipName": "MSC LORETO", "latitude": -20.2410, "longitude": 57.4180, "time_utc": "2026-07-30 07:59:12.418000000 +0000 UTC"},
+      "Message": {"PositionReport": {"Cog": 341.2, "Latitude": -20.2410, "Longitude": 57.4180, "NavigationalStatus": 0, "Sog": 11.4, "TrueHeading": 340, "RateOfTurn": 0, "PositionAccuracy": true, "Timestamp": 12}}
+    },
+    {
+      "MessageType": "ShipStaticData",
+      "MetaData": {"MMSI": 645123456, "ShipName": "MSC LORETO", "latitude": -20.2410, "longitude": 57.4180, "time_utc": "2026-07-30 07:58:40.102000000 +0000 UTC"},
+      "Message": {"ShipStaticData": {"Name": "MSC LORETO", "CallSign": "3BXY7", "Destination": "PORT LOUIS", "Type": 71, "ImoNumber": 9411243, "MaximumStaticDraught": 11.2, "Eta": {"Month": 7, "Day": 30, "Hour": 10, "Minute": 0}, "Dimension": {"A": 180, "B": 40, "C": 16, "D": 16}}}
+    },
+    {
+      "MessageType": "PositionReport",
+      "MetaData": {"MMSI": 645234567, "ShipName": "CMA CGM MASCAREIGNE", "latitude": -20.2905, "longitude": 57.3620, "time_utc": "2026-07-30 07:57:55.870000000 +0000 UTC"},
+      "Message": {"PositionReport": {"Cog": 22.8, "Latitude": -20.2905, "Longitude": 57.3620, "NavigationalStatus": 0, "Sog": 14.1, "TrueHeading": 23, "RateOfTurn": -2, "PositionAccuracy": true, "Timestamp": 55}}
+    },
+    {
+      "MessageType": "ShipStaticData",
+      "MetaData": {"MMSI": 645234567, "ShipName": "CMA CGM MASCAREIGNE", "latitude": -20.2905, "longitude": 57.3620, "time_utc": "2026-07-30 07:56:31.004000000 +0000 UTC"},
+      "Message": {"ShipStaticData": {"Name": "CMA CGM MASCAREIGNE", "CallSign": "3BAB2", "Destination": "PORT LOUIS", "Type": 70, "ImoNumber": 9784271, "MaximumStaticDraught": 12.8, "Eta": {"Month": 7, "Day": 30, "Hour": 14, "Minute": 30}, "Dimension": {"A": 210, "B": 55, "C": 18, "D": 18}}}
+    },
+    {
+      "MessageType": "PositionReport",
+      "MetaData": {"MMSI": 645345678, "ShipName": "BOW TRIDENT", "latitude": -20.1780, "longitude": 57.4520, "time_utc": "2026-07-30 07:55:02.331000000 +0000 UTC"},
+      "Message": {"PositionReport": {"Cog": 0.0, "Latitude": -20.1780, "Longitude": 57.4520, "NavigationalStatus": 1, "Sog": 0.1, "TrueHeading": 118, "RateOfTurn": 0, "PositionAccuracy": true, "Timestamp": 2}}
+    },
+    {
+      "MessageType": "ShipStaticData",
+      "MetaData": {"MMSI": 645345678, "ShipName": "BOW TRIDENT", "latitude": -20.1780, "longitude": 57.4520, "time_utc": "2026-07-30 07:54:20.667000000 +0000 UTC"},
+      "Message": {"ShipStaticData": {"Name": "BOW TRIDENT", "CallSign": "3BQL5", "Destination": "PORT LOUIS", "Type": 80, "ImoNumber": 9302191, "MaximumStaticDraught": 9.4, "Eta": {"Month": 7, "Day": 30, "Hour": 22, "Minute": 0}, "Dimension": {"A": 96, "B": 26, "C": 10, "D": 10}}}
+    },
+    {
+      "MessageType": "PositionReport",
+      "MetaData": {"MMSI": 645456789, "ShipName": "INDIAN OCEAN STAR", "latitude": -20.3120, "longitude": 57.5410, "time_utc": "2026-07-30 07:52:47.219000000 +0000 UTC"},
+      "Message": {"PositionReport": {"Cog": 298.4, "Latitude": -20.3120, "Longitude": 57.5410, "NavigationalStatus": 0, "Sog": 17.6, "TrueHeading": 297, "RateOfTurn": 4, "PositionAccuracy": true, "Timestamp": 47}}
+    },
+    {
+      "MessageType": "ShipStaticData",
+      "MetaData": {"MMSI": 645456789, "ShipName": "INDIAN OCEAN STAR", "latitude": -20.3120, "longitude": 57.5410, "time_utc": "2026-07-30 07:51:09.885000000 +0000 UTC"},
+      "Message": {"ShipStaticData": {"Name": "INDIAN OCEAN STAR", "CallSign": "3BPS9", "Destination": "PORT LOUIS", "Type": 60, "ImoNumber": 9223851, "MaximumStaticDraught": 7.1, "Eta": {"Month": 7, "Day": 31, "Hour": 6, "Minute": 0}, "Dimension": {"A": 140, "B": 32, "C": 14, "D": 14}}}
+    },
+    {
+      "MessageType": "PositionReport",
+      "MetaData": {"MMSI": 645567890, "ShipName": "LADY SUSHIL", "latitude": -20.2015, "longitude": 57.3105, "time_utc": "2026-07-30 07:49:33.540000000 +0000 UTC"},
+      "Message": {"PositionReport": {"Cog": 87.9, "Latitude": -20.2015, "Longitude": 57.3105, "NavigationalStatus": 0, "Sog": 6.2, "TrueHeading": 88, "RateOfTurn": 0, "PositionAccuracy": false, "Timestamp": 33}}
+    },
+    {
+      "MessageType": "ShipStaticData",
+      "MetaData": {"MMSI": 645567890, "ShipName": "LADY SUSHIL", "latitude": -20.2015, "longitude": 57.3105, "time_utc": "2026-07-30 07:48:12.006000000 +0000 UTC"},
+      "Message": {"ShipStaticData": {"Name": "LADY SUSHIL", "CallSign": "3BFV1", "Destination": "", "Type": 30, "ImoNumber": 0, "MaximumStaticDraught": 3.2, "Eta": {"Month": 0, "Day": 0, "Hour": 24, "Minute": 60}, "Dimension": {"A": 18, "B": 6, "C": 4, "D": 4}}}
+    },
+    {
+      "MessageType": "PositionReport",
+      "MetaData": {"MMSI": 645678901, "ShipName": "KAI XIN", "latitude": -20.1592, "longitude": 57.4981, "time_utc": "2026-07-30 07:46:58.774000000 +0000 UTC"},
+      "Message": {"PositionReport": {"Cog": 0.0, "Latitude": -20.1592, "Longitude": 57.4981, "NavigationalStatus": 5, "Sog": 0.0, "TrueHeading": 45, "RateOfTurn": 0, "PositionAccuracy": true, "Timestamp": 58}}
+    },
+    {
+      "MessageType": "ShipStaticData",
+      "MetaData": {"MMSI": 645678901, "ShipName": "KAI XIN", "latitude": -20.1592, "longitude": 57.4981, "time_utc": "2026-07-30 07:45:41.220000000 +0000 UTC"},
+      "Message": {"ShipStaticData": {"Name": "KAI XIN", "CallSign": "3BJH8", "Destination": "PORT LOUIS", "Type": 70, "ImoNumber": 9515180, "MaximumStaticDraught": 10.1, "Eta": {"Month": 7, "Day": 29, "Hour": 18, "Minute": 0}, "Dimension": {"A": 155, "B": 38, "C": 15, "D": 15}}}
+    },
+    {
+      "MessageType": "PositionReport",
+      "MetaData": {"MMSI": 645789012, "ShipName": "ST BRANDON TRADER", "latitude": -20.2688, "longitude": 57.4402, "time_utc": "2026-07-30 07:44:16.933000000 +0000 UTC"},
+      "Message": {"PositionReport": {"Cog": 15.5, "Latitude": -20.2688, "Longitude": 57.4402, "NavigationalStatus": 0, "Sog": 9.8, "TrueHeading": 16, "RateOfTurn": 1, "PositionAccuracy": true, "Timestamp": 16}}
+    },
+    {
+      "MessageType": "ShipStaticData",
+      "MetaData": {"MMSI": 645789012, "ShipName": "ST BRANDON TRADER", "latitude": -20.2688, "longitude": 57.4402, "time_utc": "2026-07-30 07:43:02.418000000 +0000 UTC"},
+      "Message": {"ShipStaticData": {"Name": "ST BRANDON TRADER", "CallSign": "3BRT4", "Destination": "PORT LOUIS", "Type": 79, "ImoNumber": 9147329, "MaximumStaticDraught": 8.0, "Eta": {"Month": 7, "Day": 30, "Hour": 16, "Minute": 45}, "Dimension": {"A": 110, "B": 28, "C": 11, "D": 11}}}
+    },
+    {
+      "MessageType": "PositionReport",
+      "MetaData": {"MMSI": 645890123, "ShipName": "", "latitude": -20.3301, "longitude": 57.2988, "time_utc": "2026-07-30 07:41:29.612000000 +0000 UTC"},
+      "Message": {"PositionReport": {"Cog": 44.1, "Latitude": -20.3301, "Longitude": 57.2988, "NavigationalStatus": 0, "Sog": 8.3, "TrueHeading": 44, "RateOfTurn": 0, "PositionAccuracy": false, "Timestamp": 29}}
+    },
+    {
+      "MessageType": "PositionReport",
+      "MetaData": {"MMSI": 645901234, "ShipName": "PETREL EXPRESS", "latitude": -20.1104, "longitude": 57.5622, "time_utc": "2026-07-30 07:39:50.187000000 +0000 UTC"},
+      "Message": {"PositionReport": {"Cog": 61.3, "Latitude": -20.1104, "Longitude": 57.5622, "NavigationalStatus": 0, "Sog": 19.2, "TrueHeading": 61, "RateOfTurn": -1, "PositionAccuracy": true, "Timestamp": 50}}
+    },
+    {
+      "MessageType": "ShipStaticData",
+      "MetaData": {"MMSI": 645901234, "ShipName": "PETREL EXPRESS", "latitude": -20.1104, "longitude": 57.5622, "time_utc": "2026-07-30 07:38:11.455000000 +0000 UTC"},
+      "Message": {"ShipStaticData": {"Name": "PETREL EXPRESS", "CallSign": "3BME6", "Destination": "PORT REUNION", "Type": 69, "ImoNumber": 9364771, "MaximumStaticDraught": 5.9, "Eta": {"Month": 7, "Day": 31, "Hour": 2, "Minute": 0}, "Dimension": {"A": 74, "B": 20, "C": 8, "D": 8}}}
+    },
+    {
+      "MessageType": "PositionReport",
+      "MetaData": {"MMSI": 646012345, "ShipName": "OCEAN NEPTUNE", "latitude": -20.1866, "longitude": 57.4331, "time_utc": "2026-07-30 07:36:44.902000000 +0000 UTC"},
+      "Message": {"PositionReport": {"Cog": 0.0, "Latitude": -20.1866, "Longitude": 57.4331, "NavigationalStatus": 1, "Sog": 0.2, "TrueHeading": 203, "RateOfTurn": 0, "PositionAccuracy": true, "Timestamp": 44}}
+    },
+    {
+      "MessageType": "ShipStaticData",
+      "MetaData": {"MMSI": 646012345, "ShipName": "OCEAN NEPTUNE", "latitude": -20.1866, "longitude": 57.4331, "time_utc": "2026-07-30 07:35:20.118000000 +0000 UTC"},
+      "Message": {"ShipStaticData": {"Name": "OCEAN NEPTUNE", "CallSign": "3BTN3", "Destination": "PORT LOUIS", "Type": 82, "ImoNumber": 9288573, "MaximumStaticDraught": 10.7, "Eta": {"Month": 7, "Day": 30, "Hour": 20, "Minute": 15}, "Dimension": {"A": 128, "B": 30, "C": 12, "D": 12}}}
+    },
+    {
+      "MessageType": "PositionReport",
+      "MetaData": {"MMSI": 646123450, "ShipName": "", "latitude": -20.2233, "longitude": 57.6104, "time_utc": "2026-07-30 07:33:07.640000000 +0000 UTC"},
+      "Message": {"PositionReport": {"Cog": 210.7, "Latitude": -20.2233, "Longitude": 57.6104, "NavigationalStatus": 0, "Sog": 4.4, "TrueHeading": 211, "RateOfTurn": 0, "PositionAccuracy": false, "Timestamp": 7}}
+    },
+    {
+      "MessageType": "PositionReport",
+      "MetaData": {"MMSI": 646234561, "ShipName": "GRAND BAIE PIONEER", "latitude": -20.3402, "longitude": 57.2611, "time_utc": "2026-07-30 07:31:55.288000000 +0000 UTC"},
+      "Message": {"PositionReport": {"Cog": 30.9, "Latitude": -20.3402, "Longitude": 57.2611, "NavigationalStatus": 0, "Sog": 7.7, "TrueHeading": 31, "RateOfTurn": 2, "PositionAccuracy": true, "Timestamp": 55}}
+    },
+    {
+      "MessageType": "ShipStaticData",
+      "MetaData": {"MMSI": 646234561, "ShipName": "GRAND BAIE PIONEER", "latitude": -20.3402, "longitude": 57.2611, "time_utc": "2026-07-30 07:30:12.771000000 +0000 UTC"},
+      "Message": {"ShipStaticData": {"Name": "GRAND BAIE PIONEER", "CallSign": "3BGP7", "Destination": "PORT LOUIS", "Type": 74, "ImoNumber": 9430512, "MaximumStaticDraught": 9.9, "Eta": {"Month": 8, "Day": 2, "Hour": 9, "Minute": 30}, "Dimension": {"A": 145, "B": 34, "C": 14, "D": 14}}}
+    }
+  ]
+}

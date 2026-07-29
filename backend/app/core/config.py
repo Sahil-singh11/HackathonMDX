@@ -32,7 +32,36 @@ class Settings(BaseSettings):
     # Comma-separated pillar ids allowed to serve live pillar routes. A pillar
     # is "live" only when implemented AND listed here, so merging a new pillar
     # module never silently exposes it (Task 4a).
+    #
+    # Transport ships implemented-but-disabled ON PURPOSE: the default deployment
+    # has no AIS feed, and an endpoint that answers 503 with an explanation is
+    # more honest than one that answers 200 with fixture data nobody asked for.
+    # Enable with PILLARS_ENABLED=fisheries,transport.
     pillars_enabled: str = "fisheries"
+
+    # -- Marine Transport & Trade pillar (Task 4b) --------------------------
+    # Rolling AIS window. Both bounds are enforced on every write: a collector
+    # left running overnight must not grow the SQLite file without bound.
+    transport_ais_retention_minutes: int = 180
+    transport_ais_max_rows: int = 5000
+    # How far ahead the arrivals brief looks. Deterministic filter, not a model
+    # parameter — the model never decides which vessels are in the window.
+    transport_arrivals_window_hours: int = 24
+    # Live aisstream.io collector — DORMANT FORWARD DECLARATIONS.
+    #
+    # The collector is deliberately UNIMPLEMENTED, not merely disabled. A
+    # coverage probe on 30 Jul 2026 (backend/scripts/ais_coverage_probe.py)
+    # found the global aisstream feed flowing but ZERO messages for the
+    # Mauritius region across a 120 s Port Louis box and a 120 s Mascarene
+    # box — a regional receiver gap, not a key or service fault. There is
+    # nothing for a collector to collect, and a half-built long-lived
+    # WebSocket is a startup hazard (the 4acff21 trap in a worse form) bought
+    # for no data.
+    #
+    # These two settings exist so activation is a small, reviewable change the
+    # day coverage appears: set the key, flip the flag, re-run the probe.
+    ais_collector_enabled: bool = False
+    aisstream_api_key: str = ""
 
     data_dir: Path = REPO_ROOT / "data"
     storage_dir: Path = REPO_ROOT / "storage"
