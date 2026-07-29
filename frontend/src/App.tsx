@@ -14,6 +14,9 @@
  *   Dhanesh  /record      Record a catch  (pages/CatchFlow)
  *            /log         Catch log       (pages/History)
  *            /queue       Offline queue
+ *            /assistant   Rules assistant (assistant/AssistantPage) — added by
+ *                         Workstream 2; Sahil, this is the one line that needed
+ *                         your file. Route name chosen to avoid Lane C's paths.
  *   Shirish  /declaration Declaration
  *            /authority   Authority dashboard      (stub)
  *            /verify/:id  Certificate verification (stub)
@@ -29,6 +32,7 @@
  */
 import { useEffect } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import AssistantPage from './assistant/AssistantPage'
 import About from './pages/About'
 import CatchFlow from './pages/CatchFlow'
 import Dashboard from './pages/Dashboard'
@@ -63,6 +67,7 @@ function FisherRoutes() {
           <Route path="/sea" element={<Marine />} />
           <Route path="/record" element={<CatchFlow />} />
           <Route path="/log" element={<History />} />
+          <Route path="/assistant" element={<AssistantPage />} />
           <Route path="/declaration" element={<Declaration />} />
           <Route path="/queue" element={<Queue />} />
           <Route path="/proof" element={<Proof />} />
