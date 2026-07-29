@@ -1,49 +1,130 @@
-import { useState } from 'react'
+/**
+ * Onboarding — the first screen anyone sees, including judges on a projector.
+ *
+ * The card is a plotted fix on a living nautical chart of the sea the fisher is
+ * about to go out on. The chart is drawn procedurally on a canvas
+ * (components/onboarding) — no assets, no requests, works in airplane mode.
+ *
+ * PRESERVED EXACTLY from the previous version:
+ *   - the zustand calls and their order: setLanguage on selection,
+ *     setProfile(name, area) then setOnboarded(true) on Koumanse
+ *   - local name/area state
+ *   - every Morisyen and English string, via the same i18n keys
+ *   - the AI-assistance disclaimer (restyled, meaning untouched)
+ * The only behavioural change is that Koumanse plays a ~340ms departure before
+ * setOnboarded fires, and skips it entirely under reduced motion.
+ */
+import { useEffect, useRef, useState } from 'react'
 import { useT } from '../i18n'
 import { useAppStore } from '../store/app'
+import { useTheme } from '../theme'
+import { useAnnounce } from '../lib/announce'
+import { NauticalChart } from '../components/onboarding/NauticalChart'
+import '../components/onboarding/onboarding.css'
+
+/** Mauritius. Set small in mono along the card's lower edge. */
+const FIX = '20°10′S  57°30′E'
+
+const DEPART_MS = 340
 
 export default function Landing() {
   const t = useT()
   const { language, setLanguage, setProfile, setOnboarded } = useAppStore()
   const [name, setName] = useState('')
   const [area, setArea] = useState('')
+  const [departing, setDeparting] = useState(false)
+  const { reduceMotion } = useTheme()
+  const announce = useAnnounce()
+  const timer = useRef<number | null>(null)
+
+  useEffect(() => () => { if (timer.current) window.clearTimeout(timer.current) }, [])
+
+  // Warms the horizon a touch once a language has been chosen.
+  const [warm, setWarm] = useState(0)
+
+  const choose = (lang: 'mfe' | 'en') => {
+    setLanguage(lang)
+    setWarm(1)
+  }
+
+  const start = () => {
+    // Identical store writes to the previous implementation, in the same order.
+    const commit = () => { setProfile(name, area); setOnboarded(true) }
+    announce(t('landing.start'))
+    if (reduceMotion) { commit(); return }
+    setDeparting(true)
+    timer.current = window.setTimeout(commit, DEPART_MS)
+  }
 
   return (
-    <div className="app-shell">
-      <header className="topbar">
-        <img src="/icon.svg" alt="" aria-hidden="true" />
+    <div className={`lk-onboard lk-scope${departing ? ' lk-onboard--departing' : ''}`}>
+      <NauticalChart warm={warm} />
+
+      <div className="lk-onboard__inner">
         <div>
-          <h1>{t('app.name')}</h1>
-          <span className="tagline">{t('app.tagline')}</span>
-        </div>
-      </header>
-      <main className="narrow">
-        <div className="card">
-          <h2>{t('landing.welcome')}</h2>
-          <p>{t('landing.intro')}</p>
-          <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
-            <legend className="small" style={{ fontWeight: 700 }}>{t('landing.chooseLanguage')}</legend>
-            <div style={{ display: 'flex', gap: 'var(--space-3)', margin: 'var(--space-2) 0' }}>
-              <button className="secondary" aria-pressed={language === 'mfe'}
-                style={language === 'mfe' ? { borderColor: 'var(--primary-coral)', color: 'var(--primary-coral)', background: 'var(--surface-coral-tint)' } : undefined}
-                onClick={() => setLanguage('mfe')}>Kreol Morisien</button>
-              <button className="secondary" aria-pressed={language === 'en'}
-                style={language === 'en' ? { borderColor: 'var(--primary-coral)', color: 'var(--primary-coral)', background: 'var(--surface-coral-tint)' } : undefined}
-                onClick={() => setLanguage('en')}>English</button>
+          <div className="lk-onboard__masthead">
+            <img src="/icon.svg" alt="" aria-hidden="true" />
+            <div>
+              <h1 className="lk-onboard__wordmark">{t('app.name')}</h1>
+              <span className="lk-onboard__tagline">{t('app.tagline')}</span>
             </div>
-          </fieldset>
-          <label className="field">{t('landing.profileName')}
-            <input value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
-          </label>
-          <label className="field">{t('landing.area')}
-            <input value={area} onChange={(e) => setArea(e.target.value)} placeholder="Grand Baie, Mahébourg…" />
-          </label>
-          <button className="primary" onClick={() => { setProfile(name, area); setOnboarded(true) }}>
-            {t('landing.start')}
-          </button>
+          </div>
+
+          <section className="lk-fix">
+            <span className="lk-fix__ticks" aria-hidden="true" />
+            <span className="lk-fix__cross" aria-hidden="true" />
+
+            <h2 className="lk-fix__welcome">{t('landing.welcome')}</h2>
+            <p className="lk-fix__intro">{t('landing.intro')}</p>
+
+            <fieldset className="lk-lang">
+              <legend className="lk-lang__legend">{t('landing.chooseLanguage')}</legend>
+              <div className="lk-lang__options">
+                {/* Each input lives in its own cell so it positions against that
+                    cell, not against the card. See onboarding.css. */}
+                <div className="lk-lang__cell">
+                  <input className="lk-lang__input" type="radio" id="lk-lang-mfe" name="lk-language"
+                    checked={language === 'mfe'} onChange={() => choose('mfe')} />
+                  <label className="lk-lang__option" htmlFor="lk-lang-mfe">
+                    <span className="lk-lang__marker" aria-hidden="true" />
+                    Kreol Morisien
+                  </label>
+                </div>
+
+                <div className="lk-lang__cell">
+                  <input className="lk-lang__input" type="radio" id="lk-lang-en" name="lk-language"
+                    checked={language === 'en'} onChange={() => choose('en')} />
+                  <label className="lk-lang__option" htmlFor="lk-lang-en">
+                    <span className="lk-lang__marker" aria-hidden="true" />
+                    English
+                  </label>
+                </div>
+              </div>
+            </fieldset>
+
+            <div className="lk-field-stack">
+              <div>
+                <label className="lk-onboard-label" htmlFor="lk-name">{t('landing.profileName')}</label>
+                <input className="lk-onboard-input" id="lk-name" value={name}
+                  onChange={(e) => setName(e.target.value)} autoComplete="name" />
+              </div>
+              <div>
+                <label className="lk-onboard-label" htmlFor="lk-area">{t('landing.area')}</label>
+                <input className="lk-onboard-input" id="lk-area" value={area}
+                  onChange={(e) => setArea(e.target.value)} placeholder="Grand Baie, Mahébourg…" />
+              </div>
+            </div>
+
+            <button className="lk-start" type="button" onClick={start}>
+              {t('landing.start')}
+            </button>
+
+            <span className="lk-fix__coords" aria-hidden="true">{FIX}</span>
+          </section>
         </div>
-        <p className="banner info">{t('limitation.permanent')}</p>
-      </main>
+
+        <p className="lk-onboard__legend">{t('limitation.permanent')}</p>
+      </div>
     </div>
   )
 }
