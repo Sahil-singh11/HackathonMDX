@@ -19,6 +19,11 @@
    windows fall back to the normal scrollable flow. */
 @media (min-width: 1024px) and (min-height: 900px) {
   .lk-onboard { height: 100vh; height: 100dvh; overflow: hidden; }
+  /* Sunlight's 64px touch targets and 2-3px borders need more vertical room
+     than Day/Night's 56px ones - the same content that fits at exactly
+     1920x1080 in Day/Night clipped the conditions strip here. Same fix as
+     the short-viewport case above: fall back to scrolling rather than clip. */
+  [data-theme='sunlight'] .lk-onboard { height: auto; overflow: visible; }
 }
 
 /* Layer 0: the chart. Behind everything, never interactive. */
