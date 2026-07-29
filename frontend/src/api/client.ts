@@ -59,48 +59,62 @@ export interface ConfirmResponse {
 }
 
 /* ---------------------------------------------------------------------------
-   SHORE-SIDE TYPES (Shirish's lane). Shapes are provisional: no backend
-   endpoint exists for these yet, so treat them as a contract to agree on, not
-   as something already served.
+   SHORE-SIDE TYPES (Shirish's lane).
+   These now mirror REAL endpoints added in the traceability-ledger commit:
+   /api/ledger, /api/ledger/verify, /api/verify/{record_id}, /api/submissions,
+   /api/submissions/{declaration_id}.
+
+   Every one of them returns a scope_note. RENDER IT. The chain proves a record
+   is unaltered since it was logged; it does not prove the reported catch
+   details are true, and it is a local chain, not a distributed blockchain.
 --------------------------------------------------------------------------- */
 
 export interface SubmissionSummary {
-  submission_id: string
-  vessel: string
+  declaration_id: string
   fisher_name: string
+  fishing_area: string
   period_start: string
   period_end: string
   record_count: number
-  total_weight_kg: number | null
-  status: 'submitted' | 'under_review' | 'verified' | 'flagged'
+  total_count: number
+  status: string
+  mock_receipt_id: string | null
   submitted_at: string
 }
 
-export interface LedgerLink {
+export interface LedgerEntry {
+  seq: number
   record_id: string
-  hash: string
-  previous_hash: string | null
+  payload_sha256: string
+  prev_hash: string
+  entry_hash: string
+  created_at: string
+}
+
+export interface LedgerChain {
+  entries: LedgerEntry[]
+  genesis_hash: string
+  count: number
+  scope_note: string
 }
 
 export interface LedgerVerification {
-  intact: boolean
-  checked: number
-  /** Set only when intact === false: the first record where the chain breaks. */
-  broken_at_record_id: string | null
-  links: LedgerLink[]
+  /** 'empty' is returned before any catch has been sealed — design a real state
+   *  for it rather than letting it fall through to a scary "broken". */
+  status: 'intact' | 'broken' | 'empty'
+  entries: number
+  verified_through: number
+  /** Names the FIRST record where the chain breaks; null when intact. */
+  broken_at: string | null
+  detail: string
+  scope_note: string
 }
 
+/** Public QR-landing verification. Three verdicts, never more confident. */
 export interface CertificateVerification {
   status: 'verified' | 'not_found' | 'chain_broken'
-  certificate_ref: string | null
-  species_id: string | null
-  weight_kg: number | null
-  catch_date: string | null
-  landing_site: string | null
-  vessel: string | null
-  ledger_hash: string | null
-  /** What this check does and does NOT prove. Render it; do not overclaim. */
   scope_note: string
+  [key: string]: unknown
 }
 
 async function jsonOrThrow<T>(res: Response): Promise<T> {
@@ -120,7 +134,8 @@ async function jsonOrThrow<T>(res: Response): Promise<T> {
  *   Dhanesh  — analyse, catches (listCatches), confirm, createCatch (recordCatch), processSync
  *   Shirish  — getSubmission, listSubmissions, mockSubmit, prepareDeclaration,
  *              submitDeclaration, verifyCertificate, verifyLedger
- */export const api = {
+ */
+export const api = {
   analyse(form: FormData): Promise<AnalyseResponse> {
     return fetch('/api/analyse-catch', { method: 'POST', body: form }).then((r) => jsonOrThrow<AnalyseResponse>(r))
   },
@@ -138,17 +153,15 @@ async function jsonOrThrow<T>(res: Response): Promise<T> {
   },
   demoReset: () => fetch('/api/demo/reset', { method: 'POST' }).then((r) => jsonOrThrow<Record<string, unknown>>(r)),
 
-  /**
-   * TODO(Shirish): no backend route exists yet. Wire this to a real endpoint
-   * before rendering anything on /authority — do not fabricate submissions.
-   */
-  getSubmission(_submissionId: string): Promise<SubmissionSummary> {
-    return Promise.reject(new Error('getSubmission: not implemented - no backend endpoint yet'))
-  },
-  /** TODO(Shirish): as above. */
-  listSubmissions(): Promise<{ submissions: SubmissionSummary[] }> {
-    return Promise.reject(new Error('listSubmissions: not implemented - no backend endpoint yet'))
-  },
+  getSubmission: (declarationId: string) =>
+    fetch(`/api/submissions/${declarationId}`).then((r) => jsonOrThrow<Record<string, unknown>>(r)),
+
+  /** Officer view. Walks the whole hash chain; use for the ledger inspector. */
+  ledger: (limit = 200) =>
+    fetch(`/api/ledger?limit=${limit}`).then((r) => jsonOrThrow<LedgerChain>(r)),
+
+  listSubmissions: () =>
+    fetch('/api/submissions').then((r) => jsonOrThrow<{ submissions: SubmissionSummary[]; count: number; mock_label: string }>(r)),
 
   marine: () => fetch('/api/marine-conditions').then((r) => jsonOrThrow<Record<string, unknown>>(r)),
   mockSubmit(declarationId: string) {
@@ -182,15 +195,11 @@ async function jsonOrThrow<T>(res: Response): Promise<T> {
 
   syncQueue: () => fetch('/api/sync/queue').then((r) => jsonOrThrow<{ items: Record<string, unknown>[]; queued: number }>(r)),
 
-  /**
-   * TODO(Shirish): /verify/:id. There is no certificate or ledger table in the
-   * backend yet, so this MUST NOT return an invented "verified" result.
-   */
-  verifyCertificate(_certificateRef: string): Promise<CertificateVerification> {
-    return Promise.reject(new Error('verifyCertificate: not implemented - no ledger/certificate backend yet'))
-  },
-  /** TODO(Shirish): walks the hash chain. Same caveat as verifyCertificate. */
-  verifyLedger(_submissionId: string): Promise<LedgerVerification> {
-    return Promise.reject(new Error('verifyLedger: not implemented - no ledger backend yet'))
-  },
+  /** Public, no auth. Backs /verify/:id. Render status AND scope_note. */
+  verifyCertificate: (recordId: string) =>
+    fetch(`/api/verify/${recordId}`).then((r) => jsonOrThrow<CertificateVerification>(r)),
+
+  /** Chain integrity. Reports the FIRST broken record, or intact. */
+  verifyLedger: () =>
+    fetch('/api/ledger/verify').then((r) => jsonOrThrow<LedgerVerification>(r)),
 }

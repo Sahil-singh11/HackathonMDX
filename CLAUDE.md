@@ -165,6 +165,12 @@ Shared helpers: `useOffline()` (`lib/offline`) for connectivity and the queue �
 do not write your own; `useAnnounce()` (`lib/announce`) for the shared aria-live
 region; `useToast()` for transient confirmations.
 
+> **Known duplication to reconcile:** Lane B landed its own
+> `components/capture/useAnnounce.tsx` in parallel with `lib/announce`. Both work;
+> they just mount separate live regions. Whoever touches capture next should
+> switch it to `lib/announce` and delete the local copy — two live regions can
+> double-announce. Not urgent, but do not add a third.
+
 ---
 
 ## Accessibility floor — non-negotiable
@@ -191,12 +197,15 @@ region; `useToast()` for transient confirmations.
    receipt. `/declaration` must never be mistakable for a real filing.
 3. **`/verify/:id` must not overclaim.** It can prove a record is unaltered since
    it was logged. It cannot prove the underlying claim is true. Say so on the page.
-4. **Never invent data you do not have.** The backend stores no photos (analysed
-   in memory, never written to disk) and no GPS beyond a rounded area, and has
-   **no ledger, certificate or officer tables at all**. `getSubmission`,
-   `listSubmissions`, `verifyCertificate` and `verifyLedger` therefore reject
-   rather than return fixtures. Build the UI against real endpoints or show an
-   honest "not available yet" state — do not fake a green "verified".
+4. **Never invent data you do not have.** The backend stores **no photos**
+   (analysed in memory, never written to disk) and no GPS beyond a rounded area,
+   so there are no catch thumbnails to show and no precise positions to plot —
+   use species-initial avatars and the rounded area instead of inventing either.
+   The hash chain, by contrast, is **real**: `/api/ledger`,
+   `/api/ledger/verify`, `/api/verify/{record_id}`, `/api/submissions` and
+   `/api/submissions/{id}` all exist and are wired up in `api/client.ts`. Every
+   one returns a `scope_note` — **render it verbatim**, do not paraphrase it into
+   something stronger.
 5. **Offline is the expected state, not an error.** Never style it red.
 
 ---
