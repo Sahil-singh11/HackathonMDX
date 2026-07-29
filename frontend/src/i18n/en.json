@@ -31,6 +31,8 @@
   "dashboard.yesterday": "Yesterday",
   "common.loading": "Loading…",
   "common.error": "Something went wrong. Please try again.",
+  "httpError.rateLimited": "Too many attempts. You can try again in {seconds}s.",
+  "httpError.rateLimitedReady": "You can try again now.",
   "common.retry": "Retry",
   "common.offline": "Offline — queued actions will sync when connected",
   "common.online": "Online",
