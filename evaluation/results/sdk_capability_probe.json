@@ -1,0 +1,180 @@
+{
+  "model": "gemma-4-26b-a4b-it",
+  "sdk": "google-genai",
+  "interactions_api": {
+    "client_has_interactions": true,
+    "module_importable": true,
+    "methods": [
+      "cancel",
+      "create",
+      "delete",
+      "do_request",
+      "get",
+      "parent_ref",
+      "sdk_configuration",
+      "with_raw_response",
+      "with_streaming_response"
+    ],
+    "create_params": [
+      "request",
+      "api_version",
+      "extra_headers",
+      "extra_query",
+      "extra_body",
+      "timeout",
+      "body"
+    ]
+  },
+  "probes": [
+    {
+      "probe": "baseline_no_config",
+      "supported": true,
+      "latency_ms": 10046,
+      "parsed_type": "NoneType",
+      "parsed_is_model": false,
+      "text_is_json": false,
+      "text_head": "That's a great catch, what species was it?",
+      "prompt_tokens": 21,
+      "output_tokens": 12,
+      "thought_tokens": 380,
+      "finish_reason": "FinishReason.STOP"
+    },
+    {
+      "probe": "response_mime_type_only",
+      "supported": true,
+      "latency_ms": 6953,
+      "parsed_type": "NoneType",
+      "parsed_is_model": false,
+      "text_is_json": true,
+      "text_head": "{ \"response\": \"That sounds like a great catch!\" }",
+      "prompt_tokens": 21,
+      "output_tokens": 16,
+      "thought_tokens": 283,
+      "finish_reason": "FinishReason.STOP"
+    },
+    {
+      "probe": "mime_plus_pydantic_response_schema",
+      "supported": true,
+      "latency_ms": 12641,
+      "parsed_type": "NoneType",
+      "parsed_is_model": false,
+      "text_is_json": false,
+      "text_head": "",
+      "prompt_tokens": 21,
+      "output_tokens": null,
+      "thought_tokens": null,
+      "finish_reason": "FinishReason.RECITATION"
+    },
+    {
+      "probe": "mime_plus_response_json_schema",
+      "supported": true,
+      "latency_ms": 3781,
+      "parsed_type": "dict",
+      "parsed_is_model": false,
+      "text_is_json": true,
+      "text_head": "{ \"intent\": \"log_catch\", \"species_suggestion\": { \"species_id\": null, \"morisyen\": null, \"english\": null, \"scientific\": \"unknown\" }, \"visible_characteristics\": []",
+      "prompt_tokens": 21,
+      "output_tokens": 148,
+      "thought_tokens": null,
+      "finish_reason": "FinishReason.STOP"
+    },
+    {
+      "probe": "thinking_minimal",
+      "supported": true,
+      "latency_ms": 733,
+      "parsed_type": "NoneType",
+      "parsed_is_model": false,
+      "text_is_json": false,
+      "text_head": "That sounds like a great catch!",
+      "prompt_tokens": 21,
+      "output_tokens": 7,
+      "thought_tokens": null,
+      "finish_reason": "FinishReason.STOP"
+    },
+    {
+      "probe": "thinking_high",
+      "supported": true,
+      "latency_ms": 11922,
+      "parsed_type": "NoneType",
+      "parsed_is_model": false,
+      "text_is_json": false,
+      "text_head": "That's a great catch, what species was it?",
+      "prompt_tokens": 21,
+      "output_tokens": 12,
+      "thought_tokens": 523,
+      "finish_reason": "FinishReason.STOP"
+    },
+    {
+      "probe": "thinking_budget_0",
+      "supported": false,
+      "latency_ms": 327,
+      "error_type": "ClientError",
+      "error": "400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': 'Thinking budget is not supported for this model.', 'status': 'INVALID_ARGUMENT'}}"
+    },
+    {
+      "probe": "max_output_tokens_256",
+      "supported": true,
+      "latency_ms": 6203,
+      "parsed_type": "NoneType",
+      "parsed_is_model": false,
+      "text_is_json": false,
+      "text_head": "",
+      "prompt_tokens": 21,
+      "output_tokens": null,
+      "thought_tokens": 253,
+      "finish_reason": "FinishReason.MAX_TOKENS"
+    },
+    {
+      "probe": "max_output_tokens_384",
+      "supported": true,
+      "latency_ms": 8546,
+      "parsed_type": "NoneType",
+      "parsed_is_model": false,
+      "text_is_json": false,
+      "text_head": "",
+      "prompt_tokens": 21,
+      "output_tokens": null,
+      "thought_tokens": 381,
+      "finish_reason": "FinishReason.MAX_TOKENS"
+    },
+    {
+      "probe": "max_output_tokens_1024",
+      "supported": true,
+      "latency_ms": 22266,
+      "parsed_type": "NoneType",
+      "parsed_is_model": false,
+      "text_is_json": false,
+      "text_head": "",
+      "prompt_tokens": 21,
+      "output_tokens": null,
+      "thought_tokens": 1021,
+      "finish_reason": "FinishReason.MAX_TOKENS"
+    },
+    {
+      "probe": "tools_plus_response_schema",
+      "supported": true,
+      "latency_ms": 1078,
+      "parsed_type": "NoneType",
+      "parsed_is_model": false,
+      "text_is_json": false,
+      "text_head": "",
+      "prompt_tokens": 559,
+      "output_tokens": 14,
+      "thought_tokens": null,
+      "finish_reason": "FinishReason.STOP"
+    },
+    {
+      "probe": "tools_only",
+      "supported": true,
+      "latency_ms": 13171,
+      "parsed_type": "NoneType",
+      "parsed_is_model": false,
+      "text_is_json": false,
+      "text_head": "",
+      "prompt_tokens": 559,
+      "output_tokens": 28,
+      "thought_tokens": 562,
+      "finish_reason": "FinishReason.STOP"
+    }
+  ]
+}

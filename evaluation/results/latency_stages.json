@@ -1,0 +1,120 @@
+{
+  "run_at": "2026-07-29T14:44:16.017137+00:00",
+  "model": "gemma-4-26b-a4b-it",
+  "repeats": 3,
+  "stages": {
+    "text_only_structured": {
+      "n": 3,
+      "min_ms": 3766,
+      "max_ms": 4922,
+      "avg_ms": 4218,
+      "median_ms": 3968,
+      "p90_ms": 4922
+    },
+    "image_preprocessing": {
+      "n": 3,
+      "min_ms": 31,
+      "max_ms": 46,
+      "avg_ms": 36,
+      "median_ms": 32,
+      "p90_ms": 46
+    },
+    "image_structured": {
+      "n": 3,
+      "min_ms": 5139,
+      "max_ms": 5233,
+      "avg_ms": 5191,
+      "median_ms": 5202,
+      "p90_ms": 5233
+    },
+    "function_selection_turn1": {
+      "n": 3,
+      "min_ms": 1407,
+      "max_ms": 1437,
+      "avg_ms": 1422,
+      "median_ms": 1422,
+      "p90_ms": 1437
+    },
+    "tool_execution": {
+      "n": 3,
+      "min_ms": 16,
+      "max_ms": 1342,
+      "avg_ms": 890,
+      "median_ms": 1312,
+      "p90_ms": 1342
+    },
+    "final_structured_turn2": {
+      "n": 3,
+      "min_ms": 3796,
+      "max_ms": 3875,
+      "avg_ms": 3843,
+      "median_ms": 3860,
+      "p90_ms": 3875
+    },
+    "tool_round_trip_total": {
+      "n": 3,
+      "min_ms": 5264,
+      "max_ms": 6610,
+      "avg_ms": 6161,
+      "median_ms": 6610,
+      "p90_ms": 6610
+    }
+  },
+  "thinking_comparison": {
+    "MINIMAL": {
+      "n": 3,
+      "min_ms": 5218,
+      "max_ms": 5343,
+      "avg_ms": 5275,
+      "median_ms": 5266,
+      "p90_ms": 5343,
+      "native_valid": 3,
+      "of": 3
+    },
+    "HIGH": {
+      "n": 3,
+      "min_ms": 5313,
+      "max_ms": 5781,
+      "avg_ms": 5567,
+      "median_ms": 5608,
+      "p90_ms": 5781,
+      "native_valid": 3,
+      "of": 3
+    }
+  },
+  "image_size_comparison": {
+    "768": {
+      "n": 3,
+      "min_ms": 6077,
+      "max_ms": 7687,
+      "avg_ms": 6749,
+      "median_ms": 6483,
+      "p90_ms": 7687,
+      "native_valid": 3,
+      "of": 3,
+      "avg_jpeg_bytes": 136341
+    },
+    "1024": {
+      "n": 3,
+      "min_ms": 5125,
+      "max_ms": 6561,
+      "avg_ms": 5989,
+      "median_ms": 6281,
+      "p90_ms": 6561,
+      "native_valid": 3,
+      "of": 3,
+      "avg_jpeg_bytes": 235968
+    },
+    "1280": {
+      "n": 3,
+      "min_ms": 5125,
+      "max_ms": 5733,
+      "avg_ms": 5369,
+      "median_ms": 5250,
+      "p90_ms": 5733,
+      "native_valid": 3,
+      "of": 3,
+      "avg_jpeg_bytes": 235968
+    }
+  }
+}
