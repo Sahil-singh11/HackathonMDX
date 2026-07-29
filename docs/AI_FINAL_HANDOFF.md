@@ -1,6 +1,6 @@
 # AI Workstream — Final Handoff
 
-Branch: `ai-modeling` (never merged to `main`) · Written 2026-07-30 MUT
+Branch: **merged to `main`** (true merge commit `8e2fd43`, full ai-modeling history preserved) · Updated 2026-07-30 MUT
 Owner: AI modelling workstream, Team Ctrl200 · Project: Lamer Konekte
 
 This is the single document to read when picking up the AI workstream. Everything below is
@@ -27,7 +27,7 @@ JSON, two-turn tool lifecycle.** That is the entire production AI surface.
 |---|---|---|---|---|
 | What | prove hosted Gemma works | native structured output + latency | first E2B adapter | targeted E2B adapter |
 | Headline | 10/10 live gates pass | hypothesis **rejected by its own experiment**; keep prompt-JSON; 33 s → 10.1 s | intent 73.5%, **gate REJECTED** | intent **85.3%**, declaration recall **1.000**, **gate REJECTED** (tool 58.8%) |
-| Tests | 93 | 146 | 192 | 236+ offline |
+| Tests | 93 | 146 | 192 | **314 (306 offline + 8 live)** |
 
 Full detail: `docs/GEMMA_LIVE_GATE_REPORT.md`, `docs/AI_PRODUCTION_CONFIG_DECISION.md`,
 `docs/AI_STEP3_TRAINING_REPORT.md`, `docs/AI_STEP4_FINAL_REPORT.md`.
@@ -104,19 +104,24 @@ pwsh scripts/kaggle_download_ai_outputs.ps1
 Adapter weights live under `kaggle/outputs/` (gitignored); their checksums are recorded in
 `training/archive/v1/MANIFEST.json` and `training/results/`.
 
-## 8. Merge instructions (when the team decides to)
+## 8. Merge status — DONE
 
-The branch is deliberately unmerged. When ready:
+`ai-modeling` was merged into `main` as true merge commit **`8e2fd43`** (two parents, full
+history — verified by ancestry check). Post-merge validation on `main`:
 
-```bash
-git checkout main && git pull
-git merge --no-ff ai-modeling -m "Merge ai-modeling: hosted Gemma production pipeline + E2B training programme"
-# then: run the full suite from main, re-run scripts/validate_v2_dataset.py,
-# confirm .env still ignored, and push.
-```
+- `scripts/validate_v2_dataset.py` — ALL PASS
+- **306 offline + 8 live hosted tests = 314 passed, 0 failed**
+- frontend production build ✔ · release gate **ALL CHECKS PASSED**
+- `.env` ignored ✔ · no weights tracked ✔ · E2B provider disabled ✔
 
-Do **not** cherry-pick individual commits — the dataset, archive, gates and results are
-internally cross-checked by tests and will fail if separated.
+Three merge-integration issues were found and fixed on `main` (none touched results):
+1. Windows CRLF normalisation broke the v1-archive byte checksums — content verified
+   identical after LF-normalisation; `.gitattributes` now marks checksummed evidence
+   `-text`, and the verifying test accepts raw-or-LF hashes (a real edit still fails).
+2. A teammate's migration tests leaked SQLite engine connections, which Windows file
+   locking turns into `PermissionError` on temp-dir cleanup — engines now disposed.
+3. `scripts/release_gate.sh` hardcoded the POSIX venv path — now resolves
+   `bin/python` or `Scripts/python.exe`.
 
 ## 9. If a v3 adapter attempt is made
 

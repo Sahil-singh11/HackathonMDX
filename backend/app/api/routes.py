@@ -13,6 +13,7 @@ from app.core.config import get_settings
 from app.core.limitations import (MARINE_DISCLAIMER, MOCK_DISCLOSURE,
                                   PERMANENT_LIMITATION, RULE_VERIFY_NOTICE)
 from app.core.ratelimit import InMemoryRateLimiter
+from app.pillars.routes import reset_limiters as _reset_pillar_limiters
 from app.db.session import get_session
 from app.models.entities import (CatchAnalysis, CatchRecord, Declaration,
                                  LedgerEntry, SyncQueueItem, ToolTrace)
@@ -736,6 +737,7 @@ def demo_reset(session: Session = Depends(get_session)) -> dict:
             session.delete(row)
     session.commit()
     _analyse_limiter.reset()
+    _reset_pillar_limiters()
     return {"status": "reset", "date_simulated": False}
 
 

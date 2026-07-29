@@ -1,5 +1,6 @@
 /* Thin API client. The frontend never sees any API key — everything is server-side. */
 import { RateLimitError, emitRateLimited } from '../lib/httpError'
+import type { PillarsResponse } from '../pillars/types'
 
 export interface PublicConfig {
   app: string
@@ -155,7 +156,7 @@ async function jsonOrThrow<T>(res: Response): Promise<T> {
  * Ownership:
  *   Sahil    — config, marine, providerStatus, reportToday, species, syncQueue
  *   Dhanesh  — analyse, catches (listCatches), confirm, createCatch (recordCatch),
- *              processSync, rulesStatic
+ *              pillars, processSync, rulesStatic
  *   Shirish  — getSubmission, listSubmissions, mockSubmit, prepareDeclaration,
  *              submitDeclaration, verifyCertificate, verifyLedger
  */
@@ -193,6 +194,9 @@ export const api = {
     form.append('declaration_id', declarationId)
     return fetch('/api/declarations/mock-submit', { method: 'POST', body: form }).then((r) => jsonOrThrow<Record<string, unknown>>(r))
   },
+  /** All six blue-economy pillars with their real registry state (Task 4a). */
+  pillars: () => fetch('/api/pillars').then((r) => jsonOrThrow<PillarsResponse>(r)),
+
   prepareDeclaration(data: Record<string, string>) {
     const form = new FormData()
     Object.entries(data).forEach(([k, v]) => form.append(k, v))

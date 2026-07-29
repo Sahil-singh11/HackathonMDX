@@ -29,6 +29,11 @@ class Settings(BaseSettings):
     marine_prewarm_on_startup: bool = True  # off in tests (conftest.py) — no network in the suite
     demo_mode: bool = False
 
+    # Comma-separated pillar ids allowed to serve live pillar routes. A pillar
+    # is "live" only when implemented AND listed here, so merging a new pillar
+    # module never silently exposes it (Task 4a).
+    pillars_enabled: str = "fisheries"
+
     data_dir: Path = REPO_ROOT / "data"
     storage_dir: Path = REPO_ROOT / "storage"
 
