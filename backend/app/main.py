@@ -14,8 +14,9 @@ from app.api.routes import router
 from app.core.config import get_settings
 from app.core.logging import configure, new_request_id
 from app.db.session import get_engine, init_db
-from app.pillars.routes import build_pillar_router
 from app.pillars.energy import register_energy
+from app.pillars.finance import register_finance_pillar
+from app.pillars.routes import build_pillar_router
 from app.pillars.tourism import prewarm_tourism_sites, register_tourism
 from app.services.marine.client import prewarm_demo_locations
 
@@ -73,11 +74,12 @@ def create_app() -> FastAPI:
         log.info("Lamer Konekte backend started (provider default: %s)", settings.provider_mode)
 
     app.include_router(router)
-    # Workstream 2: attach the tourism pillar before the router is built, so
-    # mount_all() picks it up. Registering does not enable it — PILLARS_ENABLED
+    # Attach every pillar module before the router is built, so mount_all()
+    # picks each one up. Registering does not enable it — PILLARS_ENABLED
     # still gates the routes (503 until listed).
     register_tourism()
     register_energy()
+    register_finance_pillar()
     app.include_router(build_pillar_router())
 
     dist = Path(__file__).resolve().parents[2] / "frontend" / "dist"

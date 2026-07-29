@@ -1,6 +1,6 @@
 /* Thin API client. The frontend never sees any API key — everything is server-side. */
 import { RateLimitError, emitRateLimited } from '../lib/httpError'
-import type { PillarProbe, PillarsResponse } from '../pillars/types'
+import type { PillarProbe, PillarResult, PillarsResponse } from '../pillars/types'
 
 export interface PublicConfig {
   app: string
@@ -119,6 +119,44 @@ export interface CertificateVerification {
   [key: string]: unknown
 }
 
+/* ---------------------------------------------------------------------------
+   BLUE FINANCE PILLAR (Task 6b, Shirish's lane). Mirrors
+   backend/app/pillars/finance/schemas.py exactly — see pillars/types.ts's own
+   note on why these are kept in sync by hand rather than generated.
+--------------------------------------------------------------------------- */
+
+export interface FinanceSample {
+  sample_id: string
+  filename: string
+  label: string
+}
+
+export interface FinanceExtractedField {
+  field: string
+  value: string | null
+  page: number | null
+  span: string | null
+  supported: boolean
+  unsupported_reason: string
+}
+
+/** Never a verdict on the bond — `status` is per-criterion only. */
+export interface FinanceCriteriaFinding {
+  criterion_id: string
+  label: string
+  status: 'met' | 'unmet' | 'indeterminate'
+  evidence: FinanceExtractedField[]
+  note: string
+  advisory_only: boolean
+}
+
+export interface FinanceResult extends PillarResult {
+  document_label: string
+  fields: FinanceExtractedField[]
+  findings: FinanceCriteriaFinding[]
+  overall_note: string
+}
+
 /**
  * The regulatory dataset served verbatim by GET /api/rules/static
  * (Workstream 2). The offline assistant bundles the same JSON at build time and
@@ -157,9 +195,9 @@ async function jsonOrThrow<T>(res: Response): Promise<T> {
  *   Sahil    — config, marine, providerStatus, reportToday, species, syncQueue
  *   Dhanesh  — analyse, catches (listCatches), confirm, createCatch (recordCatch),
  *              energyResource, pillarProvenance, pillars, processSync, rulesStatic,
- *              tourismBrief,
- *              tourismSites
- *   Shirish  — getSubmission, listSubmissions, mockSubmit, prepareDeclaration,
+ *              tourismBrief, tourismSites
+ *   Shirish  — financeAnalyse, financeCriteria, financeSamples, getSubmission,
+ *              listSubmissions, mockSubmit, prepareDeclaration,
  *              submitDeclaration, verifyCertificate, verifyLedger
  */
 export const api = {
@@ -186,6 +224,20 @@ export const api = {
     return fetch(`/api/pillars/energy/resource${qs}`)
       .then((r) => jsonOrThrow<Record<string, unknown>>(r))
   },
+
+  /** Runs the deterministic criteria check against a sample or an uploaded PDF.
+   *  503 while the pillar is disabled — the panel must render that state, not hide it. */
+  financeAnalyse(params: { sampleId?: string; file?: File }): Promise<FinanceResult> {
+    const form = new FormData()
+    if (params.sampleId) form.append('sample_id', params.sampleId)
+    if (params.file) form.append('document', params.file)
+    return fetch('/api/pillars/finance/analyse', { method: 'POST', body: form })
+      .then((r) => jsonOrThrow<FinanceResult>(r))
+  },
+  financeCriteria: () =>
+    fetch('/api/pillars/finance/criteria').then((r) => jsonOrThrow<{ criteria: Record<string, unknown>[] }>(r)),
+  financeSamples: () =>
+    fetch('/api/pillars/finance/samples').then((r) => jsonOrThrow<{ samples: FinanceSample[] }>(r)),
 
   getSubmission: (declarationId: string) =>
     fetch(`/api/submissions/${declarationId}`).then((r) => jsonOrThrow<Record<string, unknown>>(r)),

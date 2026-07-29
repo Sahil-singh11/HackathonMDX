@@ -1,0 +1,28 @@
+/* FinancePanel. Semantic tokens only, per CLAUDE.md's new-code rules. */
+.fin-panel { display: flex; flex-direction: column; gap: var(--sp-4); }
+
+.fin-samples { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--sp-2); }
+.fin-sample-option {
+  display: flex; align-items: center; gap: var(--sp-2); min-height: var(--touch-min);
+  padding: var(--sp-2) var(--sp-3); border: 2px solid var(--border); border-radius: var(--r-input);
+  cursor: pointer;
+}
+.fin-sample-option:has(input:checked) { border-color: var(--accent); background: var(--accent-quiet); }
+
+.fin-upload {
+  display: flex; align-items: center; gap: var(--sp-2); min-height: var(--touch-min);
+  padding: var(--sp-2) var(--sp-3); border: 2px dashed var(--border-strong); border-radius: var(--r-input);
+  cursor: pointer; margin: var(--sp-3) 0;
+}
+
+.fin-error { display: flex; align-items: center; gap: var(--sp-2); color: var(--danger); margin-top: var(--sp-2); }
+
+.fin-overall-note {
+  background: var(--surface-sunken); border-radius: var(--r-input); padding: var(--sp-3);
+  font-weight: 600; margin-bottom: var(--sp-4);
+}
+
+.fin-findings-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-3); }
+.fin-finding { border: 2px solid var(--border); border-radius: var(--r-card); padding: var(--sp-3); }
+.fin-finding__head { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; margin-bottom: var(--sp-1); }
+.fin-finding__span { font-style: italic; }

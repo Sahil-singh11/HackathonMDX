@@ -14,10 +14,11 @@ import type { ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { api } from '../api/client'
 import { Badge, Card, EmptyState, Skeleton } from '../components/ui'
+import FinancePanel from '../components/pillars/finance/FinancePanel'
 import { useT } from '../i18n'
-import { PillarStatusBadge } from './PillarsIndex'
-import { FIXTURE_PILLARS } from './fixture'
 import EnergySurface from './energy/EnergySurface'
+import { FIXTURE_PILLARS } from './fixture'
+import { PillarStatusBadge } from './PillarsIndex'
 import TourismSurface from './tourism/TourismSurface'
 import './pillars.css'
 
@@ -33,6 +34,7 @@ import './pillars.css'
  */
 export const PILLAR_SURFACES: Record<string, ReactNode> = {
   energy: <EnergySurface />,
+  finance: <FinancePanel />,
   tourism: <TourismSurface />,
 }
 
