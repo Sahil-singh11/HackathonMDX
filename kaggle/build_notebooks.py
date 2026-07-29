@@ -43,6 +43,9 @@ This notebook demonstrates the full analysis contract end-to-end:
 
 **Key handling:** the Gemini API key is read from **Kaggle Secrets** (`GEMINI_API_KEY`) and never printed.
 
+**Live demo:** the full PWA (camera flow, Morisyen UI, offline queue, declaration) is deployed at
+**https://lamer-konekte.onrender.com** — free tier, so allow ~30 s for the first load if it was idle.
+
 > Lamer Konekte provides AI-assisted catch documentation and informational guidance. Species
 > suggestions and regulatory checks must be confirmed against official sources and by the fisher
 > or an authorised officer.
