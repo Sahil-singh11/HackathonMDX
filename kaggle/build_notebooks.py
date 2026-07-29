@@ -102,6 +102,25 @@ def check_rule(species_id: str, measured_length_cm, capture: date) -> dict:
 print("catalogue:", len(CATALOGUE), "species | rules:", len(RULES), "(+ unknown fallback)")
 '''
 
+HERO_B64 = (HERE.parent / "kaggle" / "assets" / "hero_octopus_b64.txt").read_text().strip() \
+    if (HERE.parent / "kaggle" / "assets" / "hero_octopus_b64.txt").exists() else ""
+
+DEMO_HERO = '''# Real catch photo for the identification demo.
+#
+# Photo: Octopus cyanea observed in Mauritius waters.
+# Source: iNaturalist observation 151112387 by rohanarthur.
+# Licence: CC BY (https://creativecommons.org/licenses/by/4.0/) — redistribution permitted with credit.
+# Embedded (resized) so this notebook is fully self-contained on Kaggle.
+import base64, io
+from PIL import Image
+
+HERO_JPEG_B64 = "''' + HERO_B64 + '''"
+
+hero_photo = Image.open(io.BytesIO(base64.b64decode(HERO_JPEG_B64))).convert("RGB")
+print("hero photo:", hero_photo.size, "- Octopus cyanea, (c) rohanarthur, CC BY, via iNaturalist")
+hero_photo
+'''
+
 DEMO_QUALITY = '''# Image-quality gate (blur via Laplacian variance, brightness) — runs BEFORE any model call
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
@@ -125,9 +144,9 @@ def assess(img: Image.Image) -> dict:
     status = "invalid" if blur < 60 else ("poor" if warnings else "acceptable")
     return {"status": status, "blur_score": round(blur, 1), "brightness": round(brightness, 1), "warnings": warnings}
 
-sharp, blurry = make_demo_image(), make_demo_image(blurred=True)
-print("sharp:", assess(sharp))
-print("blurry:", assess(blurry), " -> a blurry photo returns retake guidance and NEVER spends tokens")
+blurry = make_demo_image(blurred=True)   # synthetic, only to exercise the gate
+print("real hero photo:", assess(hero_photo))
+print("synthetic blurry:", assess(blurry), " -> a blurry photo returns retake guidance and NEVER spends tokens")
 '''
 
 DEMO_ANALYSE = '''# Analysis: hosted Gemma 4 with native function calling — or the disclosed deterministic mock
@@ -189,7 +208,7 @@ def analyse(img, note, quality):
             "reply_morisyen": f"(MOCK) Kitfwa sa se {pick['morisyen']}. Konfirm ek mezir avek enn regleman.",
             "recommended_next_step": "confirm_species", "provider": "deterministic-mock", "real_inference": False}
 
-result = analyse(sharp, "Mo'nn gagn enn ourite dan lagon", assess(sharp))
+result = analyse(hero_photo, "Mo'nn gagn enn ourite dan lagon", assess(hero_photo))
 print(json.dumps(result, indent=1, ensure_ascii=False))
 '''
 
@@ -222,7 +241,8 @@ Full application (FastAPI + React PWA, offline queue, Morisyen UI): see the publ
 
 write("lamer_konekte_demo.ipynb", [
     ("markdown", DEMO_INTRO), ("code", DEMO_SETUP), ("code", DEMO_DATA),
-    ("code", DEMO_QUALITY), ("code", DEMO_ANALYSE), ("code", DEMO_CONFIRM), ("markdown", DEMO_OUTRO),
+    ("code", DEMO_HERO), ("code", DEMO_QUALITY), ("code", DEMO_ANALYSE),
+    ("code", DEMO_CONFIRM), ("markdown", DEMO_OUTRO),
 ])
 
 # ------------------------------------------------------------------ hardware gate cell (shared)
