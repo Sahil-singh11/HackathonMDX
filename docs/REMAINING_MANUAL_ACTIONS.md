@@ -9,11 +9,12 @@
 
 2. **Make repository PUBLIC before submission** — `bash scripts/make_repo_public.sh` (re-runs the release gate, flips visibility, tags `hackathon-submission-v1`). ⚠️ `YedTorma` has **push but not admin** — the API flip will be refused, so **Sahil** must either grant YedTorma admin or flip it manually: Settings → General → Danger Zone → Change visibility → Public, then we push the tag.
 3. **Submit the Kaggle Writeup** (not draft) — paste `kaggle/writeup.md`, links from `kaggle/project_links.md`. Re-run `scripts/check_writeup_count.py` after any edit.
-4. **Kaggle demo notebook — PUBLISHED, needs one committed run.** Live at
-   https://www.kaggle.com/code/yuvineappadu/lamer-konekte-gemma-4-demo-team-ctrl200 (public, on Yuvine's account).
-   An interactive run with the `GEMINI_API_KEY` secret produced real hosted inference, but the *saved version*
-   was cancelled (CLI status `CANCEL_ACKNOWLEDGED`), so no stored real-inference output exists yet.
-   **Fix:** open → Save Version → "Save & Run All (Commit)" → **wait 5–10 min** (it queues; do not cancel).
+4. ~~Kaggle demo notebook~~ — **DONE 29 Jul ~19:10.**
+   https://www.kaggle.com/code/yuvineappadu/lamer-konekte-gemma-4-demo-team-ctrl200 — PUBLIC (verified 200 logged
+   out), version 7 `COMPLETE`, independently verified from the published log: hosted mode on
+   `gemma-4-26b-a4b-it`, real licensed hero photo, `octopus_cyanea` at **high** confidence,
+   `real_inference: true`, closed-season comparison correct, and zero key material in the output.
+   ⚠️ Do NOT push this notebook via the Kaggle CLI again — it detaches the secret (see `kaggle/README.md`).
 
 ## HIGH VALUE (directly worth rubric points)
 
