@@ -533,39 +533,51 @@ print("candidate linear leaves:", linear_names.most_common(16))
 
 import torch.nn as nn
 
-PREFERRED = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
+# WHY THIS IS NOT JUST ["q_proj", ...]:
+# Gemma 4 is a multimodal checkpoint. Its VISION and AUDIO towers wrap projections in
+# Gemma4ClippableLinear (typed `config: Gemma4VisionConfig | Gemma4AudioConfig`), whose
+# in_features are tower-sized (768). A plain suffix match on "q_proj" hits those towers
+# first — and a text-only routing task never runs them, so the adapter sits outside the
+# forward graph. Observed in run v12 as grad_norm == 0.0 at every step with a bit-identical
+# eval_loss, and in v13 as "element 0 of tensors does not require grad and does not have a
+# grad_fn". So: resolve targets INSIDE the language model only, by full module path.
 
-# peft can only inject into real Linear layers. Gemma 4 wraps each projection in
-# Gemma4ClippableLinear, whose weight lives on a `.linear` child, so target that instead
-# — but only where the wrapper actually exists.
-INJECTABLE = (nn.Linear, nn.Embedding, nn.Conv1d, nn.Conv2d, nn.Conv3d)
+def find_language_model(root):
+    for attr_path in (("language_model",), ("model", "language_model"), ("model",)):
+        node = root
+        for attr in attr_path:
+            node = getattr(node, attr, None)
+            if node is None:
+                break
+        if node is not None and any("layers." in n for n, _ in node.named_modules()):
+            return node, ".".join(attr_path)
+    return root, ""
 
-def resolve_target(proj_name):
-    for name, mod in model.named_modules():
-        if not name.endswith(proj_name):
-            continue
-        if isinstance(mod, INJECTABLE) or mod.__class__.__name__.startswith("Linear4bit"):
-            return proj_name
-        inner = getattr(mod, "linear", None)
-        if inner is not None:
-            return f"{proj_name}.linear"
-        for child_name, child in mod.named_children():
-            if isinstance(child, INJECTABLE) or child.__class__.__name__.startswith("Linear4bit"):
-                return f"{proj_name}.{child_name}"
-        return None
-    return None
+lm, lm_path = find_language_model(model)
+print("language model located at:", lm_path or "<root>")
 
+PREFERRED = {"q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"}
+INJECTABLE_NAMES = ("Linear", "Linear4bit", "Linear8bitLt")
+
+# Full paths, relative to `model`, of injectable projections inside the language model.
 TARGET_MODULES = []
-for proj in PREFERRED:
-    resolved = resolve_target(proj)
-    if resolved:
-        TARGET_MODULES.append(resolved)
-    else:
-        print(f"  {proj}: not found or not injectable, skipping")
+lm_module_ids = {id(m) for _, m in lm.named_modules()}
+for name, mod in model.named_modules():
+    leaf = name.split(".")[-1]
+    if leaf not in PREFERRED:
+        continue
+    if id(mod) not in lm_module_ids:
+        continue                      # vision / audio tower — skip
+    if mod.__class__.__name__ in INJECTABLE_NAMES or isinstance(mod, nn.Linear):
+        TARGET_MODULES.append(name)
 
 if not TARGET_MODULES:
-    raise SystemExit("no injectable LoRA target modules found — refusing to guess")
-print("LoRA target modules:", TARGET_MODULES)
+    raise SystemExit("no injectable LoRA targets inside the language model — refusing to guess")
+
+from collections import Counter as _C
+print(f"LoRA targets: {len(TARGET_MODULES)} modules inside the language model")
+print("  by projection:", dict(_C(n.split(".")[-1] for n in TARGET_MODULES)))
+print("  example:", TARGET_MODULES[0])
 """)
 
 code("""
@@ -578,10 +590,15 @@ code("""
 import gc as _gc
 
 model.config.use_cache = False
-# use_reentrant=False: the reentrant implementation can drop grad flow to injected adapter
-# params, which surfaces later as "No inf checks were recorded for this optimizer".
-model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
-model.enable_input_require_grads()
+# Gradient checkpointing is back ON. It was briefly disabled while diagnosing grad_norm==0,
+# but the real cause was LoRA landing on the vision/audio towers (see the targeting cell).
+# With 205 language-model modules adapted (24.2M trainable), checkpointing is required:
+# without it, smoke training OOMed on the 14.6 GiB T4.
+USE_GRAD_CKPT = True
+if USE_GRAD_CKPT:
+    model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
+    model.enable_input_require_grads()
+    print("gradient checkpointing enabled (non-reentrant)")
 
 n_norm = 0
 for _name, _module in model.named_modules():
@@ -597,7 +614,7 @@ print(f"upcast {n_norm} norm modules to fp32 (embeddings left in {COMPUTE_DTYPE}
 print("VRAM after prep: %.2f GiB allocated" % (torch.cuda.memory_allocated() / 1024**3))
 
 lora = LoraConfig(
-    r=16, lora_alpha=32, lora_dropout=0.05, bias="none",
+    r=8, lora_alpha=16, lora_dropout=0.05, bias="none",
     task_type="CAUSAL_LM", target_modules=TARGET_MODULES,
 )
 model = get_peft_model(model, lora)
@@ -699,7 +716,7 @@ torch.manual_seed(SEED)
 
 PER_DEVICE_BS = 1
 GRAD_ACCUM = 8          # effective batch 8, via accumulation not batch size
-EPOCHS = 3
+EPOCHS = 8
 LR = 2e-4
 
 OUTPUT_DIR = "/kaggle/working/e2b_router_adapter"
@@ -727,7 +744,7 @@ def make_args(max_steps=-1, epochs=EPOCHS, out=OUTPUT_DIR, eval_strategy="epoch"
         # scaled grads to inspect and Trainer aborted with "No inf checks were recorded
         # for this optimizer." fp32 adapter math on ~5.7M params is cheap.
         fp16=False,
-        gradient_checkpointing=True,
+        gradient_checkpointing=USE_GRAD_CKPT,
         optim=("paged_adamw_8bit" if USE_4BIT else "adamw_torch"),
         report_to="none",
         seed=SEED,
@@ -747,6 +764,14 @@ if SMOKE_OK:
     try:
         smoke_res = smoke_trainer.train()
         SMOKE_STEP_SECONDS = (time.time() - t0) / 10
+
+        # A LoRA adapter that receives no gradient trains to exactly nothing. Catch it here.
+        _gn = [h.get("grad_norm") for h in smoke_trainer.state.log_history if h.get("grad_norm") is not None]
+        print("smoke grad_norms:", _gn)
+        if _gn and all((g or 0) == 0.0 for g in _gn):
+            raise RuntimeError(
+                "grad_norm is 0.0 at every smoke step: the LoRA adapter is not in the "
+                "effective forward path, so full training would be a no-op. Refusing to run it.")
         print("10-step smoke training OK; %.1f s/step" % SMOKE_STEP_SECONDS)
         steps_per_epoch = max(1, len(train_ds) // (PER_DEVICE_BS * GRAD_ACCUM))
         EST_MINUTES = SMOKE_STEP_SECONDS * steps_per_epoch * EPOCHS / 60
@@ -844,7 +869,7 @@ metrics = {
     "base_model": BASE_MODEL,
     "seed": SEED,
     "max_seq_len": MAX_SEQ_LEN,
-    "lora": {"r": 16, "alpha": 32, "dropout": 0.05, "target_modules": TARGET_MODULES},
+    "lora": {"r": 8, "alpha": 16, "dropout": 0.05, "target_modules": TARGET_MODULES},
     "batch": {"per_device": PER_DEVICE_BS, "grad_accum": GRAD_ACCUM,
               "effective": PER_DEVICE_BS * GRAD_ACCUM},
     "epochs": EPOCHS, "learning_rate": LR,

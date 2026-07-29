@@ -1,0 +1,208 @@
+{
+  "untuned_internal": {
+    "label": "untuned_internal_test",
+    "n": 34,
+    "intent_accuracy": 0.0,
+    "tool_accuracy": 0.2059,
+    "structured_validity": 0.0,
+    "valid_intent_enum_rate": 0.0,
+    "tool_allow_list_rate": 1.0,
+    "unknown_function_rate": 0.0,
+    "safety_pass_rate": 1.0,
+    "mixed_language_accuracy": null,
+    "english_control_accuracy": null,
+    "uncertainty_accuracy": 0.0,
+    "reviewed_subset_accuracy": 0.0,
+    "unreviewed_subset_accuracy": 0.0,
+    "median_latency_ms": 441,
+    "per_intent_f1": {
+      "identify_catch": {
+        "f1": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "support": 7
+      },
+      "weather_query": {
+        "f1": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "support": 6
+      },
+      "log_catch": {
+        "f1": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "support": 8
+      },
+      "make_declaration": {
+        "f1": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "support": 11
+      },
+      "other": {
+        "f1": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "support": 2
+      }
+    }
+  },
+  "tuned_internal": {
+    "label": "tuned_internal_test",
+    "n": 34,
+    "intent_accuracy": 0.7353,
+    "tool_accuracy": 0.5882,
+    "structured_validity": 1.0,
+    "valid_intent_enum_rate": 1.0,
+    "tool_allow_list_rate": 1.0,
+    "unknown_function_rate": 0.0,
+    "safety_pass_rate": 1.0,
+    "mixed_language_accuracy": null,
+    "english_control_accuracy": null,
+    "uncertainty_accuracy": 0.6667,
+    "reviewed_subset_accuracy": 0.5,
+    "unreviewed_subset_accuracy": 0.7667,
+    "median_latency_ms": 4438,
+    "per_intent_f1": {
+      "identify_catch": {
+        "f1": 0.9231,
+        "precision": 1.0,
+        "recall": 0.8571,
+        "support": 7
+      },
+      "weather_query": {
+        "f1": 0.7692,
+        "precision": 0.7143,
+        "recall": 0.8333,
+        "support": 6
+      },
+      "log_catch": {
+        "f1": 0.7,
+        "precision": 0.5833,
+        "recall": 0.875,
+        "support": 8
+      },
+      "make_declaration": {
+        "f1": 0.625,
+        "precision": 1.0,
+        "recall": 0.4545,
+        "support": 11
+      },
+      "other": {
+        "f1": 0.6667,
+        "precision": 0.5,
+        "recall": 1.0,
+        "support": 2
+      }
+    }
+  },
+  "untuned_external": {
+    "label": "untuned_external",
+    "n": 32,
+    "intent_accuracy": 0.0,
+    "tool_accuracy": 1.0,
+    "structured_validity": 0.0,
+    "valid_intent_enum_rate": 0.0,
+    "tool_allow_list_rate": 1.0,
+    "unknown_function_rate": 0.0,
+    "safety_pass_rate": null,
+    "mixed_language_accuracy": null,
+    "english_control_accuracy": null,
+    "uncertainty_accuracy": null,
+    "reviewed_subset_accuracy": 0.0,
+    "unreviewed_subset_accuracy": null,
+    "median_latency_ms": 443,
+    "per_intent_f1": {
+      "identify_catch": {
+        "f1": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "support": 13
+      },
+      "weather_query": {
+        "f1": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "support": 8
+      },
+      "log_catch": {
+        "f1": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "support": 3
+      },
+      "make_declaration": {
+        "f1": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "support": 3
+      },
+      "other": {
+        "f1": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "support": 5
+      }
+    }
+  },
+  "tuned_external": {
+    "label": "tuned_external",
+    "n": 32,
+    "intent_accuracy": 0.75,
+    "tool_accuracy": 0.375,
+    "structured_validity": 1.0,
+    "valid_intent_enum_rate": 1.0,
+    "tool_allow_list_rate": 1.0,
+    "unknown_function_rate": 0.0,
+    "safety_pass_rate": null,
+    "mixed_language_accuracy": null,
+    "english_control_accuracy": null,
+    "uncertainty_accuracy": null,
+    "reviewed_subset_accuracy": 0.75,
+    "unreviewed_subset_accuracy": null,
+    "median_latency_ms": 4340,
+    "per_intent_f1": {
+      "identify_catch": {
+        "f1": 0.7273,
+        "precision": 0.8889,
+        "recall": 0.6154,
+        "support": 13
+      },
+      "weather_query": {
+        "f1": 0.8889,
+        "precision": 0.8,
+        "recall": 1.0,
+        "support": 8
+      },
+      "log_catch": {
+        "f1": 0.75,
+        "precision": 0.6,
+        "recall": 1.0,
+        "support": 3
+      },
+      "make_declaration": {
+        "f1": 0.8571,
+        "precision": 0.75,
+        "recall": 1.0,
+        "support": 3
+      },
+      "other": {
+        "f1": 0.4444,
+        "precision": 0.5,
+        "recall": 0.4,
+        "support": 5
+      }
+    }
+  },
+  "acceptance_gate": {
+    "intent_accuracy_ge_0.90": false,
+    "tool_accuracy_ge_0.90": false,
+    "structured_validity_eq_1.0": true,
+    "safety_pass_eq_1.0": true,
+    "zero_unknown_function": true,
+    "improvement_ge_15pp": true,
+    "english_control_not_regressed": true,
+    "ACCEPTED": false
+  }
+}

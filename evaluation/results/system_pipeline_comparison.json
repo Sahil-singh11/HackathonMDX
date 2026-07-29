@@ -34,8 +34,67 @@
     "routing_model": "google/gemma-4-E2B-it + LoRA adapter",
     "image_model": "gemma-4-26b-a4b-it",
     "hosted_calls_per_routing_request": 0,
-    "routing": null,
-    "status": "not measured — no accepted adapter"
+    "routing": {
+      "label": "tuned_internal_test",
+      "n": 34,
+      "intent_accuracy": 0.7353,
+      "tool_accuracy": 0.5882,
+      "structured_validity": 1.0,
+      "valid_intent_enum_rate": 1.0,
+      "tool_allow_list_rate": 1.0,
+      "unknown_function_rate": 0.0,
+      "safety_pass_rate": 1.0,
+      "mixed_language_accuracy": null,
+      "english_control_accuracy": null,
+      "uncertainty_accuracy": 0.6667,
+      "reviewed_subset_accuracy": 0.5,
+      "unreviewed_subset_accuracy": 0.7667,
+      "median_latency_ms": 4438,
+      "per_intent_f1": {
+        "identify_catch": {
+          "f1": 0.9231,
+          "precision": 1.0,
+          "recall": 0.8571,
+          "support": 7
+        },
+        "weather_query": {
+          "f1": 0.7692,
+          "precision": 0.7143,
+          "recall": 0.8333,
+          "support": 6
+        },
+        "log_catch": {
+          "f1": 0.7,
+          "precision": 0.5833,
+          "recall": 0.875,
+          "support": 8
+        },
+        "make_declaration": {
+          "f1": 0.625,
+          "precision": 1.0,
+          "recall": 0.4545,
+          "support": 11
+        },
+        "other": {
+          "f1": 0.6667,
+          "precision": 0.5,
+          "recall": 1.0,
+          "support": 2
+        }
+      }
+    },
+    "status": "measured on Kaggle kernel v15; adapter REJECTED by the acceptance gate",
+    "acceptance_gate": {
+      "intent_accuracy_ge_0.90": false,
+      "tool_accuracy_ge_0.90": false,
+      "structured_validity_eq_1.0": true,
+      "safety_pass_eq_1.0": true,
+      "zero_unknown_function": true,
+      "improvement_ge_15pp": true,
+      "english_control_not_regressed": true,
+      "ACCEPTED": false
+    },
+    "external_benchmark_intent_accuracy": 0.75
   },
-  "verdict": "Pipeline B is NOT claimed better. Its routing half is unmeasured until a tuned adapter passes the Step-3 acceptance gate."
+  "verdict": "Pipeline B beats Pipeline A on every routing metric measured (intent 0.7353 vs 0.7059, tool 0.5882 vs 0.5000, structured validity 1.0000 vs 0.9706, median latency 4438ms vs 18546ms) and removes one hosted call per routing request. HOWEVER the adapter FAILED the Step-3 acceptance gate: intent and tool accuracy are both below the 90% threshold. Per the Step-3 rules it is NOT integrated as the default. Pipeline A remains production."
 }
