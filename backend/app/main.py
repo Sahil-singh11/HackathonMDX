@@ -14,6 +14,7 @@ from app.api.routes import router
 from app.core.config import get_settings
 from app.core.logging import configure, new_request_id
 from app.db.session import get_engine, init_db
+from app.pillars.finance import register_finance_pillar
 from app.pillars.routes import build_pillar_router
 from app.services.marine.client import prewarm_demo_locations
 
@@ -60,6 +61,7 @@ def create_app() -> FastAPI:
         log.info("Lamer Konekte backend started (provider default: %s)", settings.provider_mode)
 
     app.include_router(router)
+    register_finance_pillar()  # attaches the pillar module before routes mount; still disabled unless PILLARS_ENABLED lists it
     app.include_router(build_pillar_router())
 
     dist = Path(__file__).resolve().parents[2] / "frontend" / "dist"

@@ -1,0 +1,26 @@
+{
+  "register_version": "1.0.0",
+  "generated": "2026-07-30",
+  "sources": {
+    "F1": {
+      "title": "Green Bond Principles (GBP)",
+      "publisher": "International Capital Market Association (ICMA)",
+      "url": "https://www.icmagroup.org/assets/documents/Sustainable-finance/2025-updates/Green-Bond-Principles-GBP-June-2025.pdf",
+      "publication_date": "2025-06-01",
+      "access_date": "2026-07-30",
+      "verification_status": "verified",
+      "note": "Four core components confirmed via ICMA's own GBP page plus consistent secondary summaries (Norton Rose Fulbright, ADB/hypo.org overviews): Use of Proceeds; Process for Project Evaluation and Selection; Management of Proceeds; Reporting. These are the same four components carried into the Blue Bond Guidance (F2) — a bond is not eligible under either framework without all four disclosed.",
+      "citation": "ICMA, Green Bond Principles (GBP), June 2025 edition"
+    },
+    "F2": {
+      "title": "Bonds to Finance the Sustainable Blue Economy: A Practitioner's Guide",
+      "publisher": "ICMA, International Finance Corporation (IFC), UN Global Compact, UNEP Finance Initiative, Asian Development Bank",
+      "url": "https://www.icmagroup.org/assets/documents/Sustainable-finance/Bonds-to-Finance-the-Sustainable-Blue-Economy-a-Practitioners-Guide-September-2023.pdf",
+      "publication_date": "2023-09-01",
+      "access_date": "2026-07-30",
+      "verification_status": "partial_verification",
+      "note": "The primary PDF exceeds this tool's fetch size limit (>10MB) and could not be read directly. Six eligible-category names below are corroborated across secondary sources (DLA Piper's 26-Sep-2022 consultative-draft summary, plus other aggregated summaries): Sustainable Seafood, Coastal & Marine Tourism, Sustainable Maritime Transport, Marine Renewable Energy, Marine Pollution Prevention/Control, Sustainable Ports. At least one secondary source states the final guide defines more categories than these six; this register does NOT claim the six below are exhaustive. Treat category matching against this list as informational triage, not a definitive eligibility ruling — the coverage_note on every finance result says so explicitly.",
+      "citation": "ICMA / IFC / UNGC / UNEP FI / ADB, Bonds to Finance the Sustainable Blue Economy: A Practitioner's Guide, September 2023"
+    }
+  }
+}

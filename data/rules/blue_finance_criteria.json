@@ -1,0 +1,68 @@
+{
+  "criteria_version": "1.0.0",
+  "generated": "2026-07-30",
+  "note": "Criteria as data, not as prompt (mirrors data/rules/species_rules.json). A document either demonstrates a criterion in extracted, span-verified text or it does not — the model never renders a pass/fail verdict on a bond; check_criteria() computes every status in code from ExtractedField values only.",
+  "criteria": [
+    {
+      "criterion_id": "use_of_proceeds_disclosed",
+      "label": "Use of proceeds disclosed",
+      "source_id": "F1",
+      "required_field": "use_of_proceeds_category",
+      "description": "The framework names the categories of projects the bond proceeds will finance.",
+      "pass_condition": "field is supported (span-verified) and non-empty"
+    },
+    {
+      "criterion_id": "use_of_proceeds_blue_eligible",
+      "label": "Use of proceeds matches a recognised blue-economy category",
+      "source_id": "F2",
+      "required_field": "use_of_proceeds_category",
+      "allowed_values": [
+        "sustainable_seafood", "coastal_marine_tourism", "sustainable_maritime_transport",
+        "marine_renewable_energy", "marine_pollution_prevention", "sustainable_ports"
+      ],
+      "description": "The disclosed use-of-proceeds category matches one of the blue-economy categories corroborated in F2. This list is NOT asserted exhaustive (see blue_finance_source_register.json F2 note) — a non-match is reported as indeterminate, not a hard fail, and always says so.",
+      "pass_condition": "field is supported and its normalised value is in allowed_values"
+    },
+    {
+      "criterion_id": "evaluation_process_disclosed",
+      "label": "Project evaluation and selection process disclosed",
+      "source_id": "F1",
+      "required_field": "evaluation_process_summary",
+      "description": "The framework describes how eligible projects are selected and evaluated.",
+      "pass_condition": "field is supported and non-empty"
+    },
+    {
+      "criterion_id": "management_of_proceeds_disclosed",
+      "label": "Management of proceeds disclosed",
+      "source_id": "F1",
+      "required_field": "management_of_proceeds_summary",
+      "description": "The framework describes how proceeds are tracked, allocated and, if unallocated, held.",
+      "pass_condition": "field is supported and non-empty"
+    },
+    {
+      "criterion_id": "impact_metrics_disclosed",
+      "label": "Impact / performance metrics disclosed",
+      "source_id": "F1",
+      "required_field": "impact_metrics",
+      "description": "The framework names at least one quantifiable impact or performance metric to be reported against.",
+      "pass_condition": "field is supported and non-empty"
+    },
+    {
+      "criterion_id": "reporting_commitment_disclosed",
+      "label": "Reporting commitment disclosed",
+      "source_id": "F1",
+      "required_field": "reporting_commitment",
+      "description": "The framework commits to a reporting frequency and to disclosing use-of-proceeds / impact information to investors.",
+      "pass_condition": "field is supported and non-empty"
+    },
+    {
+      "criterion_id": "verification_commitment_disclosed",
+      "label": "External review / verification commitment disclosed",
+      "source_id": "F1",
+      "required_field": "verification_commitment",
+      "description": "GBP treats external review (second-party opinion, verification, certification, or rating) as a RECOMMENDED practice, not a mandatory eligibility gate. Absence is reported as unmet, but never phrased as disqualifying on its own.",
+      "pass_condition": "field is supported and non-empty",
+      "advisory_only": true
+    }
+  ]
+}
