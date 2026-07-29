@@ -3,7 +3,7 @@ PillarRegistry.mount_all() (enabled-check + throttle inherited from there —
 nothing here duplicates that guard)."""
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
 from app.pillars.finance.criteria import load_criteria
 from app.pillars.finance.module import SAMPLE_DOCS, BlueFinancePillar, DocumentNotFound
@@ -24,7 +24,8 @@ def list_samples() -> dict:
 
 
 @router.post("/analyse", response_model=BlueFinanceResult)
-async def analyse(sample_id: str | None = None, document: UploadFile | None = None) -> BlueFinanceResult:
+async def analyse(sample_id: str | None = Form(default=None),
+                  document: UploadFile | None = File(default=None)) -> BlueFinanceResult:
     params: dict = {}
     if document is not None:
         params = {"pdf_bytes": await document.read(), "document_label": document.filename or "uploaded document"}

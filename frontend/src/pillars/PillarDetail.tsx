@@ -14,6 +14,7 @@ import type { ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { api } from '../api/client'
 import { Badge, Card, EmptyState, Skeleton } from '../components/ui'
+import FinancePanel from '../components/pillars/finance/FinancePanel'
 import { useT } from '../i18n'
 import { PillarStatusBadge } from './PillarsIndex'
 import { FIXTURE_PILLARS } from './fixture'
@@ -22,11 +23,13 @@ import './pillars.css'
 /**
  * Extension point: map a pillar_id to its surface component.
  *
- * Empty by design at 5a — the shell lands before the content. Adding an entry
- * here is the whole integration step for a pillar owner; the shell handles
- * heading, provenance placement, enabled-state and not-found for you.
+ * Task 6b (Shirish): finance added. The shell still handles heading,
+ * provenance placement, enabled-state and not-found — FinancePanel only
+ * renders its own analyse flow and findings.
  */
-export const PILLAR_SURFACES: Record<string, ReactNode> = {}
+export const PILLAR_SURFACES: Record<string, ReactNode> = {
+  finance: <FinancePanel />,
+}
 
 export default function PillarDetail() {
   const t = useT()

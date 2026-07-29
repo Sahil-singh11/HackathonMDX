@@ -198,6 +198,36 @@ def test_extract_pdf_pages_reads_real_generated_samples():
 
 # -- 6. full route stack: mount, enable-gate, endpoints ----------------------
 
+def test_route_honours_a_non_default_sample_id():
+    """Regression test for a real bug found in review: sample_id was a bare
+    function parameter, not Form(...), alongside an UploadFile sibling — so
+    FastAPI silently failed to bind it from multipart data and fetch() always
+    fell through to DEFAULT_SAMPLE ("compliant"). Requesting "compliant"
+    itself could never have caught this, since that value IS the buggy
+    fallback's default — this test deliberately requests a DIFFERENT sample
+    and checks the response actually reflects it."""
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from app.core.ratelimit import InMemoryRateLimiter
+    from app.pillars.finance.module import DEFAULT_SAMPLE, SAMPLE_DOCS
+    from app.pillars.finance.routes import router as finance_router
+    from app.pillars.registry import PillarDescriptor, PillarRegistry
+    from app.pillars.routes import build_pillar_router
+
+    reg = PillarRegistry(enabled_ids=lambda: {"finance"})
+    reg.register_descriptor(PillarDescriptor(pillar_id="finance", pillar_name="Blue Finance"))
+    reg.register_module(BlueFinancePillar(), router=finance_router)
+    app = FastAPI()
+    app.include_router(build_pillar_router(registry=reg, limiter=InMemoryRateLimiter(limit=30, window_seconds=60.0)))
+    client = TestClient(app)
+
+    non_default = next(sid for sid in SAMPLE_DOCS if sid != DEFAULT_SAMPLE)
+    r = client.post("/api/pillars/finance/analyse", data={"sample_id": non_default})
+    assert r.status_code == 200
+    assert SAMPLE_DOCS[non_default][1] in r.json()["document_label"]
+
+
 def test_finance_routes_serve_when_enabled_on_an_isolated_app():
     """Same isolated-registry pattern as test_pillar_contract.py's dummy-pillar
     tests, but mounting the REAL finance router — proves criteria/samples/

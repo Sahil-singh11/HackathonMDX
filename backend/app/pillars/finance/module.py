@@ -46,7 +46,10 @@ def _build_prompt(pages: list[str]) -> str:
     numbered = "\n\n".join(f"--- PAGE {i + 1} ---\n{text}" for i, text in enumerate(pages))
     return (
         "You are extracting facts from a bond-framework document. Extract ONLY what is "
-        "explicitly stated in the text below. For each field, if you find supporting text, "
+        "explicitly stated in the text below. Always respond with the JSON object described "
+        "below and nothing else — no prose, no caveats, no markdown fences, even if the "
+        "document supports few or none of the fields; an empty or partial JSON object is the "
+        "correct response for a document that discloses little, not free text. For each field, if you find supporting text, "
         "return its page number and the EXACT supporting quote (verbatim substring from that "
         "page). If you cannot find explicit support, omit the field entirely rather than "
         "guessing. You are extracting facts only — do not judge eligibility or compliance; "
