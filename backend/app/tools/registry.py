@@ -277,6 +277,13 @@ def gemma_function_declarations() -> list[dict]:
              {"species_id": {"type": "string"}}, ["species_id"]),
         decl("get_recent_catches", "List the fisher's recent catch records.",
              {"limit": {"type": "integer"}}),
+        decl("record_catch", "Record a catch the fisher has ALREADY confirmed. Only call this after the fisher "
+                             "confirmed the species; measured_length_cm must come from a real measurement, never "
+                             "from an image estimate.",
+             {"species_id": {"type": "string"}, "measured_length_cm": {"type": "number"},
+              "count": {"type": "integer"}, "capture_date": {"type": "string"},
+              "fishing_area": {"type": "string"}},
+             ["species_id"]),
         decl("check_confirmed_catch_rule", "Deterministically check the recorded fisheries rule for a CONFIRMED species and measured length.",
              {"species_id": {"type": "string"}, "measured_length_cm": {"type": "number"}, "capture_date": {"type": "string"}},
              ["species_id"]),
