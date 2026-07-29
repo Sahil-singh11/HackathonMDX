@@ -94,6 +94,15 @@ export function BathymetricScene() {
     document.documentElement.setAttribute(
       'data-scene', luminance(pal.paper) < 0.18 ? 'dark' : 'light')
 
+    // The glass-card treatment (Tier 3) is keyed to the same hour buckets as
+    // paletteForHour, not to data-scene above: Day-theme-at-night still gets
+    // the plain dark panel (data-scene='dark'), but frosted glass is reserved
+    // for genuinely night/pre-dawn hours specifically - the brief's own
+    // "In Day and dusk the card stays fully opaque" line is a clock
+    // distinction, not a theme one.
+    document.documentElement.setAttribute('data-daypart',
+      hour < 6 ? 'predawn' : hour < 9 ? 'dawn' : hour < 16 ? 'day' : hour < 19 ? 'dusk' : 'night')
+
     let w = 0, h = 0, dpr = 1
     const cam: Camera = {
       heading: 0, pitch: BASE_PITCH, dist: BASE_DIST, height: BASE_HEIGHT,
@@ -404,8 +413,71 @@ export function BathymetricScene() {
       ctx.globalAlpha = 1
     }
 
-    /** One full frame. entry 0..1 through the opening move. */
-    const frame = (t: number, entry: number) => {
+    // Vessel: a hairline chart symbol, not an illustration - unfilled hull
+    // triangle, a heading tick past the bow, and a dotted trailing track,
+    // drifting once around a slow loop. Radius sits just outside the -20m
+    // ring and inside -50m, a plausible just-offshore position.
+    const VESSEL_PERIOD_MS = 90_000
+    const VESSEL_RADIUS = 1.5
+    const vesselPos = (a: number): [number, number] => [Math.sin(a) * VESSEL_RADIUS, -Math.cos(a) * VESSEL_RADIUS]
+
+    const drawVessel = (t: number, entry: number) => {
+      const local = Math.min(1, Math.max(0, (entry - 0.65) / 0.3))
+      if (local <= 0) return
+      const angle = ((t % VESSEL_PERIOD_MS) / VESSEL_PERIOD_MS) * Math.PI * 2
+      const [vx, vy] = vesselPos(angle)
+      const p = project(vx, vy, 0, cam)
+      if (p.depth <= NEAR) return
+
+      const [bx, by] = vesselPos(angle - 0.04)
+      const b = project(bx, by, 0, cam)
+      const dx = p.x - b.x, dy = p.y - b.y
+      const dlen = Math.max(0.001, Math.hypot(dx, dy))
+      const ux = dx / dlen, uy = dy / dlen
+      const nx = -uy, ny = ux
+
+      ctx.strokeStyle = rgba(pal.accent, 1)
+      ctx.lineWidth = 1.2
+
+      // Dotted trailing track.
+      ctx.globalAlpha = 0.4 * local
+      ctx.setLineDash([2, 4])
+      ctx.beginPath()
+      let started = false
+      for (let k = 24; k >= 1; k--) {
+        const [tx, ty] = vesselPos(angle - k * 0.02)
+        const tp = project(tx, ty, 0, cam)
+        if (tp.depth <= NEAR) { started = false; continue }
+        if (!started) { ctx.moveTo(tp.x, tp.y); started = true } else { ctx.lineTo(tp.x, tp.y) }
+      }
+      ctx.stroke()
+      ctx.setLineDash([])
+
+      // Hull: unfilled triangle, bow forward, two stern corners.
+      const bow = { x: p.x + ux * 6, y: p.y + uy * 6 }
+      const sternL = { x: p.x - ux * 4 + nx * 3.5, y: p.y - uy * 4 + ny * 3.5 }
+      const sternR = { x: p.x - ux * 4 - nx * 3.5, y: p.y - uy * 4 - ny * 3.5 }
+      ctx.globalAlpha = 0.85 * local
+      ctx.beginPath()
+      ctx.moveTo(bow.x, bow.y)
+      ctx.lineTo(sternL.x, sternL.y)
+      ctx.lineTo(sternR.x, sternR.y)
+      ctx.closePath()
+      ctx.stroke()
+
+      // Heading tick, past the bow.
+      ctx.beginPath()
+      ctx.moveTo(bow.x, bow.y)
+      ctx.lineTo(bow.x + ux * 8, bow.y + uy * 8)
+      ctx.stroke()
+
+      ctx.globalAlpha = 1
+    }
+
+    /** One full frame. entry 0..1 through the opening move. animated=false
+     * for the reduced-motion still: motes and the vessel are drift, and the
+     * floor is "no drift, no motes, no vessel" under reduced motion. */
+    const frame = (t: number, entry: number, animated: boolean) => {
       ctx.fillStyle = rgba(pal.paper, 1)
       ctx.fillRect(0, 0, w, h)
 
@@ -421,7 +493,8 @@ export function BathymetricScene() {
       // Far rings first, near rings last.
       for (let i = rings.length - 1; i >= 0; i--) drawRing(rings[i], t, entry, i)
       drawIsland(entry)
-      drawMotes(t, entry)
+      if (animated) drawMotes(t, entry)
+      if (animated) drawVessel(t, entry)
       drawLabels(entry)
     }
 
@@ -436,7 +509,7 @@ export function BathymetricScene() {
         curP = 0
         drift = 0
         lightX = 0.34; lightY = 0.3
-        frame(PULSE_PERIOD * 0.34, 1)
+        frame(PULSE_PERIOD * 0.34, 1, false)
       }
       still()
       window.addEventListener('resize', still)
@@ -444,6 +517,7 @@ export function BathymetricScene() {
         window.removeEventListener('resize', still)
         document.documentElement.style.removeProperty('--onboard-ink')
         document.documentElement.removeAttribute('data-scene')
+        document.documentElement.removeAttribute('data-daypart')
       }
     }
 
@@ -466,7 +540,7 @@ export function BathymetricScene() {
       curP += (targetP - curP) * LERP
       drift += IDLE_DRIFT
       const elapsed = now - t0
-      frame(elapsed, Math.min(1, elapsed / ENTRY_MS))
+      frame(elapsed, Math.min(1, elapsed / ENTRY_MS), true)
     }
     raf = requestAnimationFrame(loop)
 
