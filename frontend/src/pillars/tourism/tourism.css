@@ -1,0 +1,90 @@
+/* Workstream 2 — tourism surface. Semantic tokens only. */
+
+.tou-surface { display: flex; flex-direction: column; gap: var(--sp-4); }
+.tou-intro { color: var(--text-muted); margin: 0 0 var(--sp-3); }
+.tou-data { font-family: var(--font-data); }
+.tou-unit { color: var(--text-muted); font-size: var(--fs-sm); }
+.tou-unavailable { color: var(--text-muted); font-style: italic; }
+
+.tou-activity { display: flex; flex-direction: column; gap: var(--sp-1); margin-bottom: var(--sp-3); max-width: 20rem; }
+.tou-activity > span { font-weight: 600; font-size: var(--fs-sm); }
+
+.tou-ranking-basis {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-card);
+  background: var(--surface-sunken);
+  font-weight: 600;
+}
+
+.tou-site-title { display: inline-flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
+.tou-rank { color: var(--accent); }
+.tou-region {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-sm);
+  font-weight: 400;
+  color: var(--text-muted);
+}
+.tou-character { margin: 0 0 var(--sp-3); color: var(--text-muted); }
+
+.tou-protected {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-3);
+  padding: var(--sp-3);
+  border: 2px solid var(--warning);
+  border-radius: var(--r-card);
+  background: var(--warning-quiet);
+  font-weight: 600;
+}
+
+.tou-section {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: var(--sp-4) 0 var(--sp-2);
+  font-size: var(--fs-base);
+}
+
+.tou-figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--sp-3);
+  margin: 0;
+}
+.tou-figure dt { font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
+.tou-figure dd { margin: 2px 0 0; font-size: var(--fs-md); }
+
+.tou-computed-note { margin: 0 0 var(--sp-2); font-size: var(--fs-sm); color: var(--text-muted); }
+
+.tou-ratings { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-2); }
+.tou-ratings li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); }
+.tou-reasons { font-size: var(--fs-xs); color: var(--text-muted); }
+
+/* The model's prose is visually separated from the computed figures above. */
+.tou-interpretation {
+  margin-top: var(--sp-4);
+  padding: var(--sp-3);
+  border-left: 3px solid var(--accent);
+  background: var(--surface-sunken);
+  border-radius: 0 var(--r-card) var(--r-card) 0;
+}
+.tou-interpretation p { margin: 0; }
+.tou-interpretation__note {
+  margin-top: var(--sp-2) !important;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+.tou-no-interpretation {
+  margin: var(--sp-4) 0 0;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  font-style: italic;
+}

@@ -156,7 +156,7 @@ async function jsonOrThrow<T>(res: Response): Promise<T> {
  * Ownership:
  *   Sahil    — config, marine, providerStatus, reportToday, species, syncQueue
  *   Dhanesh  — analyse, catches (listCatches), confirm, createCatch (recordCatch),
- *              pillars, processSync, rulesStatic
+ *              pillars, processSync, rulesStatic, tourismBrief, tourismSites
  *   Shirish  — getSubmission, listSubmissions, mockSubmit, prepareDeclaration,
  *              submitDeclaration, verifyCertificate, verifyLedger
  */
@@ -225,6 +225,18 @@ export const api = {
   syncQueue: () => fetch('/api/sync/queue').then((r) => jsonOrThrow<{ items: Record<string, unknown>[]; queued: number }>(r)),
 
   /** Public, no auth. Backs /verify/:id. Render status AND scope_note. */
+  /** Condition briefs. `activity` ranks sites on FORECAST CONDITIONS only. */
+  tourismBrief: (params: { siteIds?: string[]; activity?: string } = {}) => {
+    const q = new URLSearchParams()
+    if (params.siteIds?.length) q.set('site_ids', params.siteIds.join(','))
+    if (params.activity) q.set('activity', params.activity)
+    const qs = q.toString()
+    return fetch(`/api/pillars/tourism/brief${qs ? `?${qs}` : ''}`)
+      .then((r) => jsonOrThrow<Record<string, unknown>>(r))
+  },
+  tourismSites: () =>
+    fetch('/api/pillars/tourism/sites').then((r) => jsonOrThrow<Record<string, unknown>>(r)),
+
   verifyCertificate: (recordId: string) =>
     fetch(`/api/verify/${recordId}`).then((r) => jsonOrThrow<CertificateVerification>(r)),
 

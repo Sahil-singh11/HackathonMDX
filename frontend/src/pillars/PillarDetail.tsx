@@ -17,16 +17,22 @@ import { Badge, Card, EmptyState, Skeleton } from '../components/ui'
 import { useT } from '../i18n'
 import { PillarStatusBadge } from './PillarsIndex'
 import { FIXTURE_PILLARS } from './fixture'
+import TourismSurface from './tourism/TourismSurface'
 import './pillars.css'
 
 /**
  * Extension point: map a pillar_id to its surface component.
  *
- * Empty by design at 5a — the shell lands before the content. Adding an entry
- * here is the whole integration step for a pillar owner; the shell handles
- * heading, provenance placement, enabled-state and not-found for you.
+ * Adding an entry here is the whole integration step for a pillar owner; the
+ * shell handles heading, provenance placement, enabled-state and not-found.
+ *
+ * A surface is only reached when the pillar is enabled — the not-enabled state
+ * below wins otherwise, so a merged-but-disabled surface can never render
+ * output the API would refuse to serve.
  */
-export const PILLAR_SURFACES: Record<string, ReactNode> = {}
+export const PILLAR_SURFACES: Record<string, ReactNode> = {
+  tourism: <TourismSurface />,
+}
 
 export default function PillarDetail() {
   const t = useT()
@@ -59,7 +65,10 @@ export default function PillarDetail() {
     )
   }
 
-  const surface = PILLAR_SURFACES[pillar.pillar_id]
+  // Gate on enabled, not merely on "a surface exists": a registered-but-disabled
+  // pillar answers 503, so rendering its surface would show a panel whose data
+  // the API refuses to serve. The not-enabled state below must win.
+  const surface = pillar.status === 'live' ? PILLAR_SURFACES[pillar.pillar_id] : undefined
 
   return (
     <div className="lk-scope pil-page">
