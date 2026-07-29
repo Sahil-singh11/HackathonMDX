@@ -16,6 +16,7 @@ from app.core.ratelimit import InMemoryRateLimiter
 from app.db.session import get_session
 from app.models.entities import (CatchAnalysis, CatchRecord, Declaration,
                                  SyncQueueItem, ToolTrace)
+from app.providers.capabilities import all_capabilities
 from app.providers.dispatcher import analyse as provider_analyse
 from app.schemas.analysis import (AnalyseCatchResponse, ConfirmRequest,
                                   ConfirmResponse, LegalCheck, ProviderInfo,
@@ -91,6 +92,8 @@ def provider_status() -> dict:
                   "note": "local mode appears only after a real Gemma model load"},
         "mock": {"available": True, "disclosure": MOCK_DISCLOSURE},
         "default_mode": s.provider_mode,
+        # Additive: full readiness surface per provider (never includes the key).
+        "capabilities": {k: v.model_dump() for k, v in all_capabilities().items()},
     }
 
 

@@ -16,6 +16,7 @@ import time
 
 from app.core.config import get_settings
 from app.prompts.system import SYSTEM_INSTRUCTION
+from app.providers import capabilities
 from app.providers.base import ProviderResult
 from app.tools.registry import ToolContext, execute, gemma_function_declarations
 
@@ -149,4 +150,5 @@ def analyse(image_jpeg: bytes | None, note: str | None, language: str,
         res.recommended_next_step = step if step in ("confirm_species", "retake_photo", "enter_measurement", "none") else "confirm_species"
 
     res.latency_ms = int((time.monotonic() - start) * 1000)
+    capabilities.record_hosted_latency(res.latency_ms)
     return res
