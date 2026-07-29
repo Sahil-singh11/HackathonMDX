@@ -1,0 +1,1 @@
+{"status": "blocked", "reason": "Kaggle CLI unauthenticated on the build machine; no training run was launched. No metrics are claimed.", "prepared": {"dataset_records": 72, "splits": {"train": 53, "validation": 11, "test": 8}, "notebooks_ready": true, "push_script": "scripts/kaggle_push_training.sh"}, "recorded_at": "2026-07-29"}

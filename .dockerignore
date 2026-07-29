@@ -1,0 +1,16 @@
+.git
+**/.venv
+**/node_modules
+frontend/dist
+storage
+data/raw
+data/audio
+kaggle/outputs
+training/adapters
+*.sqlite3
+.env
+.env.*
+presentation
+docs
+research
+evaluation/results

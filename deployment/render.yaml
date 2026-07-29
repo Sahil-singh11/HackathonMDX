@@ -1,0 +1,15 @@
+# Render.com blueprint — free-tier Docker web service.
+# After connecting the repo: set GEMINI_API_KEY in the Render dashboard (secret), deploy.
+services:
+  - type: web
+    name: lamer-konekte
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false        # entered manually in the dashboard — never in the repo
+      - key: PROVIDER_MODE
+        value: hosted
+      - key: GEMMA_MODEL
+        value: gemma-4-26b-a4b-it
