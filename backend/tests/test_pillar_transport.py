@@ -74,10 +74,13 @@ def _stub(name: str, reply=None, *, raises: Exception | None = None,
             self.name = name
             self.seen_prompt = ""
             self.seen_instruction = None
+            self.seen_timeout = None
 
-        def chat(self, prompt, language="en", system_instruction=None):
+        def chat(self, prompt, language="en", system_instruction=None,
+                 timeout_seconds=None):
             self.seen_prompt = prompt
             self.seen_instruction = system_instruction
+            self.seen_timeout = timeout_seconds
             if raises is not None:
                 raise raises
             return reply
@@ -201,6 +204,11 @@ def test_grounded_model_output_is_used_and_labelled(session, monkeypatch):
     assert "Never invent a vessel" in provider.seen_instruction
     assert "Never state an MMSI" in provider.seen_instruction
     assert "maritime operations analyst" in provider.seen_instruction
+    # Route-local timeout (decision log 18). The route carries its own ceiling
+    # explicitly even though it currently equals the global default: 90 s was
+    # tried, timed out anyway, and was reverted as net-harmful. Asserting the
+    # wiring rather than a magic number keeps that knob honest.
+    assert provider.seen_timeout == get_settings().transport_narrative_timeout_seconds
     assert "Do NOT invent a vessel" in provider.seen_prompt
 
 

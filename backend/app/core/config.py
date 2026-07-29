@@ -47,6 +47,21 @@ class Settings(BaseSettings):
     # How far ahead the arrivals brief looks. Deterministic filter, not a model
     # parameter — the model never decides which vessels are in the window.
     transport_arrivals_window_hours: int = 24
+    # Route-local model timeout for the narrative step (decision log 18).
+    #
+    # Set to 90 s, TESTED, and reverted to 60 s on the evidence. The hypothesis
+    # was that the narrative needed longer than the deployment-wide ceiling; a
+    # live call with the shortened ~4-sentence brief timed out at 90 s too
+    # (92.3 s wall). A longer ceiling bought nothing and cost every caller an
+    # extra 30 s of waiting before the same deterministic fallback, so it is
+    # net-harmful and the value goes back down.
+    #
+    # The knob stays because the mechanism is right — the analyse path already
+    # carries per-route timeouts (45 s tools / 60 s text / 75 s image) — and
+    # whoever diagnoses this next should change one number, not re-plumb it.
+    # Do not raise it again without evidence that latency is the actual cause;
+    # four live calls have produced 503, refusal, timeout@60, timeout@90.
+    transport_narrative_timeout_seconds: int = 60
     # Live aisstream.io collector — DORMANT FORWARD DECLARATIONS.
     #
     # The collector is deliberately UNIMPLEMENTED, not merely disabled. A

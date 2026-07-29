@@ -203,3 +203,44 @@ exact, rather than a tokeniser estimate dressed up as a measurement.
   uploaded document may be sent to a hosted model at all under this project's privacy
   rules. That is a Workstream 3 decision, not a model capability limit, and this document
   takes no position on it.
+
+## 11. Transport narrative — four live calls, three failure modes, no success (30 Jul 2026)
+
+The Marine Transport pillar asks the hosted model for one thing: a few sentences of prose
+about numbers that are already computed. **It has never once succeeded.** Recorded here
+because a capability that fails in three different ways is a capability finding, and because
+the next person to try deserves the map rather than the conclusion.
+
+| # | Configuration | Outcome | Wall clock |
+|---|---|---|---|
+| 1 | fisheries instruction, 60 s | `503 UNAVAILABLE` — "model is currently experiencing high demand" | ~9.6 s |
+| 2 | fisheries instruction, 60 s | **Refusal**, in the catch-assistant JSON envelope: *"I am an analysis engine for fishers, not a port officer."* | 5.7 s |
+| 3 | transport instruction (2 paragraphs), 60 s | Read timeout | 62.8 s |
+| 4 | transport instruction (~4 sentences), 90 s | Read timeout | 92.3 s |
+
+**What each call ruled out.**
+
+- Call 2 identified the cause of call 2 and produced a fix (decision log 17): the provider's
+  `chat()` carried the fisheries system instruction, which both scopes the model to fisher
+  assistance and orders structured output. That failure mode is fixed and pinned as a
+  regression test. **It has not recurred.**
+- Calls 3 and 4 together **reject the latency hypothesis by experiment.** If the brief were
+  merely long, cutting it from two paragraphs to four sentences *and* raising the ceiling by
+  50% should have landed it. It did not — the request ran to the new ceiling exactly as it
+  ran to the old one. The 90 s bump was therefore reverted as net-harmful: it bought no
+  success and cost every caller 30 s more waiting before the identical fallback.
+
+**What this does NOT establish.** Four calls is a small sample against a model whose own
+documented residual risk is ~1.5% of requests running long (§5), and call 1 proves the
+endpoint was under real demand pressure that day. The honest reading is *"unexplained, with
+the two cheapest explanations eliminated"* — not *"the model cannot do this."*
+
+**Next diagnostic, for whoever picks it up.** Do not raise the timeout again; that has been
+tried. Call `chat()` directly with the transport instruction and a two-line payload, outside
+the pillar, and see whether a minimal prompt returns at all. That separates "this model, this
+instruction" from "this prompt size" from "that day's capacity" for the cost of one request.
+
+**Meanwhile the product is unaffected and honest.** Every response carries
+`narrative_source: "deterministic_fallback"` with the real reason in `narrative_note`, and
+the numbers a port officer actually needs — arrivals, ETAs, congestion — are computed
+deterministically and were never at risk from any of this.

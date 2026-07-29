@@ -46,7 +46,8 @@ class InferenceProvider(Protocol):
         ...
 
     def chat(self, prompt: str, language: str = "en",
-             system_instruction: str | None = None) -> str:
+             system_instruction: str | None = None,
+             timeout_seconds: int | None = None) -> str:
         """Plain-text exchange (offline-assistant workstream). No tools.
 
         `system_instruction` is OPTIONAL and defaults to None, which means "use
@@ -68,6 +69,13 @@ class InferenceProvider(Protocol):
         still responsible for validating what comes back (the transport pillar
         keeps a grounding guard that rejects refusals, structured envelopes and
         invented identifiers).
+
+        `timeout_seconds` is likewise OPTIONAL, defaulting to None = the
+        deployment-wide `GEMMA_TIMEOUT_SECONDS`. It exists so a route whose
+        generation is genuinely heavier can carry its own ceiling instead of
+        raising the global one for every caller, which mirrors the per-route
+        timeouts the analyse path already uses via GenerationProfile (45 s
+        tools · 60 s text · 75 s image). See DECISION_LOG entry 18.
         """
         ...
 
