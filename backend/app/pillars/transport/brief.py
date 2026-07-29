@@ -146,12 +146,12 @@ HARD RULES (never break)
 - You advise a human officer. Never issue an instruction, a clearance, a berth allocation or an approval.
 - Never claim conditions are safe. You may describe them and reason about their operational implications.
 
-OUTPUT
+OUTPUT — BE BRIEF. This is the hard constraint, not a style note.
 - Plain prose. No JSON, no code fences, no headings, no bullet points, no preamble.
-- Exactly two paragraphs, separated by a blank line.
-- Paragraph 1: what the numbers show, in plain language.
-- Paragraph 2: operational risk reasoning — what the sea conditions and the traffic pattern together imply for berthing and the approach.
-- Keep it under 180 words total. Write for someone reading it on a screen between other tasks."""
+- Exactly two short paragraphs separated by a blank line.
+- Paragraph 1: AT MOST THREE SENTENCES summarising arrivals and approach congestion.
+- Paragraph 2: EXACTLY ONE SENTENCE on operational risk — what the sea state and traffic pattern together mean for berthing and the approach.
+- Under 90 words total. An officer reads this between other tasks; a long answer is a worse answer, not a more thorough one."""
 
 
 def build_prompt(arrivals: list[dict], congestion_summary: dict, conditions: dict,
@@ -190,10 +190,9 @@ def build_prompt(arrivals: list[dict], congestion_summary: dict, conditions: dic
         f"at {conditions.get('swell_period_s')} s, sea surface {conditions.get('sea_surface_temperature_c')} C "
         f"(source {conditions.get('source')})",
         "",
-        "Write two short paragraphs for a port officer.",
-        "Paragraph 1 — what the numbers above show, in plain language.",
-        "Paragraph 2 — operational risk reasoning: what the sea conditions and the "
-        "traffic pattern together imply for berthing and the approach.",
+        "Write the brief now. AT MOST THREE SENTENCES on arrivals and congestion, "
+        "then a blank line, then EXACTLY ONE SENTENCE on operational risk. "
+        "Under 90 words total.",
         "",
         "HARD RULES:",
         "- Use ONLY the vessels, counts, times and conditions given above.",
@@ -201,7 +200,7 @@ def build_prompt(arrivals: list[dict], congestion_summary: dict, conditions: dic
         "- Do NOT invent a vessel, a time, or a number that is not above.",
         "- ETAs are self-reported by the vessel over AIS. Say 'reported' when you mention one.",
         "- You are advising a human officer, not issuing an instruction or a clearance.",
-        "- No preamble, no headings, no bullet points. Two paragraphs of prose.",
+        "- No preamble, no headings, no bullet points. Prose only.",
     ]
     return "\n".join(lines)
 
