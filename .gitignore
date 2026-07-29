@@ -50,7 +50,9 @@ tmp_uploads/
 *.onnx
 training/adapters/*
 !training/adapters/.gitkeep
-models/
+# Downloaded model weights only — anchored to the repo root so it cannot match
+# Python packages such as backend/app/models/.
+/models/
 
 # Kaggle outputs kept out of the public repo
 kaggle/outputs/
