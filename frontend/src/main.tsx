@@ -3,6 +3,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App'
+import { RateLimitBanner } from './components/http/RateLimitBanner'
 import { AnnounceProvider } from './lib/announce'
 import { ThemeProvider } from './theme'
 // Load order is load-bearing. tokens defines the design system, base adds the
@@ -21,6 +22,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AnnounceProvider>
+          <RateLimitBanner />
           <BrowserRouter>
             <App />
           </BrowserRouter>
