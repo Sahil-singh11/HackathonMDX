@@ -15,6 +15,7 @@ if _TEST_DB.exists():
 os.environ["DATABASE_URL"] = f"sqlite:///{_TEST_DB}"
 os.environ["PROVIDER_MODE"] = "mock"
 os.environ["GEMINI_API_KEY"] = ""
+os.environ["MARINE_PREWARM_ON_STARTUP"] = "false"  # suite must not depend on live network
 
 
 @pytest.fixture(scope="session")
