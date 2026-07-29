@@ -30,6 +30,8 @@ FastAPI (Python 3.12, SQLModel/SQLite) + React/TypeScript PWA (offline-first, In
 
 ## Quick start
 
+> **New to the project? Follow [`docs/SETUP_GUIDE.md`](docs/SETUP_GUIDE.md)** — a verified step-by-step walkthrough (clone → running app in ~5 minutes, no API key needed), with file locations, per-role instructions and troubleshooting. The condensed version:
+
 ```bash
 # backend
 cd backend && python3.12 -m venv .venv && .venv/bin/pip install -r requirements.txt
