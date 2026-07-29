@@ -1,6 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -27,6 +28,23 @@ class Settings(BaseSettings):
     data_dir: Path = REPO_ROOT / "data"
     storage_dir: Path = REPO_ROOT / "storage"
 
+    @field_validator("database_url")
+    @classmethod
+    def _anchor_relative_sqlite_path(cls, value: str) -> str:
+        """Resolve relative SQLite paths against the repo root.
+
+        Without this, `sqlite:///./storage/app.db` depends on the working
+        directory: uvicorn is launched from `backend/`, so it would look for
+        `backend/storage/` and fail with "unable to open database file".
+        """
+        prefix = "sqlite:///"
+        if not value.startswith(prefix):
+            return value
+        path = value[len(prefix):]
+        if not path or path == ":memory:" or path.startswith("/"):
+            return value
+        return f"{prefix}{(REPO_ROOT / path).resolve()}"
+
     @property
     def hosted_available(self) -> bool:
         return bool(self.gemini_api_key)
@@ -36,4 +54,9 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     s = Settings()
     s.storage_dir.mkdir(parents=True, exist_ok=True)
+    # The database may live outside storage_dir if DATABASE_URL was overridden.
+    if s.database_url.startswith("sqlite:///"):
+        db_path = Path(s.database_url[len("sqlite:///"):])
+        if str(db_path) != ":memory:":
+            db_path.parent.mkdir(parents=True, exist_ok=True)
     return s

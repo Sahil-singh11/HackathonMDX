@@ -109,14 +109,14 @@ cd ~/HackathonMDX
 cp .env.example .env
 ```
 
-Then open `.env` in an editor (`nano .env` or VS Code) and set two lines:
+Then open `.env` in an editor (`nano .env` or VS Code) and set **only these two lines**:
 
 ```ini
 GEMINI_API_KEY=your_actual_key_here
 PROVIDER_MODE=hosted
 ```
 
-Leave everything else as-is. Get a key from [aistudio.google.com/apikey](https://aistudio.google.com/apikey).
+Leave everything else as-is (in particular, leave `DATABASE_URL` commented out — the app picks the right path automatically). Get a key from [aistudio.google.com/apikey](https://aistudio.google.com/apikey).
 
 > **Never** paste the key into any file inside `frontend/`, never commit it, never post it in chat. Only the server reads it. `.gitignore` already blocks `.env` — verify with `git check-ignore .env` (should print `.env`).
 
@@ -282,7 +282,10 @@ Install the venv package: `sudo apt install python3.12-venv`.
 **`ModuleNotFoundError: No module named 'app...'` when running pytest**
 You are in the wrong directory. All pytest and uvicorn commands must run from **`~/HackathonMDX/backend`**, not the repo root.
 
-**Tests fail with a database or `sqlite3.OperationalError`**
+**`sqlite3.OperationalError: unable to open database file` on startup**
+Fixed in the app as of commit `d6bd6f1` — **`git pull`** and try again. It was caused by a relative `DATABASE_URL` in an early `.env`; relative paths are now resolved against the repo root regardless of where you launch the server. If you still see it, comment out the `DATABASE_URL` line in your `.env` entirely.
+
+**Other database errors**
 Delete the local DBs and re-run; they regenerate automatically:
 ```bash
 rm -f ~/HackathonMDX/storage/*.sqlite3

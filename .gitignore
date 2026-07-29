@@ -57,6 +57,9 @@ training/adapters/*
 # Kaggle outputs kept out of the public repo
 kaggle/outputs/
 
+# Accidental nested clone of this repo (from running git clone inside the repo)
+/HackathonMDX/
+
 # OS / editor
 .DS_Store
 Thumbs.db
