@@ -119,9 +119,21 @@ export interface TransportConditions {
   sea_surface_temperature_c: number | null
 }
 
-/** 'model' = grounded prose from the inference provider; anything else means
- *  the deterministic assembly served instead and narrative_note says why. */
-export type NarrativeSource = 'model' | 'deterministic_fallback'
+/**
+ * Which rung produced the narrative.
+ *
+ *   'model'                  a fresh provider call wrote it, and it passed
+ *                            narrative_is_grounded plus the number firewall
+ *   'cached'                 that same already-grounded prose, reused from the
+ *                            narrative cache for identical conditions instead of
+ *                            paying for a second identical call
+ *   'deterministic_fallback' assembled in code; narrative_note says why
+ *
+ * 'cached' is NOT a weaker rung than 'model' — same sentences, same checks, no new
+ * call. The UI must therefore treat the two alike when it attributes authorship,
+ * and must never put a mechanical-summary badge on cached text.
+ */
+export type NarrativeSource = 'model' | 'cached' | 'deterministic_fallback'
 
 export interface ArrivalsBrief extends PillarResult {
   port: PortDescriptor

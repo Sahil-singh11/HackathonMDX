@@ -19,6 +19,9 @@ import ProvenanceBadge from '../ProvenanceBadge'
 import type { DataProvenance } from '../types'
 import './energy.css'
 
+/** Rungs that mean "a language model wrote these sentences". */
+const MODEL_RUNGS = new Set(['model', 'cached'])
+
 interface Measurements {
   wave_height_m: number | null
   wave_period_s: number | null
@@ -151,7 +154,13 @@ export default function EnergySurface() {
             {site.interpretation && (
               <div className="ene-interpretation">
                 <h4>{t('energy.interpretation')}</h4>
-                {site.interpretation_source === 'model' ? (
+                {/* 'cached' IS model prose — the same sentences, already checked by
+                    the envelope guard and the number firewall before they were
+                    stored, reused instead of paying for an identical second call.
+                    Rendering it under a "Mechanical summary" badge would be a
+                    plain misattribution, so both rungs get the model badge and
+                    only the reuse note distinguishes them. */}
+                {MODEL_RUNGS.has(site.interpretation_source) ? (
                   <Badge tone="accent" icon={<Bot size={14} aria-hidden="true" />}>
                     {t('transport.sourceModel')}
                   </Badge>
@@ -161,7 +170,10 @@ export default function EnergySurface() {
                   </Badge>
                 )}
                 <p>{site.interpretation}</p>
-                {site.interpretation_source === 'model' && (
+                {site.interpretation_source === 'cached' && (
+                  <p className="ene-interpretation__note">{t('pillars.narrativeReused')}</p>
+                )}
+                {MODEL_RUNGS.has(site.interpretation_source) && (
                   <p className="ene-interpretation__note">{t('energy.interpretationNote')}</p>
                 )}
               </div>

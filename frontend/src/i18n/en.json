@@ -476,5 +476,6 @@
   "transport.underWay": "Under way",
   "transport.atAnchor": "At anchor",
   "transport.withinApproach": "Within approach",
-  "transport.etaIn": "reported ETA in"
+  "transport.etaIn": "reported ETA in",
+  "pillars.narrativeReused": "Reused from an earlier answer for these same conditions, so no new model call was made. The wording is unchanged from when it was written and checked."
 }

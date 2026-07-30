@@ -132,7 +132,10 @@ export default function TransportSurface() {
     )
   }
 
-  const modelWrote = brief.narrative_source === 'model'
+  /* 'cached' counts as model-written: it is the same prose, already grounded by
+     narrative_is_grounded and the number firewall before it was stored, reused
+     rather than re-requested. Only 'deterministic_fallback' is mechanical. */
+  const modelWrote = brief.narrative_source === 'model' || brief.narrative_source === 'cached'
 
   return (
     <div className="tpt">
@@ -197,6 +200,9 @@ export default function TransportSurface() {
               {t('transport.narrativeByModel')}{' '}
               {providerLabel(brief.provenance.model_provider, t)}
             </p>
+            {brief.narrative_source === 'cached' && (
+              <p className="small tpt-note tpt-source-why">{t('pillars.narrativeReused')}</p>
+            )}
           </>
         ) : (
           <>
