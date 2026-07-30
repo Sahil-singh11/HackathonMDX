@@ -1,6 +1,6 @@
 # Final Training-Evidence Audit
 
-Audited 2026-07-29T23:23:48.640837+00:00 · **36/36 claims supported by a stored artifact**
+Audited 2026-07-29T23:51:50.600958+00:00 · **36/36 claims supported by a stored artifact**
 
 Every documented number is cross-checked against the artifact that produced it.
 The audit fails if any claim lacks support, or if a forbidden claim appears.

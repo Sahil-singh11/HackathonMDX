@@ -1,6 +1,6 @@
 # Final Local AI End-to-End Report
 
-Run 2026-07-29T22:40:07.167523+00:00 · `http://127.0.0.1:8011` · provider `hosted` · **7/7 flows passed**
+Run 2026-07-29T23:59:38.626296+00:00 · `http://127.0.0.1:8020` · provider `hosted` · **7/7 flows passed**
 
 > API layer automated. **Browser rendering was not automated** — the manual steps
 > are in `docs/AI_USER_TEST_GUIDE.md`. No browser step is claimed as passed here.

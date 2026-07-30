@@ -1,12 +1,12 @@
 # Final Render AI Check
 
-Run 2026-07-29T23:28:23.588930+00:00 · `https://lamer-konekte.onrender.com`
+Run 2026-07-29T23:58:24.136425+00:00 · `https://lamer-konekte.onrender.com`
 
-**Reachable: YES** (first 200 after 3187 ms) · 24 passed · 0 failed · 0 skipped
+**Reachable: YES** (first 200 after 3750 ms) · 24 passed · 0 failed · 0 skipped
 
 | Check | Result | Detail |
 |---|---|---|
-| deployment reachable (after cold start) | PASS | 3187 ms to first 200 |
+| deployment reachable (after cold start) | PASS | 3750 ms to first 200 |
 | health endpoint 200 | PASS | {"status":"ok","service":"lamer-konekte"} |
 | homepage responds | PASS | 200, 809 bytes |
 | homepage is the PWA (not a stack trace) | PASS | branded HTML served |
@@ -21,12 +21,12 @@ Run 2026-07-29T23:28:23.588930+00:00 · `https://lamer-konekte.onrender.com`
 | no adapter/router endpoint exposed | PASS |  |
 | CORS configured for the frontend | PASS | status=400 allow-origin=None |
 | no debug stack trace on error | PASS | 404, 34 bytes |
-| live Morisyen marine request succeeded | PASS | 1764 ms |
+| live Morisyen marine request succeeded | PASS | 24297 ms |
 | marine function selected | PASS | ['get_marine_conditions'] |
-| real inference OR disclosed fallback | PASS | real=False disclosed=True |
+| real inference OR disclosed fallback | PASS | real=True disclosed=False |
 | no secret in analysis response | PASS |  |
 | internal diagnostics redacted | PASS |  |
-| live image request succeeded | PASS | 19032 ms, quality=acceptable |
+| live image request succeeded | PASS | 13577 ms, quality=acceptable |
 | species confirmation still required | PASS |  |
 | no premature legal decision | PASS | pending_confirmation |
 | mock declaration prepare labelled MOCK | PASS | MOCK DEMONSTRATION — NOT AN OFFICIAL GOVERNMENT SUBMISSION |

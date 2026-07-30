@@ -187,22 +187,54 @@ def main() -> int:
         record("gate_2", "morisyen_text", "FAIL", f"{type(e).__name__}: {e}")
 
     # ---------------- GATE 3 weather function selection (+ capture for gate 4)
+    #
+    # The prompt asks about *tomorrow*, so the model may legitimately resolve the demo date
+    # first (`get_current_demo_date`) before requesting conditions. Asserting that turn 1 is
+    # exactly `get_marine_conditions` would fail on correct multi-step reasoning, so the
+    # gate follows the chain instead: every call must be allow-listed, and
+    # `get_marine_conditions` must be reached within MAX_TURNS. Nothing safety-relevant is
+    # relaxed — allow-list, location plausibility and the no-guarantee check all still hold,
+    # and they now cover every turn rather than only the first.
+    MAX_TURNS = 3
     fc = fc_response = None
     try:
-        r, ms = gen("Ki kondisyon lamer pou dime dan Flic-en-Flac?", tools_cfg)
-        fc_response = r
-        for c in (r.candidates or []):
-            for p in (getattr(c.content, "parts", None) or []):
-                if getattr(p, "function_call", None) and p.function_call.name:
-                    fc = p.function_call
+        from google.genai import types as T3
+        chain: list[str] = []
+        history = [T3.Content(role="user", parts=[T3.Part.from_text(
+            text="Ki kondisyon lamer pou dime dan Flic-en-Flac?")])]
+        ms = 0
+        prose = ""
+        for _turn in range(MAX_TURNS):
+            r, turn_ms = gen(history, tools_cfg)
+            ms += turn_ms
+            prose += "\n" + final_text(r)
+            call = None
+            for c in (r.candidates or []):
+                for p in (getattr(c.content, "parts", None) or []):
+                    if getattr(p, "function_call", None) and p.function_call.name:
+                        call = p.function_call
+            if call is None:
+                break
+            chain.append(call.name)
+            fc, fc_response = call, r
+            if call.name == "get_marine_conditions":
+                break
+            # Feed the intermediate tool's real result back so the model can continue.
+            with Session(get_engine()) as sess:
+                step_ctx = ToolContext(session=sess, language="mfe", allow_network=True)
+                step_result, _ = execute(call.name, dict(call.args or {}), step_ctx)
+            history = [*history, r.candidates[0].content,
+                       T3.Content(role="tool", parts=[T3.Part.from_function_response(
+                           name=call.name, response={"result": step_result})])]
+
         args = dict(fc.args or {}) if fc else {}
         lat_ok = ("latitude" not in args) or (-21.5 < float(args.get("latitude", -20)) < -19.0)
-        checks = {"requested_get_marine_conditions": bool(fc and fc.name == "get_marine_conditions"),
-                  "allow_listed_only": fc is None or fc.name in REGISTRY,
+        checks = {"requested_get_marine_conditions": "get_marine_conditions" in chain,
+                  "allow_listed_only": all(n in REGISTRY for n in chain),
                   "plausible_mauritius_location": lat_ok,
-                  "no_safety_guarantee": not AUTHORITATIVE.search(final_text(r))}
+                  "no_safety_guarantee": not AUTHORITATIVE.search(prose)}
         record("gate_3", "weather_function_selection", "PASS" if all(checks.values()) else "FAIL",
-               f"requested={fc.name if fc else None} arg_names={sorted(args)}", ms, checks)
+               f"chain={'>'.join(chain) or None} arg_names={sorted(args)}", ms, checks)
     except Exception as e:  # noqa: BLE001
         record("gate_3", "weather_function_selection", "FAIL", f"{type(e).__name__}: {e}")
 
@@ -229,7 +261,8 @@ def main() -> int:
             r2, ms2 = gen(contents, tools_cfg)
             body = final_text(r2)
             final = f"{body}\n\n{MARINE_DISCLAIMER}"  # server-injected disclaimer
-            checks = {"tool_executed_ok": trace.result_status == "ok",
+            checks = {"round_trips_the_marine_tool": fc.name == "get_marine_conditions",
+                      "tool_executed_ok": trace.result_status == "ok",
                       "arguments_validated": trace.result_status not in ("invalid_arguments", "unknown_function"),
                       "summarises_conditions": bool(body.strip()),
                       "marine_disclaimer_present": MARINE_DISCLAIMER in final,

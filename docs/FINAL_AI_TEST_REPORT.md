@@ -9,8 +9,8 @@ Every result below came from an actual run of the command shown.
 
 | Suite / check | Command | Result |
 |---|---|---|
-| Backend offline suite (unit, AI, safety, schema, tools, rules, declarations, offline queue) | `pytest -q` (backend) | **343 passed, 0 failed** (8 live deselected) |
-| Final acceptance regression tests (new) | `pytest tests/test_final_acceptance.py -q` | **25 passed, 0 failed** |
+| Backend offline suite (whole repo, after merging current `main`) | `pytest -q` (backend) | **472 passed, 0 failed** (8 live deselected) |
+| Final acceptance regression tests (new) | `pytest tests/test_final_acceptance.py -q` | **29 passed, 0 failed** |
 | Hosted live tier (real inference) | `pytest tests/test_hosted_integration.py -m live -q` | **8 passed, 0 failed** |
 | **Live hosted Gemma gates** | `backend/scripts/run_final_live_gates.py` | **10/10 gates passed** |
 | Dataset validators (schema, leakage, families, arguments, safety) | `scripts/validate_v2_dataset.py` | **ALL PASS** |
@@ -24,7 +24,8 @@ Every result below came from an actual run of the command shown.
 | One-command check, offline | `scripts/final_ai_check.py --offline` | **required 7/7 passed** |
 | One-command check, live | `scripts/final_ai_check.py --live` | **required 9/9 passed — OVERALL: PASS** |
 
-Baseline was 318 backend + 8 hosted. Now **343 backend + 8 hosted = 351**, no regressions.
+The AI workstream contributed 343 of those backend tests (baseline 318) plus the 8 live
+hosted tests. Nothing regressed on either side of the merge.
 
 ## 2. Live hosted gates (real inference, `gemma-4-26b-a4b-it`, google-genai 2.14.0)
 
@@ -118,6 +119,57 @@ RESOURCE_EXHAUSTED · UNAVAILABLE · DEADLINE_EXCEEDED`) applied in two places �
 This makes the harness honest in both directions: it no longer cries regression at a network
 blip, and it still cannot report a pass when a call never succeeded. After the fix:
 **10/10 gates, 8/8 live tests, `OVERALL: PASS`**.
+
+### 3.6 Gate 3 assumed the marine tool would be requested on turn 1 (over-strict gate)
+
+The prompt is *"Ki kondisyon lamer pou **dime** dan Flic-en-Flac?"* — conditions for
+**tomorrow**. On one run the model first called `get_current_demo_date` to resolve what
+"tomorrow" means, then would have asked for conditions. The gate only inspected turn 1, so
+it scored correct multi-step reasoning as a failure, and gate 4 then round-tripped whichever
+tool turn 1 happened to pick.
+
+**Fix:** gate 3 now follows the real chain for up to 3 turns, feeding each intermediate
+tool's genuine result back to the model, and asserts `get_marine_conditions` **is reached**
+with every call in the chain allow-listed. Gate 4 gained
+`round_trips_the_marine_tool`, so it can no longer pass by round-tripping a preparatory
+tool.
+
+No safety assertion was weakened to achieve this — allow-list membership, Mauritius location
+plausibility and the no-guarantee check now apply to **every** turn instead of only the
+first, and gate 4 became strictly harder. The recorded detail is now the chain
+(`chain=get_marine_conditions`) rather than a single name.
+`test_weather_gate_follows_the_tool_chain_instead_of_assuming_the_first_turn` prevents a
+revert to turn-1-only.
+
+### 3.7 An out-of-sync venv looked like a code regression (harness diagnosability)
+
+After merging current `main`, the suite failed with
+`ModuleNotFoundError: No module named 'pypdf'` — a dependency a teammate had correctly added
+to `backend/requirements.txt` but which was not installed locally. As an opaque pytest
+collection error this reads like broken code. `final_ai_check.py` now runs a preflight that
+names any declared-but-missing distribution and prints the exact `pip install` command before
+running the tests. Covered by
+`test_final_check_reports_missing_backend_dependencies_by_name`.
+
+## 3a. Integration with current `main`
+
+`main` had advanced by 40 commits (the Tourism, Energy, Transport and Blue Finance pillars)
+since the AI handoff. Merged with **no conflicts**, then everything was re-verified on the
+merged tree rather than on the pre-merge tree:
+
+| After merge | Result |
+|---|---|
+| Backend suite (mine + teammates') | **472 passed**, 8 live deselected |
+| Final acceptance regression tests | **29 passed** |
+| `final_ai_check.py --live` | **required 9/9 passed — OVERALL: PASS** |
+| Local E2E flows A–F | **7/7 passed**, `real_inference: true` |
+| Release gate | **13/13 PASS** |
+
+Two spot-checks on the merged surface, both expected behaviour and not defects:
+`GET /api/pillars` returns 200, and `POST /api/pillars/finance/analyse` returns 503
+*"registered but not enabled on this deployment"* — the pillar is deliberately
+feature-flagged off. `/api/provider/status` is nested (`hosted.model`), still reporting
+`gemma-4-26b-a4b-it` with `real_inference: true`.
 
 ## 4. Non-regressions investigated and dismissed
 

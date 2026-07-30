@@ -1,6 +1,6 @@
 {
-  "run_at": "2026-07-29T22:40:07.167523+00:00",
-  "base_url": "http://127.0.0.1:8011",
+  "run_at": "2026-07-29T23:59:38.626296+00:00",
+  "base_url": "http://127.0.0.1:8020",
   "provider_mode": "hosted",
   "flows_passed": 7,
   "flows_total": 7,
@@ -57,7 +57,7 @@
         {
           "step": "request accepted",
           "ok": true,
-          "detail": "d5875c59"
+          "detail": "27ee8135"
         },
         {
           "step": "inference real OR disclosed fallback (never silent mock)",
@@ -95,9 +95,9 @@
           "detail": ""
         },
         {
-          "step": "latency recorded (18968 ms)",
+          "step": "latency recorded (16342 ms)",
           "ok": true,
-          "detail": "16016"
+          "detail": "13140"
         }
       ],
       "passed": true
@@ -156,7 +156,7 @@
         {
           "step": "confirmation accepted",
           "ok": true,
-          "detail": "b84e7f39-8046-4c66-81d1-a4ccf957fed1"
+          "detail": "c8f644e4-6a6a-4788-b9db-62f6c860b97a"
         },
         {
           "step": "deterministic rule engine returned a status",
@@ -188,7 +188,7 @@
         {
           "step": "declaration prepared",
           "ok": true,
-          "detail": "aba0dd3b-b617-4315-88b9-5cbbcaa6b9dd"
+          "detail": "7fcf6f69-4c41-440e-9f78-a191034038d1"
         },
         {
           "step": "prepare labelled MOCK",
@@ -198,7 +198,7 @@
         {
           "step": "PDF generated",
           "ok": true,
-          "detail": "200, 1629 bytes"
+          "detail": "200, 1642 bytes"
         },
         {
           "step": "submission labelled MOCK",
@@ -208,7 +208,7 @@
         {
           "step": "mock receipt issued",
           "ok": true,
-          "detail": "MOCK-20260729-3DEE4F"
+          "detail": "MOCK-20260730-CEB7A4"
         },
         {
           "step": "explicitly states no official system was contacted",
@@ -225,12 +225,12 @@
         {
           "step": "operation queued while offline",
           "ok": true,
-          "detail": "8158eda0-c972-4e9e-8499-fb785ae4e604"
+          "detail": "3b091d97-8891-4d1a-858e-8db8a4b07b9e"
         },
         {
           "step": "queue visible to the user",
           "ok": true,
-          "detail": "3 item(s), queued=1"
+          "detail": "4 item(s), queued=1"
         },
         {
           "step": "sync applied the queued item",
@@ -267,7 +267,7 @@
         {
           "step": "latency present",
           "ok": true,
-          "detail": "9156"
+          "detail": "11812"
         },
         {
           "step": "function trace with names + status",

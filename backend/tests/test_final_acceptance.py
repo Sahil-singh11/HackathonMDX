@@ -237,3 +237,89 @@ def test_pdf_safe_transliterates_typographic_characters():
     assert _pdf_safe("a\u2014b") == "a-b"
     assert _pdf_safe("\u2018q\u2019 \u201cd\u201d") == "'q' \"d\""
     _pdf_safe("\u2026\u00a0").encode("latin-1")
+
+
+# --- harness honesty: a transport error is neither a pass nor a safety failure ----------
+
+def test_live_gate_runner_retries_server_side_transients_but_not_content_errors():
+    """A 500/503 never reaches a content assertion, so scoring it as a gate failure is a
+    false alarm — and scoring it as a pass would be dishonest. It must be retried, then
+    labelled TRANS, while a real model error (NOT_FOUND) must not be retried."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "_gates", Path(__file__).resolve().parents[1] / "scripts" / "run_final_live_gates.py")
+    gates = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gates)
+
+    for transient in ("ServerError: 500 INTERNAL", "503 UNAVAILABLE", "429 RESOURCE_EXHAUSTED",
+                      "504 DEADLINE_EXCEEDED", "502 Bad Gateway"):
+        assert gates.TRANSIENT.search(transient), transient
+    for real in ("404 NOT_FOUND: model not found", "400 INVALID_ARGUMENT",
+                 "403 PERMISSION_DENIED"):
+        assert not gates.TRANSIENT.search(real), real
+
+    gates.RESULTS.clear()
+    gates.record("gate_x", "n", "FAIL", "ServerError: 500 INTERNAL.")
+    assert gates.RESULTS[-1]["status"] == "TRANS"
+
+    # A failure with real check results stays FAIL even if the detail mentions a code.
+    gates.RESULTS.clear()
+    gates.record("gate_y", "n", "FAIL", "500 INTERNAL", checks={"no_safety_claim": False})
+    assert gates.RESULTS[-1]["status"] == "FAIL"
+    gates.RESULTS.clear()
+
+
+def test_live_tier_client_retries_transients_and_reraises_real_errors():
+    from tests import test_hosted_integration as live
+
+    class Boom:
+        def __init__(self, exc, succeed_on=None):
+            self.exc, self.succeed_on, self.calls = exc, succeed_on, 0
+
+        def generate_content(self, **kw):
+            self.calls += 1
+            if self.succeed_on and self.calls >= self.succeed_on:
+                return "ok"
+            raise RuntimeError(self.exc)
+
+    recovering = Boom("ServerError: 500 INTERNAL", succeed_on=2)
+    assert live._RetryingModels(recovering, attempts=3, delay=0).generate_content() == "ok"
+    assert recovering.calls == 2
+
+    permanent = Boom("404 NOT_FOUND")
+    with pytest.raises(RuntimeError):
+        live._RetryingModels(permanent, attempts=3, delay=0).generate_content()
+    assert permanent.calls == 1, "a real model error must not be retried"
+
+    persistent = Boom("503 UNAVAILABLE")
+    with pytest.raises(RuntimeError):
+        live._RetryingModels(persistent, attempts=3, delay=0).generate_content()
+    assert persistent.calls == 3, "retry must be bounded and must still surface the failure"
+
+
+def test_final_check_reports_missing_backend_dependencies_by_name():
+    """An unsynced venv must be named as such, not surface as an opaque collection error."""
+    import importlib.util
+
+    root = Path(__file__).resolve().parents[2]
+    spec = importlib.util.spec_from_file_location(
+        "_finalcheck", root / "scripts" / "final_ai_check.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    absent = mod.missing_requirements()
+    assert absent == [], f"venv is out of sync with backend/requirements.txt: {absent}"
+    assert "pypdf" in (root / "backend" / "requirements.txt").read_text(encoding="utf-8")
+
+
+def test_weather_gate_follows_the_tool_chain_instead_of_assuming_the_first_turn():
+    """The model may resolve the demo date before asking for conditions ("dime" = tomorrow).
+    The gate must audit the whole chain — allow-listed at every turn, marine tool reached —
+    and gate 4 must round-trip the marine tool specifically, not a preparatory one."""
+    src = (Path(__file__).resolve().parents[1] / "scripts" / "run_final_live_gates.py"
+           ).read_text(encoding="utf-8")
+    assert "MAX_TURNS" in src
+    assert '"requested_get_marine_conditions": "get_marine_conditions" in chain' in src
+    assert '"allow_listed_only": all(n in REGISTRY for n in chain)' in src
+    assert '"round_trips_the_marine_tool": fc.name == "get_marine_conditions"' in src

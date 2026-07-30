@@ -14,6 +14,7 @@ import argparse
 import json
 import os
 import platform
+import re
 import subprocess
 import sys
 import time
@@ -63,8 +64,46 @@ def has_key() -> bool:
     return False
 
 
+def missing_requirements() -> list[str]:
+    """Declared backend requirements that are not installed in the venv being used.
+
+    Without this, a venv that predates a teammate's new dependency fails as an opaque
+    pytest collection error, which reads like a code regression instead of "run pip
+    install". Only distribution names are reported — never versions of anything secret.
+    """
+    req = ROOT / "backend" / "requirements.txt"
+    if not req.exists():
+        return []
+    names = []
+    for raw in req.read_text(encoding="utf-8").splitlines():
+        line = raw.split("#", 1)[0].strip()
+        if not line or line.startswith("-"):
+            continue
+        names.append(re.split(r"[<>=!~\[;]", line, 1)[0].strip())
+    probe = (
+        "import importlib.metadata as m, sys\n"
+        "out=[]\n"
+        "for n in sys.argv[1:]:\n"
+        "    try: m.version(n)\n"
+        "    except Exception: out.append(n)\n"
+        "print(' '.join(out))\n"
+    )
+    try:
+        p = subprocess.run([str(PY), "-c", probe, *names], capture_output=True, text=True,
+                           timeout=120, encoding="utf-8", errors="replace")
+    except Exception:  # noqa: BLE001 — a probe failure must not mask the real checks
+        return []
+    return (p.stdout or "").split()
+
+
 def offline_suite(quick: bool) -> None:
     print("\n== offline ==")
+    absent = missing_requirements()
+    if absent:
+        print(f"  [WARN] {len(absent)} declared backend dependency/ies not installed in the "
+              f"venv: {', '.join(absent)}")
+        print(f"         fix with: {PY} -m pip install -r backend/requirements.txt")
+        print("         test failures below are most likely this, not a code regression.")
     run("backend unit + AI + safety tests", [str(PY), "-m", "pytest", "-q"],
         cwd=ROOT / "backend")
     run("final acceptance regression tests",
