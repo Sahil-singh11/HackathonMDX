@@ -408,5 +408,20 @@
   "energy.unavailable": "Chif resours pa ti kapav sarze. Sa pilie la bizin backend; pena kopi offline parski enn vie chif pwisans pou trompe.",
   "pillars.dataSummary": "Done lor bann pilie an direk:",
   "pillars.notReported": "pa rapporte",
-  "pillars.noProvenance": "Pankor rapport so sours done"
+  "pillars.noProvenance": "Pankor rapport so sours done",
+  "map.ariaLabel": "Kart Moris avek bann landrwa marke. Enn lalis navigab par klavie ar mem bann landrwa swiv.",
+  "map.listLabel": "Bann landrwa marke",
+  "map.north": "Nor",
+  "map.sunlightNote": "Kart la pa desine dan mod Soley, ki fer pou soley direk lor enn pon. Tou bann landrwa dan lalis anba.",
+  "map.disclaimer": "Kontour trase zis pou oryantasion — pa pou navigasion. Pena resif, pena batimetri, pena profonder.",
+  "map.status.good": "Bon",
+  "map.status.caution": "Atansion",
+  "map.status.poor": "Fay",
+  "map.status.info": "Marke",
+  "tourism.protectedShort": "Park marin",
+  "tourism.siteListLabel": "Bann sit touristik, pli bon kondision anpremie",
+  "transport.portDetail": "Por, lor so pozision pibliye",
+  "transport.vesselUnnamed": "Kontak pozision zis — nom pa difize",
+  "transport.approachListLabel": "Por ek bann arive atann par distans",
+  "transport.bearingCaveat": "AIS rapport enn distans, pa enn direksion. Bann bato desine lor zot VRE distans lor enn sel liyn skematik 315° pou ki distans la kapav lir kont bar lesel. Zot vre direksion pa kone ek pa montre."
 }

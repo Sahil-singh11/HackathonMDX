@@ -449,5 +449,20 @@
   "transport.riskTitle": "Risk reasoning",
   "pillars.dataSummary": "Data across live pillars:",
   "pillars.notReported": "not reported",
-  "pillars.noProvenance": "Does not report its data source yet"
+  "pillars.noProvenance": "Does not report its data source yet",
+  "map.ariaLabel": "Chart of Mauritius with marked locations. A keyboard-navigable list of the same locations follows.",
+  "map.listLabel": "Marked locations",
+  "map.north": "North",
+  "map.sunlightNote": "The chart is not drawn in Sunlight mode, which is built for direct sun on a deck. Every location is in the list below.",
+  "map.disclaimer": "Traced outline for orientation only — not for navigation. No reef, no bathymetry, no depths.",
+  "map.status.good": "Good",
+  "map.status.caution": "Caution",
+  "map.status.poor": "Poor",
+  "map.status.info": "Marked",
+  "tourism.protectedShort": "Marine park",
+  "tourism.siteListLabel": "Tourism sites, best conditions first",
+  "transport.portDetail": "Port, at its published position",
+  "transport.vesselUnnamed": "Position-only contact — name not broadcast",
+  "transport.approachListLabel": "Port and expected arrivals by range",
+  "transport.bearingCaveat": "AIS reports a distance, not a bearing. Vessels are drawn at their TRUE range along one schematic 315° line so the ranges can be read against the scale bar. Their real bearings are unknown and are not shown."
 }
