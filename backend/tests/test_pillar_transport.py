@@ -197,7 +197,6 @@ def test_grounded_model_output_is_used_and_labelled(session, monkeypatch):
     # that drifts out of sync with the synthetic fixture — as a stale
     # "Five vessels" here once did after the fixture's arrivals count changed.
     provider = _use(monkeypatch, _stub(
-<<<<<<< HEAD
         # NO NUMBER IN THE STUB PROSE, and that is the point of this edit.
         #
         # It used to say "Five vessels report Port Louis." The number firewall
@@ -214,12 +213,6 @@ def test_grounded_model_output_is_used_and_labelled(session, monkeypatch):
     result = _brief(session)
     assert result.narrative_source == "model"
     assert result.narrative.startswith("Vessels are reporting")
-=======
-        "stub_good", "Several vessels report Port Louis.\n\nSwell is moderate; berthing should hold."))
-    result = _brief(session)
-    assert result.narrative_source == "model"
-    assert result.narrative.startswith("Several vessels")
->>>>>>> d019f095e7c650526d456b94dd9ed8fe514680d1
     assert "berthing" in result.risk_reasoning
     assert result.provenance.model_provider == "stub_good"
     # The honesty rules live in the transport-scoped system instruction

@@ -47,7 +47,6 @@ class SiteAssessment(BaseModel):
     #: The written note. Always populated by build_brief() — model prose when the
     #: model produced usable prose, otherwise a summary assembled from the figures.
     interpretation: str = ""
-<<<<<<< HEAD
     #: Which rung produced the note. FOUR values, because two changes landed on
     #: this field in parallel and each drew a distinction the other conflated:
     #:
@@ -67,13 +66,6 @@ class SiteAssessment(BaseModel):
     #: claiming a source for text that does not exist is the same class of
     #: overclaim as presenting a template as model reasoning.
     interpretation_source: str = "none"
-=======
-    #: "model" (fresh call), "cached" (served from narrative_cache without a
-    #: model call), or "" (no interpretation — no provider, rejected output, or
-    #: demo_mode with no cache entry yet). Same honesty extended to model rungs
-    #: that the UI already gives a mechanical-summary badge (Task 3).
-    interpretation_source: str = ""
->>>>>>> d019f095e7c650526d456b94dd9ed8fe514680d1
 
 
 class EnergyBrief(PillarResult):
