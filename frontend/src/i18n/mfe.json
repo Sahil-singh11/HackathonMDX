@@ -448,5 +448,12 @@
   "decl.colDate": "Dat",
   "decl.colLength": "Longer",
   "decl.colStatus": "Stati regleman",
-  "decl.reviewRows": "Anrezistreman dan sa brouyon la ({n})"
+  "decl.reviewRows": "Anrezistreman dan sa brouyon la ({n})",
+  "catch.cameraTitle": "Pran enn foto",
+  "catch.cameraLive": "Vi kamera an direk",
+  "catch.cameraStarting": "Pe demar kamera…",
+  "catch.cameraShoot": "Kaptire",
+  "catch.cameraCancel": "Anile",
+  "catch.cameraDenied": "Permision kamera refize, alor pa kapav pran foto isi. Permet akse kamera dan to navigater, ouswa swazir enn foto ki deza ena.",
+  "catch.cameraNone": "Pena kamera disponib lor sa aparey la. Swazir enn foto ki deza ena."
 }
