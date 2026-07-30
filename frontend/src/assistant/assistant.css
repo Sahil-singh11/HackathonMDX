@@ -5,16 +5,47 @@
 
 .asst-page { display: flex; flex-direction: column; gap: var(--sp-4); }
 
-.asst-head {
+/* --- title bar + tab strip, as one panel --------------------------------
+   The heading used to float free above the tabs and read as orphaned. This
+   block draws the top half of a panel; the tab strip below closes it. The
+   negative margin cancels .asst-page's row gap for this one seam only, so
+   the two edges meet instead of being pushed apart.
+
+   .lk-tabs is a FROZEN primitive and is not edited — it is only re-skinned
+   here, scoped to this page by the child selector. */
+.asst-topbar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin-bottom: calc(var(--sp-4) * -1);
+  padding: var(--sp-4) var(--sp-4) var(--sp-3);
+  border: 1px solid var(--border);
+  border-bottom: 0;
+  border-radius: var(--r-card) var(--r-card) 0 0;
+  background: var(--surface);
+}
+.asst-topbar__row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-2);
+  gap: var(--sp-3);
 }
-.asst-head__badges { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+.asst-topbar__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-display);
+}
 
-.asst-intro { color: var(--text-muted); margin: 0; max-width: 60ch; }
+.asst-page > .lk-tabs {
+  padding: 0 var(--sp-2);
+  border: 1px solid var(--border);
+  border-top: 0;
+  border-bottom: 2px solid var(--border);
+  border-radius: 0 0 var(--r-card) var(--r-card);
+  background: var(--surface);
+}
 
 .asst-stale-warning {
   display: flex;
@@ -29,54 +60,203 @@
 }
 
 /* --- species cards ------------------------------------------------------ */
-.asst-species-list { display: flex; flex-direction: column; gap: var(--sp-4); }
+.asst-species-list { display: flex; flex-direction: column; gap: var(--sp-3); }
 
-.asst-species-title { font-weight: 600; }
-.asst-species-sci { font-style: italic; color: var(--text-muted); font-weight: 400; }
-.asst-habitat { color: var(--text-muted); margin: 0 0 var(--sp-2); }
-
-.asst-rule { padding: var(--sp-3) 0; border-bottom: 1px solid var(--border); }
-.asst-rule:last-child { border-bottom: 0; padding-bottom: 0; }
-
-.asst-rule__head {
+/* Card header: an initial mark, the names, and (for the one species with a
+   real gazetted rule) the GN badge. */
+.asst-species__head {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-2);
+  gap: var(--sp-3);
+  flex-wrap: wrap;
 }
-.asst-rule__fact {
+.asst-species__names { min-width: 0; flex: 1 1 16ch; }
+.asst-species__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  line-height: var(--lh-tight);
+}
+.asst-species__sub {
+  margin: 2px 0 0;
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-snug);
+}
+.asst-species__sci { font-style: italic; }
+.asst-species__habitat {
   display: inline-flex;
   align-items: center;
-  gap: var(--sp-2);
-  font-size: var(--fs-base);
+  gap: var(--sp-1);
+  margin-left: var(--sp-2);
+  padding-left: var(--sp-2);
+  border-left: 1px solid var(--border);
 }
+
+/* Species-initial mark. The backend stores no photos (CLAUDE.md honesty rule
+   4), so this stands in for one rather than inventing a thumbnail. */
+.asst-mark {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-chip);
+  background: var(--surface-sunken);
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: var(--fs-base);
+  line-height: 1;
+  font-weight: 600;
+}
+.asst-mark--accent {
+  background: var(--accent-quiet);
+  color: var(--accent-hover);
+}
+
+/* --- rule rows ----------------------------------------------------------
+   The fact leads at display size; evidence collapses into a disclosure. */
+.asst-rules {
+  list-style: none;
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+/* Transparent, not a tinted fill. These rows sit inside BOTH a normal card and
+   the raised octopus card, and --surface-sunken is near-black in Night — a
+   filled row would read as a hole punched in the raised card. A hairline
+   border carries the grouping in all four theme states instead. */
+.asst-rule {
+  /* The evidence summary below carries a full 56px touch target; that height
+     doubles as this row's bottom padding rather than stacking on top of it. */
+  padding: var(--sp-3) var(--sp-3) var(--sp-1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: transparent;
+}
+/* A rule that is explicitly NOT in force should not read as loudly as one
+   that is. Dimmed by hierarchy — dashed edge, no fill — never by contrast. */
+.asst-rule--muted { border-style: dashed; }
+
+.asst-rule__top {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+.asst-rule__icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  margin-top: 2px;
+  color: var(--text-muted);
+}
+.asst-rule__fact {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 14ch;
+}
+.asst-rule__label {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-muted);
+}
+.asst-rule__value {
+  font-size: var(--fs-md);
+  line-height: var(--lh-snug);
+  font-weight: 600;
+}
+/* An absent rule is prose, not a number — it must not borrow the visual
+   authority of a real limit. */
+.asst-rule__value--missing {
+  font-size: var(--fs-base);
+  font-weight: 400;
+  color: var(--text-muted);
+}
+.asst-rule__status { flex: 0 0 auto; margin-left: auto; }
+
+.asst-species__empty { margin: var(--sp-3) 0 0; }
 
 .asst-rule__mantle-callout {
   display: flex;
   align-items: flex-start;
   gap: var(--sp-2);
-  margin: var(--sp-2) 0 0;
+  margin: var(--sp-3) 0 0;
   padding: var(--sp-3);
   border: 1px solid var(--warning);
   border-radius: var(--r-card);
   background: var(--warning-quiet);
   font-weight: 600;
+  line-height: var(--lh-snug);
 }
+.asst-rule__mantle-callout svg { flex: 0 0 auto; margin-top: 2px; }
 
-.asst-rule__note { margin: var(--sp-2) 0 0; color: var(--text-muted); }
-.asst-rule__scope { margin: var(--sp-1) 0 0; color: var(--text-muted); font-size: var(--fs-sm); }
-.asst-rule__cite {
+/* --- evidence disclosure ------------------------------------------------
+   Nothing is hidden: the regulation text, scope caveats and citation all
+   still render verbatim, one tap away. Collapsing them is what lets the
+   fact above be read at a glance on a moving boat. */
+.asst-evidence { margin: var(--sp-1) 0 0; }
+.asst-evidence__summary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: var(--touch-min);
+  padding: 0 var(--sp-2);
+  margin-left: calc(var(--sp-2) * -1);
+  border-radius: var(--r-input);
+  color: var(--accent);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+.asst-evidence__summary::-webkit-details-marker { display: none; }
+.asst-evidence__summary::after {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg) translate(-2px, -2px);
+  transition: transform var(--motion-fast) var(--ease-out);
+}
+.asst-evidence[open] .asst-evidence__summary::after {
+  transform: rotate(-135deg) translate(-2px, -2px);
+}
+.asst-evidence__summary:hover { color: var(--accent-hover); }
+
+.asst-evidence__body {
+  padding: var(--sp-2) 0 0 var(--sp-3);
+  border-left: 2px solid var(--border);
+  margin-left: var(--sp-1);
+}
+.asst-evidence__note { margin: 0; color: var(--text-muted); line-height: var(--lh-body); }
+.asst-evidence__scope {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+.asst-evidence__cite {
   margin: var(--sp-2) 0 0;
   font-size: var(--fs-sm);
   color: var(--text-muted);
   overflow-wrap: anywhere;
 }
-.asst-rule__cite a {
-  color: var(--accent);
+.asst-evidence__link {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: var(--sp-1);
+  min-height: var(--touch-min);
+  color: var(--accent);
+  font-size: var(--fs-sm);
+  font-weight: 600;
 }
 
 .asst-data { font-family: var(--font-data); }
@@ -86,22 +266,22 @@
 /* --- declaration guide -------------------------------------------------- */
 .asst-mock-warning {
   margin: 0 0 var(--sp-3);
-  padding: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
   border: 2px solid var(--danger);
   border-radius: var(--r-card);
   background: var(--danger-quiet);
   font-weight: 700;
 }
 
-.asst-guide { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-4); }
+.asst-guide { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-3); }
 .asst-guide__step { display: flex; gap: var(--sp-3); align-items: flex-start; }
 .asst-guide__num {
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 34px;
+  height: 34px;
   border-radius: var(--r-chip);
   border: 2px solid var(--border-strong);
   background: var(--surface);
@@ -117,7 +297,12 @@
   font-size: var(--fs-base);
   font-weight: 600;
 }
-.asst-guide__body p { margin: 0 0 var(--sp-1); color: var(--text-muted); }
+.asst-guide__body p {
+  margin: 0 0 var(--sp-1);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-snug);
+}
 .asst-guide__link {
   display: inline-flex;
   align-items: center;
@@ -127,16 +312,49 @@
 }
 
 /* --- sources ------------------------------------------------------------ */
-.asst-sources { display: flex; flex-direction: column; gap: var(--sp-4); }
+.asst-sources { display: flex; flex-direction: column; gap: var(--sp-2); }
 .asst-source {
-  padding: var(--sp-3);
   border: 1px solid var(--border);
   border-radius: var(--r-card);
   background: var(--surface);
 }
-.asst-source__title { margin: 0 0 var(--sp-1); font-size: var(--fs-base); }
+/* Collapsed, a source is one scannable line: its register id and its title.
+   Everything else is one tap away, not gone. */
+.asst-source__summary {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: var(--touch-min);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-card);
+  cursor: pointer;
+  list-style: none;
+}
+.asst-source__summary::-webkit-details-marker { display: none; }
+.asst-source__summary::after {
+  content: '';
+  flex: 0 0 auto;
+  margin-left: auto;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid var(--text-muted);
+  border-bottom: 2px solid var(--text-muted);
+  transform: rotate(45deg) translate(-2px, -2px);
+  transition: transform var(--motion-fast) var(--ease-out);
+}
+.asst-source[open] .asst-source__summary::after {
+  transform: rotate(-135deg) translate(-2px, -2px);
+}
+.asst-source__id { flex: 0 0 auto; color: var(--accent); font-weight: 700; }
+.asst-source__title { min-width: 0; font-weight: 600; }
+.asst-source__body { padding: 0 var(--sp-3) var(--sp-3); }
 .asst-source__meta { margin: 0 0 var(--sp-2); font-size: var(--fs-sm); color: var(--text-muted); }
-.asst-source__note { margin: 0 0 var(--sp-2); color: var(--text-muted); }
+.asst-source__note {
+  margin: 0 0 var(--sp-2);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-snug);
+}
 .asst-source__link { color: var(--accent); overflow-wrap: anywhere; font-size: var(--fs-sm); }
 
 .asst-disclaimer {
