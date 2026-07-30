@@ -352,6 +352,7 @@ class EnergyPillar:
         except Exception:  # noqa: BLE001
             log.warning("Interpretation failed for %s", assessment.site_id, exc_info=True)
             return "", ""
+<<<<<<< HEAD
 
 
 def _mechanical_note(a: SiteAssessment) -> str:
@@ -386,6 +387,8 @@ def _mechanical_note(a: SiteAssessment) -> str:
         "computed values above."
     )
     return " ".join(bits)
+=======
+>>>>>>> d019f095e7c650526d456b94dd9ed8fe514680d1
 
 
 energy_pillar = EnergyPillar()

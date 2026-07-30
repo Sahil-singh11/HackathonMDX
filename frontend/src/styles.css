@@ -460,8 +460,37 @@ textarea { resize: vertical; }
 .compass-legend span { display: flex; align-items: center; gap: var(--space-2); }
 .compass-legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 
+/* ---------- Sea conditions ---------- */
+.marine-card { display: flex; flex-direction: column; gap: var(--space-4); }
+.marine-head {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: var(--space-2);
+}
+.marine-head h2 { margin: 0; }
+.marine-badges { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+.marine-footer {
+  display: flex; flex-direction: column; gap: var(--space-1);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+}
+.marine-footer .caption { margin: 0; }
+/* The standing marine caveat. Muted, not a warning banner: the page is working
+   normally, so styling it as an alert trained people to dismiss it. It is still
+   always present — see the note in pages/Marine.tsx. */
+.marine-caveat { font-style: italic; }
+
 .marine-layout { display: flex; flex-direction: column; gap: var(--space-4); align-items: center; }
 .marine-layout .stat-grid { width: 100%; }
+
+/* Sea conditions has SEVEN metric tiles. The shared 2-column .stat-grid wrapped
+   them 2/2/2/1, leaving an orphan tile and a large dead area beside it. Auto-fit
+   lets them use whatever width the page actually has — 4-up, 5-up or 7-up as the
+   viewport allows — with no fixed column count to go stale. */
+.marine-layout .stat-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr));
+  align-content: start;
+}
 
 .catch-grid { display: grid; grid-template-columns: 1fr; gap: var(--space-3); }
 .catch-card { margin: 0; }
@@ -757,6 +786,10 @@ textarea { resize: vertical; }
 @media (min-width: 1024px) {
   main { max-width: 960px; }
   main.narrow { max-width: 720px; }
+  /* Data-dense pages (Sea conditions) use the viewport rather than the reading
+     column. Still capped, so metric tiles do not stretch to absurd widths on an
+     ultrawide monitor. */
+  main.wide { max-width: 1600px; }
 
   .app-body { gap: var(--space-6); padding: 0 var(--space-6); }
 

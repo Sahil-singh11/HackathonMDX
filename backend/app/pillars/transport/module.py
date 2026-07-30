@@ -606,4 +606,16 @@ def _split_narrative(text: str) -> tuple[str, str]:
     return narrative, risk
 
 
+def _split_narrative(text: str) -> tuple[str, str]:
+    """Split the model's two-paragraph reply into (narrative, risk), raw — the
+    caller decides what an empty risk means (a fallback substitution and/or a
+    disclosure note). Shared by the live and cached paths so a cache hit
+    reconstructs the same shape a fresh call would have produced.
+    """
+    paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
+    narrative = paragraphs[0] if paragraphs else text
+    risk = "\n\n".join(paragraphs[1:]) if len(paragraphs) > 1 else ""
+    return narrative, risk
+
+
 transport_pillar = TransportPillar()

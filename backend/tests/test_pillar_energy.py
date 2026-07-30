@@ -184,6 +184,7 @@ def test_model_output_cannot_substitute_for_the_computed_figures(monkeypatch, cl
 
     # The fabricated figures are rejected entirely — the numeric firewall
     # cannot trace 9999/88888 to anything in the FACTS the model was given.
+<<<<<<< HEAD
     #
     # This asserted `interpretation == ""` when rejection meant "no note". It now
     # means "no MODEL note": the mechanical summary serves instead, so the reader
@@ -193,6 +194,9 @@ def test_model_output_cannot_substitute_for_the_computed_figures(monkeypatch, cl
     assert site.interpretation_source == "deterministic_fallback"
     assert "9999" not in site.interpretation
     assert "88888" not in site.interpretation
+=======
+    assert site.interpretation == ""
+>>>>>>> d019f095e7c650526d456b94dd9ed8fe514680d1
     assert site.resource.wave_power_kw_per_m != 9999
     assert site.resource.wind_power_w_per_m2 != 88888
 
@@ -258,6 +262,7 @@ def test_interpretation_is_capped(monkeypatch, client):
     # same number as sites interpreted once caching exists.
     assert _Counting.calls <= MAX_INTERPRETED_SITES
     assert _Counting.calls >= 1
+<<<<<<< HEAD
 
     # THE CAP IS ON MODEL CALLS, NOT ON NOTES. This used to assert that exactly
     # MAX_INTERPRETED_SITES sites had a non-empty interpretation, which stopped
@@ -276,6 +281,10 @@ def test_interpretation_is_capped(monkeypatch, client):
         if s.interpretation_source == "deterministic_fallback":
             assert "No model reasoned over these figures" in s.interpretation
 
+=======
+    interpreted = [s for s in result.sites if s.interpretation]
+    assert len(interpreted) == MAX_INTERPRETED_SITES
+>>>>>>> d019f095e7c650526d456b94dd9ed8fe514680d1
     assert all(s.resource.wave_power_kw_per_m is not None for s in result.sites)
 
 
@@ -362,6 +371,7 @@ def test_pillar_listed_with_government_naming(client):
     assert energy["enabled"] is False
 
 
+<<<<<<< HEAD
 def test_a_fenced_json_refusal_never_reaches_the_interpretation_field(monkeypatch, client):
     """Regression pin for the bug that was visible on screen.
 
@@ -447,6 +457,13 @@ def test_second_request_for_the_same_site_serves_from_cache_without_a_second_mod
     """A repeat request for the same figures is instant and never re-invokes the
     provider — and it is labelled 'cached', not 'model', so reused prose is never
     presented as a fresh call."""
+=======
+# --- narrative cache (Task 3) ----------------------------------------------
+
+def test_second_request_for_the_same_site_serves_from_cache_without_a_second_model_call(monkeypatch, client):
+    """The actual behavioural promise of Task 3: a repeat request for the same
+    figures is instant and never re-invokes the provider."""
+>>>>>>> d019f095e7c650526d456b94dd9ed8fe514680d1
     class _Counting:
         name = "counter"
         calls = 0
@@ -484,6 +501,7 @@ def test_demo_mode_never_calls_the_model(monkeypatch, client):
     monkeypatch.setenv("DEMO_MODE", "true")
     try:
         result = _run(monkeypatch, _Boom(), ["se_coast_offshore"])
+<<<<<<< HEAD
         # The load-bearing assertion, unchanged: _Boom raises if it is ever
         # called, so reaching this line at all proves demo_mode skipped the model.
         #
@@ -495,6 +513,10 @@ def test_demo_mode_never_calls_the_model(monkeypatch, client):
         site = result.sites[0]
         assert site.interpretation_source == "deterministic_fallback"
         assert "No model reasoned over these figures" in site.interpretation
+=======
+        assert result.sites[0].interpretation == ""
+        assert result.sites[0].interpretation_source == ""
+>>>>>>> d019f095e7c650526d456b94dd9ed8fe514680d1
     finally:
         monkeypatch.delenv("DEMO_MODE", raising=False)
         get_settings.cache_clear()

@@ -467,6 +467,7 @@
   "tourism.state.very rough": "Very rough",
   "tourism.state.high": "High",
   "tourism.state.unknown": "Unknown",
+<<<<<<< HEAD
   "transport.bearingCaveat": "AIS reports a distance, not a bearing. Vessels are drawn at their TRUE range along one schematic 315° line so the ranges can be read against the scale bar. Their real bearings are unknown and are not shown.",
   "transport.vesselUnnamed": "Position-only contact — name not broadcast",
   "transport.mapLegendStandIn": "The shaded ring is the 10 nautical mile approach zone this assessment covers, drawn true to scale. The diamonds are stand-in vessels from a demonstration feed, not live traffic — no AIS receiver covers Mauritius. They are labelled as stand-in data below.",
@@ -478,4 +479,20 @@
   "transport.withinApproach": "Within approach",
   "transport.etaIn": "reported ETA in",
   "pillars.narrativeReused": "Reused from an earlier answer for these same conditions, so no new model call was made. The wording is unchanged from when it was written and checked."
+=======
+  "energy.answerLead": "{site} is the strongest candidate today, with an indicated wave power density of {value} kW/m.",
+  "energy.answerNoData": "No wave power figure could be produced for any candidate site — the forecast inputs were unavailable.",
+  "energy.heroCaption": "best candidate, wave power",
+  "energy.figureBestSite": "at the best-ranked site",
+  "energy.figureAt10m": "wind measured at 10 m, not hub height",
+  "energy.figureNearshore": "deep-water formula overstates here",
+  "energy.distanceFromShore": "Distance from shore",
+  "energy.swellPeriod": "Swell period",
+  "energy.barCaption": "Bar length is relative to the strongest site shown, not an absolute scale. Wave power density in kW per metre of crest.",
+  "energy.detailTitle": "Per-site breakdown",
+  "energy.detailHint": "{n} candidate sites",
+  "energy.limitsTitle": "What this does not account for",
+  "energy.limitNearshore": "All candidate points are nearshore. The deep-water formula overstates wave power in shallow water, so these figures are not comparable with published deep-water resource atlases.",
+  "energy.unavailableShort": "unavailable"
+>>>>>>> d019f095e7c650526d456b94dd9ed8fe514680d1
 }
