@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import logging
-import re
 from datetime import date
 
 from fastapi import (APIRouter, Depends, File, Form, HTTPException, Request,
@@ -15,8 +14,10 @@ from app.core.limitations import (FALLBACK_DISCLOSURE, MARINE_DISCLAIMER,
                                   MOCK_DISCLOSURE, PERMANENT_LIMITATION,
                                   RULE_VERIFY_NOTICE)
 from app.core.ratelimit import InMemoryRateLimiter
+from app.core.safety import asserts_safety_guarantee, classify_failure
 from app.pillars.routes import reset_limiters as _reset_pillar_limiters
 from app.db.session import get_session
+from app.inference import gemma_chat
 from app.models.entities import (AisPosition, CatchAnalysis, CatchRecord,
                                  Declaration, LedgerEntry, SyncQueueItem,
                                  ToolTrace)
@@ -26,6 +27,7 @@ from app.schemas.analysis import (AnalyseCatchResponse, ConfirmRequest,
                                   ConfirmResponse, ConsoleError, ConsoleRequest,
                                   ConsoleResponse, LegalCheck, ProviderInfo,
                                   SpeciesSuggestion)
+from app.schemas.chat import ChatRequest, ChatResponse
 from app.services.declarations import service as declarations
 from app.services.fisheries_rules import demo_date
 from app.services.fisheries_rules.engine import check_confirmed_catch
@@ -747,6 +749,7 @@ def demo_reset(session: Session = Depends(get_session)) -> dict:
             session.delete(row)
     session.commit()
     _analyse_limiter.reset()
+    _chat_limiter.reset()
     _reset_pillar_limiters()
     return {"status": "reset", "date_simulated": False}
 
@@ -763,36 +766,6 @@ def demo_fixtures() -> dict:
 # --------------------------------------------------------------- manual AI test console
 
 _console_limiter = InMemoryRateLimiter(limit=6, window_seconds=60.0)
-
-# Server-side classification of a failure that never reached a model assertion. A hosted
-# 5xx, a DNS drop or a timeout says nothing about the model's behaviour, so the console
-# must not present it as an AI result — and the frontend must not discard a good trace
-# because the Wi-Fi blinked. Behavioural failures are the opposite: they ARE the result.
-_TRANSIENT_ERROR = re.compile(
-    r"\b(429|500|502|503|504)\b|RESOURCE_EXHAUSTED|UNAVAILABLE|DEADLINE_EXCEEDED"
-    r"|ConnectError|ConnectTimeout|ReadTimeout|RemoteProtocolError|getaddrinfo"
-    r"|Connection reset|Server disconnected|Timeout", re.I)
-
-# Phrases the product must never ASSERT about going to sea. Same intent as the live gate
-# runner's check, reported here as a visible flag.
-_GUARANTEE = re.compile(r"(100\s*%?\s*safe|guaranteed safe|it is safe to (go|sail|travel)"
-                        r"|definitely safe|safe to go out|no risk)", re.I)
-
-# A refusal necessarily quotes the phrase it is refusing: "I cannot say if it is 100% safe"
-# is the behaviour we want, but a naive match flags it as a guarantee — which would tell the
-# tester the app made a promise when it explicitly declined to. So a match only counts when
-# it is not negated by the words just before it.
-_NEGATED = re.compile(r"(cannot|can't|can not|won't|will not|unable|never|not\b|no one|nobody"
-                      r"|pa kapav|napa|pa\b|zame)[^.!?]{0,60}$", re.I)
-
-
-def _asserts_safety_guarantee(text: str) -> bool:
-    """True only when a safety guarantee is stated, not quoted in order to refuse it."""
-    for m in _GUARANTEE.finditer(text):
-        if not _NEGATED.search(text[:m.start()]):
-            return True
-    return False
-
 
 @router.post(
     "/api/ai/test-console",
@@ -830,7 +803,7 @@ def ai_test_console(
         result = provider_analyse(None, None, None, prompt, body.language, candidates, ctx)
     except Exception as e:  # noqa: BLE001 — surfaced as a controlled error, never a 500
         log.warning("test console request failed: %s", type(e).__name__)
-        kind = "transient" if _TRANSIENT_ERROR.search(f"{type(e).__name__}: {e}") else "behavioural"
+        kind = classify_failure(e)
         return ConsoleResponse(controlled_error=ConsoleError(
             kind=kind,
             message=("The hosted model could not be reached. This is a transport or capacity "
@@ -877,7 +850,7 @@ def ai_test_console(
         schema_valid=bool(result.diagnostics.get("final_schema_valid", False)),
         safety_flags={
             "marine_disclaimer_present": (MARINE_DISCLAIMER in disclosures) if marine_ran else True,
-            "no_safety_guarantee": not _asserts_safety_guarantee(text),
+            "no_safety_guarantee": not asserts_safety_guarantee(text),
             "permanent_limitation_present": PERMANENT_LIMITATION in disclosures,
             "no_unknown_function_executed": all(
                 t.result_status != "unknown_function" or t.final_action == "rejected"
@@ -888,4 +861,85 @@ def ai_test_console(
         disclosures=disclosures,
         function_trace=result.function_trace,
         controlled_error=transient_note,
+    )
+
+
+# ------------------------------------------------------------ conversational assistant
+
+# Looser than the console's 6/min because this is a real user surface a fisher
+# types into, and tighter than analyse-catch because each turn can cost two
+# hosted calls.
+_chat_limiter = InMemoryRateLimiter(limit=12, window_seconds=60.0)
+
+
+@router.post(
+    "/api/ai/chat",
+    response_model=ChatResponse,
+    summary="Conversational assistant — grounded chat for fishers",
+    description=(
+        "Multi-turn chat backed by hosted Gemma with the app's own regulatory data retrieved "
+        "and injected on every turn, so an answer about Mauritian fisheries rules comes from "
+        "`data/rules/`, never from the model's memory.\n\n"
+        "The assistant has **read-only** tools. It cannot record a catch, edit the log, or "
+        "prepare or submit a declaration — a request for any writing function is rejected "
+        "before execution and appears in the trace as `not_available_in_chat`.\n\n"
+        "When no key is configured, or hosted Gemma fails for any reason, the response is the "
+        "deterministic answer assembled from the rules files, with `real_inference=false`, "
+        "`grounded_only=true` and a label the client must show. That is the designed offline "
+        "behaviour, not an error. Rate-limited to 12/min per client address."
+    ),
+    responses={429: {"description": "Rate limit exceeded (12 requests/minute per client address)."}},
+)
+def ai_chat(
+    request: Request,
+    body: ChatRequest,
+    session: Session = Depends(get_session),
+) -> ChatResponse:
+    if not _chat_limiter.allow(_client_ip(request)):
+        raise HTTPException(429, "Too many messages from this address — please wait a minute.",
+                            headers={"Retry-After": "60"})
+
+    if body.messages[-1].role != "user":
+        raise HTTPException(422, "The last message must be from the fisher.")
+
+    turns = [(m.role, m.text.strip()) for m in body.messages]
+    question = turns[-1][1]
+    # analysis_id stays None: a conversation must not manufacture a CatchAnalysis row.
+    ctx = ToolContext(session=session, language=body.language, allow_network=True, analysis_id=None)
+
+    controlled: ConsoleError | None = None
+    try:
+        result = gemma_chat.chat(turns, body.language, ctx)
+    except gemma_chat.ChatUnavailable:
+        # Expected on any deployment without a key. Not worth a warning log, and
+        # not worth telling the fisher about the plumbing.
+        result = gemma_chat.grounded_only_result(question, body.language)
+    except Exception as e:  # noqa: BLE001 — degraded with disclosure, never a 500
+        kind = classify_failure(e)
+        log.warning("chat request failed (%s): %s", kind, type(e).__name__)
+        result = gemma_chat.grounded_only_result(
+            question, body.language,
+            note="The hosted model could not be reached, so this answer was assembled from the "
+                 "app's stored rules instead.")
+        controlled = ConsoleError(
+            kind=kind,
+            message=("The hosted model could not be reached. This is a transport or capacity "
+                     "problem — the answer below still comes from the app's own rules data."
+                     if kind == "transient" else
+                     f"The request failed in a controlled way ({type(e).__name__}). The answer "
+                     "below comes from the app's own rules data."))
+
+    return ChatResponse(
+        reply=result.reply,
+        provider=result.provider_name,
+        model=result.model,
+        real_inference=result.real_inference,
+        latency_ms=result.latency_ms,
+        functions_called=[t.function for t in result.function_trace if t.final_action == "executed"],
+        function_trace=result.function_trace,
+        cited_rules=result.cited_rules,
+        disclosures=_limitations(result.disclosures),
+        grounded_only=result.grounded_only,
+        grounded_label=result.grounded_label,
+        controlled_error=controlled,
     )
