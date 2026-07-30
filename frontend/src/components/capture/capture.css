@@ -100,15 +100,26 @@
   color: var(--text-label);
   margin-bottom: var(--space-1);
 }
-.context-chips-row { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+/* Equal-width columns rather than content-width flex items: the five chips
+   measured [81, 119, 113, 87, 98] px and wrapped 4+1 / 3+2 depending on width,
+   which is the ragged look. auto-fit keeps them on one row while there is room
+   and drops to a tidy grid when there is not — same gap horizontally and
+   vertically, every chip the same size. */
+.context-chips-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr));
+  gap: var(--space-2);
+}
 
 .context-chip {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
+  justify-content: center;
   min-height: 56px;      /* a11y floor — never reduce this */
-  padding: 0 var(--space-3);  /* horizontal only: packs 5 chips onto one row */
+  padding: 0 var(--space-2);
   white-space: nowrap;
+  text-align: center;
   border-radius: 999px;
   border: 2px solid var(--border-subtle);
   background: var(--surface-card);
@@ -221,4 +232,29 @@
    single-class selectors: styles.css will win again and the floor breaks
    silently, with nothing failing except usability in a wet boat. */
 .catch-step__col > .analyse-btn { min-height: 56px; }
-.note-field .note-wrap .mic-btn { min-height: 56px; min-width: 56px; }
+
+/* --- mic button, seated inside the textarea ------------------------------
+   It was overflowing the textarea's bottom edge by 3px at every width. The
+   cause is the inline-block baseline gap: a <textarea> sits on the text
+   baseline, so .note-wrap ends up ~3px taller than the textarea it contains,
+   and a button anchored `bottom: 4px` of the WRAP lands below the FIELD.
+   Making the textarea a block element removes the gap, and centring the button
+   vertically means it no longer depends on the wrap and field bottoms agreeing.
+
+   styles.css sizes .mic-btn 48x48 with `right/bottom: 4px`; these selectors are
+   deliberately more specific so the 56px target and the inset both hold. */
+.note-field .note-wrap { position: relative; display: block; }
+.note-field .note-wrap textarea {
+  display: block;              /* kills the baseline gap */
+  padding-right: 76px;         /* 56 button + 10 inset + 10 breathing room */
+}
+.note-field .note-wrap .mic-btn {
+  width: 56px;
+  height: 56px;
+  min-height: 56px;
+  min-width: 56px;
+  right: 10px;
+  bottom: auto;
+  top: 50%;
+  transform: translateY(-50%);
+}
