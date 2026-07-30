@@ -422,7 +422,7 @@
   "energy.unavailable": "Resource figures could not be loaded. This pillar needs the backend; there is no offline copy because a stale power figure would be misleading.",
   "transport.arrivalsTitle": "Expected arrivals",
   "transport.expectedIn": "vessels report this port as their destination within",
-  "transport.chartLegend": "Figures on the approach line are distances from the port in nautical miles, true to scale. Bearings are NOT shown: AIS reports each vessel's distance but not its direction, so vessels are drawn along one schematic line rather than at guessed positions. Vessel names are in the table below.",
+  "transport.chartLegend": "The range circles are true to scale on the map, and each vessel sits at its true distance from the port. The DIRECTION is not real: AIS reports distance but not bearing, so vessels are placed along one north-west construction line rather than at guessed positions. Vessel names are in the table below.",
   "transport.loadingNote": "Waiting for the narrative step — this can take up to a minute while the model is called.",
   "transport.errorBody": "Could not load the arrivals brief.",
   "transport.noArrivals": "No vessels currently report this port as their destination. That means nothing was observed, not that nothing is there.",

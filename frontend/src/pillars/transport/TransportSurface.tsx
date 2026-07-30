@@ -19,7 +19,7 @@ import { api } from '../../api/client'
 import { Badge, Button, Card, Skeleton, Table, type Column } from '../../components/ui'
 import { useT } from '../../i18n'
 import ProvenanceBadge from '../ProvenanceBadge'
-import ApproachChart from './ApproachChart'
+import ApproachMap from './ApproachMap'
 import type { ArrivalEntry } from './types'
 import './transport.css'
 
@@ -114,7 +114,7 @@ export default function TransportSurface() {
           <span className="pil-data">{brief.window_hours} h</span>
         </p>
 
-        <ApproachChart brief={brief} />
+        <ApproachMap brief={brief} />
         {/* The legend is HTML, not canvas pixels: translatable, findable by a
             screen reader, and impossible to miss — it carries the one claim
             the chart must not overstate. */}
