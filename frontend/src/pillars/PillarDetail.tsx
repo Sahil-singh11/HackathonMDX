@@ -20,6 +20,7 @@ import EnergySurface from './energy/EnergySurface'
 import { FIXTURE_PILLARS } from './fixture'
 import { PillarStatusBadge } from './PillarsIndex'
 import TourismSurface from './tourism/TourismSurface'
+import TransportSurface from './transport/TransportSurface'
 import './pillars.css'
 
 /**
@@ -36,6 +37,7 @@ export const PILLAR_SURFACES: Record<string, ReactNode> = {
   energy: <EnergySurface />,
   finance: <FinancePanel />,
   tourism: <TourismSurface />,
+  transport: <TransportSurface />,
 }
 
 export default function PillarDetail() {
