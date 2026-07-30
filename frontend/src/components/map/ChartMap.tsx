@@ -104,6 +104,31 @@ export default function ChartMap({
   const mapRef = useRef<L.Map | null>(null)
   const layerRef = useRef<L.LayerGroup | null>(null)
 
+  /* Latest camera props, readable from the create effect without joining its
+     dependency list — putting bounds/centre/zoom there would tear the map down
+     and rebuild it on every camera change. */
+  const cameraRef = useRef({ bounds, centre, zoom })
+  cameraRef.current = { bounds, centre, zoom }
+
+  /* THE MAP MUST NEVER EXIST WITHOUT A VIEW.
+   *
+   * Leaflet throws "Set map center and zoom first." from any projection call —
+   * latLngToContainerPoint in the de-collision pass below, for one — on a map
+   * that has had neither setView nor fitBounds. An uncaught throw inside an
+   * effect unmounts the whole React tree, which is a BLANK PAGE, not a broken
+   * map.
+   *
+   * It was reachable because the create effect depends on `t`: when that identity
+   * changes the map is rebuilt, but the camera effect does not re-run (its own
+   * deps are unchanged), so the new map stayed view-less until something
+   * projected against it. Applying the camera at creation closes that window. */
+  const applyCamera = (map: L.Map) => {
+    const { bounds: bx, centre: c, zoom: z } = cameraRef.current
+    if (c && z != null) { map.setView(c, z, { animate: false }); return }
+    const box = bx ?? MAURITIUS_BBOX
+    map.fitBounds([[box[0], box[1]], [box[2], box[3]]], { padding: [24, 24], animate: false })
+  }
+
   // Sunlight is deliberately map-free: hard contrast, no shadows, no canvas
   // surfaces. The list below carries everything the map would have shown.
   const drawMap = theme !== 'sunlight'
@@ -157,6 +182,9 @@ export default function ChartMap({
     })
     new North({ position: 'topright' }).addTo(map)
 
+    // BEFORE the layer group, and before any marker pass can project a point.
+    applyCamera(map)
+
     layerRef.current = L.layerGroup().addTo(map)
 
     // Arm wheel zoom only once the user has engaged with the map.
@@ -177,9 +205,7 @@ export default function ChartMap({
   useEffect(() => {
     const map = mapRef.current
     if (!map) return
-    const box = bounds ?? MAURITIUS_BBOX
-    if (centre && zoom != null) map.setView(centre, zoom, { animate: false })
-    else map.fitBounds([[box[0], box[1]], [box[2], box[3]]], { padding: [24, 24], animate: false })
+    applyCamera(map)
   }, [bounds, centre, zoom, drawMap])
 
   // --- markers and rings --------------------------------------------------
@@ -206,11 +232,21 @@ export default function ChartMap({
 
     // One de-collision pass in screen space, so badges stay readable without a
     // clustering plugin hiding markers behind a count.
-    const projected = badged.map((m) => {
-      const pt = map.latLngToContainerPoint(m.position)
-      return { id: m.id, x: pt.x, y: pt.y }
-    })
-    const offsets = decollide(projected)
+    /* Belt as well as braces. The camera is applied at creation now, so this
+       should always succeed — but label de-collision is a cosmetic nicety, and a
+       cosmetic nicety must never be able to take the page down. Overlapping
+       badges are a far better outcome than a blank screen. */
+    let offsets: ReturnType<typeof decollide> = {}
+    try {
+      const projected = badged.map((m) => {
+        const pt = map.latLngToContainerPoint(m.position)
+        return { id: m.id, x: pt.x, y: pt.y }
+      })
+      offsets = decollide(projected)
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.warn('[ChartMap] skipped label de-collision:', err)
+    }
 
     for (const m of badged) {
       const icon = buildMarkerIcon({

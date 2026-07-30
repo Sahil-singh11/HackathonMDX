@@ -264,3 +264,16 @@
   font-size: var(--fs-sm);
   color: var(--text-muted);
 }
+
+/* Shown while a newly-picked activity's brief is still in flight. Muted, not a
+   warning: waiting is normal, and the ratings on screen are still valid — they
+   are just for the previous activity, which the text says. */
+.tou-activity-pending {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: var(--sp-2) 0 0;
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-snug);
+}

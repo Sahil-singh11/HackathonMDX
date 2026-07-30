@@ -492,5 +492,6 @@
   "energy.detailHint": "{n} candidate sites",
   "energy.limitsTitle": "What this does not account for",
   "energy.limitNearshore": "All candidate points are nearshore. The deep-water formula overstates wave power in shallow water, so these figures are not comparable with published deep-water resource atlases.",
-  "energy.unavailableShort": "unavailable"
+  "energy.unavailableShort": "unavailable",
+  "tourism.activityPending": "Still loading the {wanted} ranking. The ratings below are for {shown} until it arrives."
 }
