@@ -67,6 +67,36 @@ export interface ConsoleResult {
   controlled_error: { kind: 'transient' | 'behavioural'; message: string } | null
 }
 
+/** One turn of the conversational assistant. `role` mirrors the backend enum. */
+export interface ChatTurn {
+  role: 'user' | 'assistant'
+  text: string
+}
+
+/**
+ * A reply from POST /api/ai/chat.
+ *
+ * `real_inference` and `grounded_only` are the two fields that must never be
+ * hidden. When Gemma cannot be reached the backend still answers — from the
+ * rules files, deterministically — and the fisher is entitled to know which of
+ * the two they are reading. `cited_rules` are ids they can look up in the
+ * Fishing rules page.
+ */
+export interface ChatResult {
+  reply: string
+  provider: string
+  model: string
+  real_inference: boolean
+  latency_ms: number
+  functions_called: string[]
+  function_trace: import('../store/app').FunctionTraceEntry[]
+  cited_rules: string[]
+  disclosures: string[]
+  grounded_only: boolean
+  grounded_label: string
+  controlled_error: { kind: 'transient' | 'behavioural'; message: string } | null
+}
+
 export interface LegalCheck {
   status: string
   rule: string | null
@@ -226,6 +256,16 @@ async function jsonOrThrow<T>(res: Response): Promise<T> {
  *              submitDeclaration, verifyCertificate, verifyLedger
  */
 export const api = {
+  /** Conversational assistant. Send the whole visible conversation (oldest first, last
+   *  turn from the fisher); the backend re-grounds every turn against the rules data and
+   *  answers deterministically from it when hosted Gemma is unreachable. */
+  aiChat(messages: ChatTurn[], language: 'en' | 'mfe'): Promise<ChatResult> {
+    return fetch(apiUrl('/api/ai/chat'), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages, language }),
+    }).then((r) => jsonOrThrow<ChatResult>(r))
+  },
+
   /** Manual AI test console (Technical Proof page). Runs one free-text prompt through the
    *  SAME production inference path as `analyse` and returns only safe metadata — no key,
    *  no prompt text, no reasoning, argument names only. */

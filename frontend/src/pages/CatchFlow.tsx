@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api, type AnalyseResponse, type ConfirmResponse, type SpeciesCandidate } from '../api/client'
 import '../components/capture/capture.css'
+import AssistantBot from '../components/assistantbot/AssistantBot'
 import AnalyseProgress from '../components/capture/AnalyseProgress'
 import ContextChips from '../components/capture/ContextChips'
 import NoteField from '../components/capture/NoteField'
@@ -314,6 +315,11 @@ export default function CatchFlow() {
         )}
       </div>
       <p className="banner info">{t('limitation.permanent')}</p>
+
+      {/* Fixed to the viewport corner, so it sits outside the card rather than
+          at the end of the flow. It is read-only by construction: the assistant
+          cannot record or change the catch being entered above it. */}
+      <AssistantBot />
     </>
   )
 }

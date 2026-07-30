@@ -172,8 +172,10 @@ def test_safety_flag_distinguishes_a_refusal_from_a_guarantee(text, asserts_guar
     """A refusal necessarily quotes the phrase it refuses ("I cannot say if it is 100%
     safe"). A naive substring match reports that as a guarantee — telling the tester the
     app promised safety when it explicitly declined to."""
-    from app.api.routes import _asserts_safety_guarantee
-    assert _asserts_safety_guarantee(text) is asserts_guarantee
+    # Moved to app.core.safety when the conversational assistant became a second
+    # caller — one copy of this regex, not two that drift.
+    from app.core.safety import asserts_safety_guarantee
+    assert asserts_safety_guarantee(text) is asserts_guarantee
 
 
 # ------------------------------------------------------------------ adapter + limits

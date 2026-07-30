@@ -1,0 +1,414 @@
+/* Floating assistant — launcher + docked chat panel.
+ *
+ * Semantic tokens only (styles/tokens.css). No raw palette values, no legacy
+ * --accent-teal / --space-N, no hex literals: this component is new code and
+ * has to theme correctly in Day, Night, Night-vision and Sunlight without a
+ * per-theme override.
+ *
+ * Every duration goes through --motion-*, which the a11y panel and
+ * prefers-reduced-motion both flatten to 0ms.
+ */
+
+/* ---------------------------------------------------------------- launcher */
+
+.lkbot-launcher {
+  position: fixed;
+  right: var(--sp-4);
+  /* Clears the floating tab bar (64px tall, 12px from the bottom) on phones.
+     The bar is display:none from 1024px, where this drops back down. */
+  bottom: calc(88px + env(safe-area-inset-bottom));
+  z-index: 30;
+
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: var(--touch-min);
+  padding: var(--sp-2) var(--sp-4) var(--sp-2) var(--sp-2);
+
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  font-weight: 600;
+  color: var(--text);
+  background: var(--surface-raised);
+  border: 2px solid var(--border-strong);
+  border-radius: var(--r-chip);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 18%);
+  cursor: pointer;
+  transition: transform var(--motion-fast) var(--ease-out),
+              background-color var(--motion-fast) var(--ease-out);
+}
+
+.lkbot-launcher:hover { background: var(--accent-quiet); }
+.lkbot-launcher:active { transform: scale(0.98); }
+.lkbot-launcher:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.lkbot-launcher__mark {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-card);
+  flex-shrink: 0;
+}
+
+@media (min-width: 1024px) {
+  .lkbot-launcher { bottom: var(--sp-5); right: var(--sp-5); }
+}
+
+/* Below 380px the label would push the pill off-screen; the mark keeps its own
+   64px target and the name still reaches a screen reader through the button. */
+@media (max-width: 379px) {
+  .lkbot-launcher__label {
+    position: absolute;
+    width: 1px; height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .lkbot-launcher { padding: var(--sp-2); }
+}
+
+/* ------------------------------------------------------------------- panel */
+
+.lkbot-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgb(0 0 0 / 45%);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+}
+
+.lkbot-panel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: 92vh;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card) var(--r-card) 0 0;
+  box-shadow: 0 -8px 40px rgb(0 0 0 / 28%);
+  animation: lkbot-rise var(--motion-base) var(--ease-out);
+}
+
+.lkbot-panel:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; }
+
+@keyframes lkbot-rise {
+  from { transform: translateY(16px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+@media (min-width: 768px) {
+  /* Docked to the corner the launcher sits in, so the panel visibly belongs to
+     the button that opened it. */
+  .lkbot-scrim {
+    align-items: flex-end;
+    justify-content: flex-end;
+    padding: var(--sp-5);
+    background: rgb(0 0 0 / 28%);
+  }
+  .lkbot-panel {
+    width: 420px;
+    height: min(640px, 80vh);
+    border-radius: var(--r-card);
+  }
+}
+
+/* ------------------------------------------------------------------ header */
+
+.lkbot-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.lkbot-header__mark { width: 40px; height: 40px; border-radius: var(--r-input); flex-shrink: 0; }
+.lkbot-header__text { min-width: 0; flex: 1; }
+
+.lkbot-header__text h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  line-height: 1.2;
+  color: var(--text);
+}
+
+.lkbot-header__text p {
+  margin: 2px 0 0;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.lkbot-header__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--touch-min);
+  min-height: var(--touch-min);
+  color: var(--text);
+  background: none;
+  border: none;
+  border-radius: var(--r-input);
+  cursor: pointer;
+}
+
+.lkbot-header__btn:hover { background: var(--surface-sunken); }
+.lkbot-header__btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* --------------------------------------------------------------------- log */
+
+.lkbot-log {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.lkbot-intro p { margin: 0 0 var(--sp-2); font-size: var(--fs-base); }
+.lkbot-scope { color: var(--text-muted); font-size: var(--fs-sm) !important; }
+
+.lkbot-suggestions {
+  list-style: none;
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.lkbot-suggestion {
+  width: 100%;
+  min-height: var(--touch-min);
+  padding: var(--sp-2) var(--sp-3);
+  text-align: left;
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  color: var(--text);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-input);
+  cursor: pointer;
+}
+
+.lkbot-suggestion:hover { background: var(--accent-quiet); }
+.lkbot-suggestion:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ------------------------------------------------------------------- turns */
+
+.lkbot-turn { display: flex; }
+.lkbot-turn--user { justify-content: flex-end; }
+
+.lkbot-bubble {
+  max-width: 92%;
+  padding: var(--sp-3);
+  border-radius: var(--r-card);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+}
+
+.lkbot-turn--user .lkbot-bubble {
+  background: var(--accent-quiet);
+  border-color: var(--accent);
+}
+
+.lkbot-bubble__text {
+  margin: 0;
+  font-size: var(--fs-base);
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.lkbot-bubble--pending {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.lkbot-dots { display: inline-flex; gap: 3px; }
+.lkbot-dots i {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  animation: lkbot-pulse 1s var(--ease-out) infinite;
+}
+.lkbot-dots i:nth-child(2) { animation-delay: 0.15s; }
+.lkbot-dots i:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes lkbot-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+/* ------------------------------------------------- provenance + attribution */
+
+.lkbot-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: var(--sp-2);
+  padding: 2px var(--sp-2);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  border-radius: var(--r-chip);
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+}
+
+.lkbot-chip--model { background: var(--accent-quiet); }
+.lkbot-chip--grounded { background: var(--surface-sunken); }
+.lkbot-chip--offline { background: var(--surface-sunken); }
+
+.lkbot-data {
+  font-family: var(--font-data);
+  font-size: 0.95em;
+}
+
+.lkbot-cited,
+.lkbot-note {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.lkbot-rules-link {
+  display: inline-block;
+  margin-top: var(--sp-2);
+  min-height: 44px;
+  line-height: 44px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.lkbot-rules-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* --------------------------------------------------------------- rule facts */
+
+.lkbot-facts {
+  list-style: none;
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.lkbot-fact {
+  padding: var(--sp-2);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--r-input);
+}
+
+.lkbot-fact__species {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+}
+
+.lkbot-fact__line {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+}
+
+.lkbot-fact__line svg { flex-shrink: 0; margin-top: 2px; }
+
+.lkbot-fact__warn {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  margin: var(--sp-2) 0;
+  padding: var(--sp-2);
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+  color: var(--text);
+  background: var(--warning-quiet);
+  border-left: 3px solid var(--warning);
+  border-radius: var(--r-input);
+}
+
+.lkbot-fact__warn svg { flex-shrink: 0; margin-top: 2px; }
+
+.lkbot-fact__cite {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+/* ---------------------------------------------------------------- composer */
+
+.lkbot-composer {
+  display: flex;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.lkbot-composer input {
+  flex: 1;
+  min-width: 0;
+  min-height: var(--touch-min);
+  padding: 0 var(--sp-3);
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  color: var(--text);
+  background: var(--surface);
+  border: 2px solid var(--border-strong);
+  border-radius: var(--r-input);
+}
+
+.lkbot-composer input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.lkbot-send {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: var(--touch-min);
+  padding: 0 var(--sp-3);
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  font-weight: 700;
+  /* Coral carries DARK text: white on this coral measures 2.81:1 and fails. */
+  color: var(--action-contrast);
+  background: var(--action);
+  border: none;
+  border-radius: var(--r-input);
+  cursor: pointer;
+}
+
+.lkbot-send:hover:not(:disabled) { background: var(--action-hover); }
+.lkbot-send:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.lkbot-send:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.lkbot-footer {
+  margin: 0;
+  padding: 0 var(--sp-4) var(--sp-3);
+  font-size: var(--fs-xs);
+  line-height: 1.4;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* Sunlight kills ambient motion and shadow entirely — a deck in direct sun
+   needs edges, not depth. */
+[data-theme='sunlight'] .lkbot-launcher,
+[data-theme='sunlight'] .lkbot-panel { box-shadow: none; }
+[data-theme='sunlight'] .lkbot-panel { border: 2px solid var(--border-strong); }
+[data-theme='sunlight'] .lkbot-scrim { background: rgb(0 0 0 / 55%); }
