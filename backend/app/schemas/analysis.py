@@ -88,3 +88,44 @@ class ConfirmResponse(BaseModel):
     count: int
     capture_date: str
     limitations: list[str] = Field(default_factory=list)
+
+
+# ---------------------------------------------------------------- manual AI test console
+#
+# A deliberately NARROW projection of ProviderResult for the Technical Proof console.
+# It exists so the console can show schema/tool/mock status without widening
+# AnalyseCatchResponse, whose contract must not carry engineering telemetry.
+#
+# Nothing here can hold a secret, a prompt, model prose beyond the final user-facing
+# reply, chain of thought, or an argument VALUE (hence argument_names, not arguments).
+
+class ConsoleRequest(BaseModel):
+    prompt: str = Field(min_length=1, max_length=500,
+                        description="Free-text prompt in Morisyen or English. No image.")
+    language: Literal["en", "mfe"] = "mfe"
+
+
+class ConsoleError(BaseModel):
+    kind: Literal["transient", "behavioural"]
+    message: str
+
+
+class ConsoleResponse(BaseModel):
+    final_response: str = ""
+    reply_morisyen: str = ""
+    intent: str = ""
+    provider: str = ""
+    model: str = ""
+    real_inference: bool = False
+    latency_ms: int = 0
+    selected_function: str | None = None
+    functions_called: list[str] = Field(default_factory=list)
+    argument_names: list[str] = Field(default_factory=list)
+    tool_round_trip_completed: bool = False
+    schema_valid: bool = False
+    safety_flags: dict[str, bool] = Field(default_factory=dict)
+    mock_used: bool = False
+    mock_label: str = ""
+    disclosures: list[str] = Field(default_factory=list)
+    function_trace: list[FunctionTraceEntry] = Field(default_factory=list)
+    controlled_error: ConsoleError | None = None

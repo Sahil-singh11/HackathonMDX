@@ -778,3 +778,65 @@ textarea { resize: vertical; }
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+/* ---------------------------------------------------------------- manual AI test console
+   Scoped entirely to .console-* on the Technical Proof page. Reuses the existing card,
+   badge, trace-table and .primary/.secondary button styles, so nothing else moves. */
+
+.console-presets {
+  display: flex; flex-wrap: wrap; gap: var(--space-2);
+  margin: var(--space-3) 0 var(--space-2);
+}
+/* .secondary is full-width by default (it is a stacked mobile action elsewhere). The
+   presets are a wrapping row of four, so width is released here only. */
+.console-preset {
+  width: auto; flex: 0 1 auto; padding: var(--space-2) var(--space-3);
+  font-size: 0.9rem; min-height: 48px;
+}
+
+.console-label {
+  display: block; margin-top: var(--space-3); margin-bottom: var(--space-1);
+  font-weight: 600; font-size: 0.95rem;
+}
+
+.console-input {
+  width: 100%; box-sizing: border-box; resize: vertical;
+  padding: var(--space-3); border: 2px solid var(--border-subtle, #d9dfe5);
+  border-radius: var(--radius-md); background: var(--surface-card);
+  color: inherit; font-size: 1rem; line-height: 1.5;
+}
+.console-input:focus-visible { outline: 3px solid var(--accent-teal-2); outline-offset: 2px; }
+.console-input:disabled { opacity: 0.7; }
+
+.console-actions {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+/* Same reason as .console-preset: these sit side by side, not stacked. */
+.console-actions .primary, .console-actions .secondary { width: auto; flex: 0 1 auto; }
+
+.console-reply {
+  background: var(--surface-mint, #f2f7f8); border-left: 4px solid var(--accent-teal);
+  padding: var(--space-3); border-radius: var(--radius-sm, 6px);
+  margin: var(--space-2) 0; white-space: pre-wrap;
+}
+
+.console-flags { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: var(--space-2) 0; }
+
+.console-note {
+  border-left: 4px solid var(--accent-teal); padding: var(--space-3);
+  border-radius: var(--radius-sm, 6px); margin: var(--space-3) 0;
+  background: var(--surface-mint, #f2f7f8);
+}
+/* Offline/capacity states are never styled red (CLAUDE.md): a transient error is an
+   expected condition, not a fault. Behavioural findings are the ones worth alarming on. */
+.console-note.transient { border-left-color: var(--accent-teal); }
+.console-note.behavioural { border-left-color: var(--primary-coral); }
+
+/* The metadata table is two columns here rather than the five-column trace layout. */
+.console-presets + .small { margin-top: 0; }
+
+@media (max-width: 560px) {
+  .console-preset { flex: 1 1 100%; }
+  .console-actions .primary, .console-actions .secondary { flex: 1 1 100%; }
+}

@@ -42,6 +42,29 @@ export interface AnalyseResponse {
   limitations: string[]
 }
 
+/** Manual AI test console result. A narrow, safe projection of the production
+ *  pipeline — deliberately carries no argument values, no prompt, no reasoning. */
+export interface ConsoleResult {
+  final_response: string
+  reply_morisyen: string
+  intent: string
+  provider: string
+  model: string
+  real_inference: boolean
+  latency_ms: number
+  selected_function: string | null
+  functions_called: string[]
+  argument_names: string[]
+  tool_round_trip_completed: boolean
+  schema_valid: boolean
+  safety_flags: Record<string, boolean>
+  mock_used: boolean
+  mock_label: string
+  disclosures: string[]
+  function_trace: import('../store/app').FunctionTraceEntry[]
+  controlled_error: { kind: 'transient' | 'behavioural'; message: string } | null
+}
+
 export interface LegalCheck {
   status: string
   rule: string | null
@@ -201,6 +224,15 @@ async function jsonOrThrow<T>(res: Response): Promise<T> {
  *              submitDeclaration, verifyCertificate, verifyLedger
  */
 export const api = {
+  /** Manual AI test console (Technical Proof page). Runs one free-text prompt through the
+   *  SAME production inference path as `analyse` and returns only safe metadata — no key,
+   *  no prompt text, no reasoning, argument names only. */
+  aiTestConsole(prompt: string, language: 'en' | 'mfe'): Promise<ConsoleResult> {
+    return fetch('/api/ai/test-console', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, language }),
+    }).then((r) => jsonOrThrow<ConsoleResult>(r))
+  },
   analyse(form: FormData): Promise<AnalyseResponse> {
     return fetch('/api/analyse-catch', { method: 'POST', body: form }).then((r) => jsonOrThrow<AnalyseResponse>(r))
   },
