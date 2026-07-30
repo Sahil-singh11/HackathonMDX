@@ -224,7 +224,6 @@ export default function Dashboard() {
           ))
         )}
       </div>
-<<<<<<< HEAD
 
       <p className="banner info">{t('limitation.permanent')}</p>
 
@@ -233,8 +232,6 @@ export default function Dashboard() {
           where a fisher lands, so it is the one place a greeting is not an
           interruption of a task already in progress. */}
       <AssistantBot autoOpen />
-=======
->>>>>>> 55c5202d3914616e6acd2cde526c2910bbf6397e
     </>
   )
 }

@@ -339,10 +339,6 @@ export default function CatchFlow() {
         <strong>{t('catch.aiDisclaimerTitle')}</strong> {t('catch.aiDisclaimerBody')}
       </p>
 
-      {/* Fixed to the viewport corner, so it sits outside the card rather than
-          at the end of the flow. It is read-only by construction: the assistant
-          cannot record or change the catch being entered above it. */}
-      <AssistantBot />
     </>
   )
 }

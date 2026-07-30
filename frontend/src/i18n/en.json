@@ -495,7 +495,6 @@
   "tourism.activityPending": "Still loading the {wanted} ranking. The ratings below are for {shown} until it arrives.",
   "catch.aiDisclaimerTitle": "AI Disclaimer:",
   "catch.aiDisclaimerBody": "AI-generated information is provided for decision support only and may contain errors. Users must verify species, measurements, regulations, and marine conditions with official sources. AI does not replace the judgement of authorised officers or guarantee safety or legal compliance.",
-<<<<<<< HEAD
 
   "bot.launch": "Ask Nemo",
   "bot.title": "Nemo",
@@ -523,8 +522,7 @@
   "bot.offline.uncovered": "You have no signal, and the rules saved on this phone do not cover that. Open Fishing rules to read everything the app holds — it works with no connection.",
   "bot.failed": "I could not reach the assistant, and the rules saved on this phone do not cover that. Open Fishing rules to see everything the app holds.",
   "bot.disclaimer": "Advisory only. Nemo can read this app's data but cannot record a catch, change your log or send anything to any authority. Confirm rules against the latest official fisheries notice.",
-  "bot.a11y.answered": "Nemo has replied."
-=======
+  "bot.a11y.answered": "Nemo has replied.",
   "decl.records": "Records",
   "decl.totalFish": "Total fish",
   "decl.speciesCount": "Species",
@@ -541,5 +539,4 @@
   "catch.cameraCancel": "Cancel",
   "catch.cameraDenied": "Camera permission was refused, so the photo cannot be taken here. Allow camera access in your browser, or choose an existing photo instead.",
   "catch.cameraNone": "No camera is available on this device. Choose an existing photo instead."
->>>>>>> 5bc39e9b35c6bf27d4de874af39a3a2ce1d1cb2b
 }
