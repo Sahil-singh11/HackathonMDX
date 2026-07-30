@@ -15,6 +15,7 @@ interpretation. A missing sentence is honest; a fabricated one is not.
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 from datetime import datetime, timezone
 from typing import Optional
@@ -29,6 +30,7 @@ from app.core.limitations import MARINE_DISCLAIMER
 # patchable in tests.
 import app.inference.registry as inference_registry
 from app.pillars.base import RawBundle, SourceDescriptor
+from app.pillars.narrative import prose_or_empty
 from app.pillars.provenance import DataProvenance
 from app.pillars.tourism import wind as wind_client
 from app.pillars.tourism.schema import (ActivitySuitability, SiteBrief,
@@ -46,6 +48,25 @@ PILLAR_NAME = "Sustainable Ocean Tourism"  # government naming, verbatim
 #: latency: hosted Gemma is ~20-30 s per call, so this is the difference between
 #: a usable request and a multi-minute one.
 MAX_INTERPRETED_SITES = 3
+
+# Scopes the model to THIS task. Without it chat() supplies the catch-assistant
+# instruction, under which the model correctly refuses an ocean-tourism request —
+# see app/pillars/narrative.py for the measured failure this prevents.
+SYSTEM_INSTRUCTION = """You are a coastal-conditions analyst writing a short brief for an ocean-tourism operator in Mauritius.
+
+WHAT YOU ARE GIVEN
+- Measured or forecast conditions for one named site, and suitability ratings that have ALREADY been computed from fixed thresholds. They are correct. Your job is to explain them in plain language, never to recompute, change or dispute them.
+
+HARD RULES (never break)
+- Use ONLY the figures supplied in the message. Never add a number, a site, an activity or a condition.
+- Never change a rating. If a rating looks surprising, explain which condition drives it.
+- Say nothing about crowding, visitor numbers, occupancy, prices or opening hours — you have no such data.
+- This is NOT safety advice. Never say it is safe to enter the water, dive, or put to sea.
+- Never issue an instruction or an approval. You inform an operator who decides.
+- Conditions are a forecast and may be wrong near the coast. Do not present them as certain.
+
+OUTPUT
+- Two or three sentences of plain prose. No JSON, no code fences, no bullet lists, no headings, no preamble. Return the sentences only."""
 
 _MARINE_SOURCE = SourceDescriptor(
     name="Open-Meteo Marine",
@@ -199,8 +220,22 @@ class TourismPillar:
         try:
             provider, _events = inference_registry.select()
             provider_name = provider.name
-            for brief in to_interpret:
-                brief.interpretation = self._interpret(provider, brief)
+            # CONCURRENT, not sequential. provider.chat() blocks for ~20-30 s, so
+            # `for brief in to_interpret: ...` made a full-catalogue brief take
+            # 160 s end to end (measured). The calls are independent — each site's
+            # prompt contains only that site's already-computed figures — so they
+            # run together in threads and the wall time becomes one call, not N.
+            # asyncio.to_thread because chat() is sync; return_exceptions so one
+            # failed site cannot lose the other sites' prose.
+            results = await asyncio.gather(
+                *(asyncio.to_thread(self._interpret, provider, b) for b in to_interpret),
+                return_exceptions=True,
+            )
+            for brief, result in zip(to_interpret, results):
+                if isinstance(result, BaseException):
+                    log.warning("Interpretation failed for %s", brief.site_id, exc_info=result)
+                    continue
+                brief.interpretation = result
         except Exception:  # noqa: BLE001 — a brief without prose is still valid
             log.warning("Tourism interpretation unavailable; returning figures only", exc_info=True)
 
@@ -241,7 +276,6 @@ class TourismPillar:
             + "; ".join(f"{r.activity}={r.rating}" for r in brief.ratings),
         ]
         prompt = (
-            "You write short condition briefs for ocean-tourism operators in Mauritius.\n\n"
             "RULES:\n"
             "1. Do NOT state any number that is not in the FACTS below. Never invent a figure.\n"
             "2. Do NOT change or dispute the computed suitability ratings — explain them.\n"
@@ -251,7 +285,24 @@ class TourismPillar:
             "FACTS:\n" + "\n".join(facts) + "\n\nBrief:"
         )
         try:
-            return (provider.chat(prompt, language="en") or "").strip()
+            # system_instruction is REQUIRED, not optional polish. Without it
+            # chat() injects the catch-assistant instruction, which scopes the
+            # model to fishers and demands JSON — so the live model refused this
+            # task and returned its refusal envelope, which then rendered to the
+            # user as the site's written brief (2 of 8 sites, measured
+            # 30 Jul 2026). prose_or_empty is the second line of defence.
+            raw = provider.chat(
+                prompt,
+                language="en",
+                system_instruction=SYSTEM_INSTRUCTION,
+            )
+            text = prose_or_empty(raw)
+            if raw and not text:
+                log.warning(
+                    "Tourism interpretation for %s was not prose (envelope or JSON); "
+                    "dropping it rather than rendering it", brief.site_id,
+                )
+            return text
         except Exception:  # noqa: BLE001
             log.warning("Interpretation failed for %s", brief.site_id, exc_info=True)
             return ""
