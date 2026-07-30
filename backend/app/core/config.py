@@ -31,6 +31,16 @@ class Settings(BaseSettings):
     marine_api_base: str = "https://marine-api.open-meteo.com/v1/marine"
     marine_cache_minutes: int = 30
     marine_prewarm_on_startup: bool = True  # off in tests (conftest.py) — no network in the suite
+    # Warms app.pillars.narrative_cache for energy/tourism/transport at startup,
+    # same fire-and-forget contract as marine_prewarm_on_startup (never blocks
+    # /health). Off in tests (conftest.py) — the suite must make zero external
+    # network/model calls.
+    narrative_prewarm_on_startup: bool = True
+    # DEMO_MODE=true: pillar narrative calls (energy/tourism/transport) serve
+    # ONLY from app.pillars.narrative_cache and never call a model — see
+    # narrative_cache.demo_mode_active(). For when venue wifi cannot be trusted:
+    # pre-warm the cache beforehand (prewarm_pillar_narratives), then flip this
+    # on so nothing in the rest of the demo depends on connectivity (Task 3).
     demo_mode: bool = False
 
     # Comma-separated pillar ids allowed to serve live pillar routes. A pillar

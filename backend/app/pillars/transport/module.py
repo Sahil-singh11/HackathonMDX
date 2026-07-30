@@ -31,7 +31,7 @@ from app.core.config import get_settings
 from app.db.session import get_engine
 from app.inference.registry import select as select_provider
 from app.pillars.base import PillarResult, RawBundle, SourceDescriptor
-from app.pillars import numeric_guard
+from app.pillars import narrative_cache, numeric_guard
 from app.pillars.provenance import DataProvenance
 from app.pillars.narrative import prose_or_empty
 from app.pillars.transport import ais, brief, store, transit
@@ -361,6 +361,19 @@ class TransportPillar:
             log.warning("transport: provider selection failed: %s", exc)
             return fallback, fallback, "deterministic_fallback", f"provider selection failed: {exc}", "none"
 
+        # Cache check (Task 3): a hit skips both the health check and the model
+        # call entirely — a demo rehearsal for the same arrivals/conditions is
+        # instant and uses previously-grounded real prose, never a fresh guess.
+        figures = {"arrivals": arrivals, "congestion": congestion, "conditions": conditions,
+                  "window_hours": window_hours}
+        cache_key = narrative_cache.cache_key(PILLAR_ID, figures, provider_name=provider_name)
+        cached_text = narrative_cache.get(cache_key)
+        if cached_text:
+            narrative, risk = _split_narrative(cached_text)
+            return narrative, (risk or fallback), "cached", "", provider_name
+        if narrative_cache.demo_mode_active():
+            return fallback, fallback, "deterministic_fallback", "demo_mode: no cache entry for these figures", provider_name
+
         if not health.available or health.simulated:
             why = ("the selected provider is a disclosed mock, so no model reasoned over this brief"
                    if health.simulated else f"provider unavailable: {health.detail}")
@@ -403,9 +416,8 @@ class TransportPillar:
             return (fallback, fallback, "deterministic_fallback",
                     f"model output rejected: {grounding.reason}", provider_name)
 
-        paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
-        narrative = paragraphs[0] if paragraphs else text
-        risk = "\n\n".join(paragraphs[1:]) if len(paragraphs) > 1 else ""
+        narrative_cache.put(cache_key, text, pillar_id=PILLAR_ID, provider_name=provider_name)
+        narrative, risk = _split_narrative(text)
         if not risk:
             # One paragraph came back where two were asked for. Say so rather
             # than splitting prose arbitrarily and pretending it was structured.
@@ -580,6 +592,18 @@ def _approach_fallback(w: "transit.TransitWindow") -> str:
         "the readings and the computed bands above."
     )
     return " ".join(parts)
+
+
+def _split_narrative(text: str) -> tuple[str, str]:
+    """Split the model's two-paragraph reply into (narrative, risk), raw — the
+    caller decides what an empty risk means (a fallback substitution and/or a
+    disclosure note). Shared by the live and cached paths so a cache hit
+    reconstructs the same shape a fresh call would have produced.
+    """
+    paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
+    narrative = paragraphs[0] if paragraphs else text
+    risk = "\n\n".join(paragraphs[1:]) if len(paragraphs) > 1 else ""
+    return narrative, risk
 
 
 transport_pillar = TransportPillar()

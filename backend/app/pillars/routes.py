@@ -15,7 +15,7 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, Request
 
 from app.core.ratelimit import InMemoryRateLimiter
-from app.pillars import numeric_guard
+from app.pillars import narrative_cache, numeric_guard
 from app.pillars.registry import PillarRegistry, pillar_registry
 
 log = logging.getLogger(__name__)
@@ -28,6 +28,7 @@ def reset_limiters() -> None:
     """Called by /api/demo/reset alongside the analyse limiter."""
     _pillars_limiter.reset()
     numeric_guard.stats.reset()
+    narrative_cache.reset()
 
 
 def _client_ip(request: Request) -> str:

@@ -184,7 +184,15 @@ def test_model_output_cannot_substitute_for_the_computed_figures(monkeypatch, cl
 
     # The fabricated figures are rejected entirely — the numeric firewall
     # cannot trace 9999/88888 to anything in the FACTS the model was given.
-    assert site.interpretation == ""
+    #
+    # This asserted `interpretation == ""` when rejection meant "no note". It now
+    # means "no MODEL note": the mechanical summary serves instead, so the reader
+    # gets the figures described rather than an empty panel. The guarantee that
+    # matters is unchanged and checked directly below — the fabricated numbers
+    # reach neither the computed figures nor the prose.
+    assert site.interpretation_source == "deterministic_fallback"
+    assert "9999" not in site.interpretation
+    assert "88888" not in site.interpretation
     assert site.resource.wave_power_kw_per_m != 9999
     assert site.resource.wind_power_w_per_m2 != 88888
 
@@ -242,7 +250,32 @@ def test_interpretation_is_capped(monkeypatch, client):
             return "prose"
 
     result = _run(monkeypatch, _Counting())
-    assert _Counting.calls == MAX_INTERPRETED_SITES
+    # <=, not ==: two of the top-ranked sites can coincidentally share IDENTICAL
+    # deterministic-mock figures (the mock seeds on `% 7` of lat/lon across only
+    # 5 candidate sites), in which case the second legitimately gets served
+    # from app.pillars.narrative_cache instead of a second identical model call
+    # (Task 3) — the cap on MODEL CALLS still holds, it just is not always the
+    # same number as sites interpreted once caching exists.
+    assert _Counting.calls <= MAX_INTERPRETED_SITES
+    assert _Counting.calls >= 1
+
+    # THE CAP IS ON MODEL CALLS, NOT ON NOTES. This used to assert that exactly
+    # MAX_INTERPRETED_SITES sites had a non-empty interpretation, which stopped
+    # being the invariant when the mechanical fallback landed: every site now
+    # carries a note, because a site with figures and a blank panel reads as a
+    # broken page rather than an honest absence. What must stay bounded is how
+    # many times the provider is invoked, and that is asserted above.
+    assert all(s.interpretation.strip() for s in result.sites)
+
+    # Model prose only where the model was actually consulted; everything else
+    # is labelled as assembled in code, so the two can never be confused.
+    model_written = [s for s in result.sites
+                     if s.interpretation_source in ("model", "cached")]
+    assert len(model_written) <= MAX_INTERPRETED_SITES
+    for s in result.sites:
+        if s.interpretation_source == "deterministic_fallback":
+            assert "No model reasoned over these figures" in s.interpretation
+
     assert all(s.resource.wave_power_kw_per_m is not None for s in result.sites)
 
 
@@ -399,10 +432,69 @@ def test_every_site_carries_a_note_not_only_the_ones_sent_to_the_model(monkeypat
 
     for site in result.sites:
         assert site.interpretation.strip(), f"{site.site_id} has no note at all"
-        assert site.interpretation_source in ("model", "deterministic_fallback")
+        assert site.interpretation_source in ("model", "cached", "deterministic_fallback")
         if site.interpretation_source == "deterministic_fallback":
             assert "No model reasoned over these figures" in site.interpretation
 
     # And the note reads as prose. `exposure` is a whole sentence in the catalogue,
     # so the old "(<sentence> exposure)" template produced text nobody would write.
     assert " exposure)." not in result.sites[0].interpretation
+
+
+# --- narrative cache -------------------------------------------------------
+
+def test_second_request_for_the_same_site_serves_from_cache_without_a_second_model_call(monkeypatch, client):
+    """A repeat request for the same figures is instant and never re-invokes the
+    provider — and it is labelled 'cached', not 'model', so reused prose is never
+    presented as a fresh call."""
+    class _Counting:
+        name = "counter"
+        calls = 0
+
+        def chat(self, prompt: str, language: str = "en",
+                 system_instruction: str | None = None,
+                 timeout_seconds: int | None = None) -> str:
+            type(self).calls += 1
+            # No digits at all, so this is trivially grounded regardless of the
+            # site's actual (deterministic-mock-derived) figures — the point of
+            # this test is the cache, not the numeric guard.
+            return "This site shows a solid wave resource relative to the other candidates."
+
+    first = _run(monkeypatch, _Counting(), ["se_coast_offshore"])
+    assert _Counting.calls == 1
+    assert first.sites[0].interpretation_source == "model"
+    assert first.sites[0].interpretation != ""
+
+    second = _run(monkeypatch, _Counting(), ["se_coast_offshore"])
+    assert _Counting.calls == 1  # NOT called again
+    assert second.sites[0].interpretation_source == "cached"
+    assert second.sites[0].interpretation == first.sites[0].interpretation
+
+
+def test_demo_mode_never_calls_the_model(monkeypatch, client):
+    from app.core.config import get_settings
+
+    class _Boom:
+        name = "should-not-be-called"
+
+        def chat(self, *a, **k) -> str:  # noqa: ANN002, ANN003
+            raise AssertionError("demo_mode must never call the model")
+
+    get_settings.cache_clear()
+    monkeypatch.setenv("DEMO_MODE", "true")
+    try:
+        result = _run(monkeypatch, _Boom(), ["se_coast_offshore"])
+        # The load-bearing assertion, unchanged: _Boom raises if it is ever
+        # called, so reaching this line at all proves demo_mode skipped the model.
+        #
+        # The two assertions that followed expected an EMPTY interpretation and an
+        # empty source. They were written before the mechanical fallback landed on
+        # this path. Demo mode with a cold cache is exactly when a blank panel is
+        # least acceptable, so the reader now gets a note assembled from the
+        # computed figures, labelled as such. Strictly more content, same honesty.
+        site = result.sites[0]
+        assert site.interpretation_source == "deterministic_fallback"
+        assert "No model reasoned over these figures" in site.interpretation
+    finally:
+        monkeypatch.delenv("DEMO_MODE", raising=False)
+        get_settings.cache_clear()

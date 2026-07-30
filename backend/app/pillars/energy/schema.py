@@ -47,13 +47,24 @@ class SiteAssessment(BaseModel):
     #: The written note. Always populated by build_brief() — model prose when the
     #: model produced usable prose, otherwise a summary assembled from the figures.
     interpretation: str = ""
-    #: 'model' when the language model wrote the note; 'deterministic_fallback' when
-    #: it was assembled in code; 'none' when no note was produced at all. The UI
-    #: must render these differently — see energy/module.py.
+    #: Which rung produced the note. FOUR values, because two changes landed on
+    #: this field in parallel and each drew a distinction the other conflated:
     #:
-    #: Defaults to 'none', NOT 'deterministic_fallback': the default describes an
-    #: unpopulated object, and claiming a source for text that does not exist is
-    #: the same class of overclaim as presenting a template as model reasoning.
+    #:   'model'                 a fresh model call wrote it
+    #:   'cached'                real, already-grounded model prose reused from
+    #:                           narrative_cache without paying for a second call
+    #:   'deterministic_fallback' assembled in code from the computed figures
+    #:   'none'                  no note was produced at all
+    #:
+    #: 'cached' is NOT a lesser rung than 'model' — it is the same model prose,
+    #: already checked by prose_or_empty and numeric_guard before it was stored.
+    #: The UI must therefore treat model and cached alike when it says who wrote a
+    #: sentence, and must NOT show a mechanical-summary badge for cached text.
+    #:
+    #: 'none' rather than '' as the default, and kept distinct from
+    #: 'deterministic_fallback': the default describes an unpopulated object, and
+    #: claiming a source for text that does not exist is the same class of
+    #: overclaim as presenting a template as model reasoning.
     interpretation_source: str = "none"
 
 
