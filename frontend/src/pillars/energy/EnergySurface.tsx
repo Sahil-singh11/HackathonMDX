@@ -24,11 +24,7 @@
  * implying a yield figure.
  */
 import { useQuery } from '@tanstack/react-query'
-<<<<<<< HEAD
-import { AlertTriangle, Bot, Calculator, Info, Waves, Wind } from 'lucide-react'
-=======
-import { Waves, Wind } from 'lucide-react'
->>>>>>> d019f095e7c650526d456b94dd9ed8fe514680d1
+import { Bot, Calculator, Waves, Wind } from 'lucide-react'
 import { api } from '../../api/client'
 import {
   Answer, BarComparison, FigureRow, Foldable, PillarPage,
@@ -203,8 +199,28 @@ export default function EnergySurface() {
 
                   {site.interpretation ? (
                     <div className="ene-interpretation">
+                      {/* 'cached' IS model prose — the same sentences, already checked by
+                          the envelope guard and the number firewall before they were
+                          stored, reused instead of paying for an identical second call.
+                          Rendering it under a "Mechanical summary" badge would be a plain
+                          misattribution, so both rungs get the model badge and only the
+                          reuse note distinguishes them. */}
+                      {MODEL_RUNGS.has(site.interpretation_source) ? (
+                        <Badge tone="accent" icon={<Bot size={14} aria-hidden="true" />}>
+                          {t('transport.sourceModel')}
+                        </Badge>
+                      ) : (
+                        <Badge tone="neutral" icon={<Calculator size={14} aria-hidden="true" />}>
+                          {t('transport.sourceMechanical')}
+                        </Badge>
+                      )}
                       <p>{site.interpretation}</p>
-                      <p className="ene-interpretation__note">{t('energy.interpretationNote')}</p>
+                      {site.interpretation_source === 'cached' && (
+                        <p className="ene-interpretation__note">{t('pillars.narrativeReused')}</p>
+                      )}
+                      {MODEL_RUNGS.has(site.interpretation_source) && (
+                        <p className="ene-interpretation__note">{t('energy.interpretationNote')}</p>
+                      )}
                     </div>
                   ) : (
                     <p className="ene-no-interpretation">{t('energy.noInterpretation')}</p>
@@ -223,97 +239,6 @@ export default function EnergySurface() {
             ))}
           </ul>
           <p className="ene-formulas__note">{t('energy.formulasNote')}</p>
-<<<<<<< HEAD
-        </div>
-
-        <ProvenanceBadge provenance={data.provenance} />
-      </Card>
-
-      {ordered.map((site) => {
-        const { measurements: m, resource: r } = site
-        return (
-          <Card
-            key={site.site_id}
-            title={
-              <span className="ene-site-title">
-                <span className="ene-rank ene-data">#{rank.get(site.site_id)}</span>
-                {site.name}
-              </span>
-            }
-            action={site.nearshore && (
-              <Badge tone="warning" icon={<AlertTriangle size={14} aria-hidden="true" />}>
-                {t('energy.nearshore')}
-              </Badge>
-            )}
-          >
-            <p className="ene-exposure">{site.exposure}</p>
-            <p className="ene-distance ene-data">
-              ~{site.approx_distance_from_shore_km} km {t('energy.offshore')}
-            </p>
-
-            <div className="ene-resource-grid">
-              {/* Each figure shows its own inputs so it can be re-derived. */}
-              <div className="ene-resource">
-                <h4><Waves size={16} aria-hidden="true" /> {t('energy.wavePower')}</h4>
-                <p className="ene-value ene-data">
-                  {r.wave_power_kw_per_m ?? '—'}<span className="ene-unit"> kW/m</span>
-                </p>
-                <p className="ene-derivation ene-data">
-                  0.49 × ({m.wave_height_m ?? '—'} m)² × {m.wave_period_s ?? '—'} s
-                </p>
-                <p className="ene-caveat">
-                  <Info size={14} aria-hidden="true" /> {r.period_basis}
-                </p>
-              </div>
-
-              <div className="ene-resource">
-                <h4><Wind size={16} aria-hidden="true" /> {t('energy.windPower')}</h4>
-                <p className="ene-value ene-data">
-                  {r.wind_power_w_per_m2 ?? '—'}<span className="ene-unit"> W/m²</span>
-                </p>
-                <p className="ene-derivation ene-data">
-                  0.5 × 1.225 × ({m.wind_speed_kmh ?? '—'} km/h ÷ 3.6 = {r.wind_speed_ms ?? '—'} m/s)³
-                </p>
-                <p className="ene-caveat">
-                  <Info size={14} aria-hidden="true" /> {r.wind_height_basis}
-                </p>
-              </div>
-            </div>
-
-            {/* Same two-state treatment as TransportSurface, on purpose: one
-                pattern for "who wrote this sentence" across the platform. */}
-            {site.interpretation && (
-              <div className="ene-interpretation">
-                <h4>{t('energy.interpretation')}</h4>
-                {/* 'cached' IS model prose — the same sentences, already checked by
-                    the envelope guard and the number firewall before they were
-                    stored, reused instead of paying for an identical second call.
-                    Rendering it under a "Mechanical summary" badge would be a
-                    plain misattribution, so both rungs get the model badge and
-                    only the reuse note distinguishes them. */}
-                {MODEL_RUNGS.has(site.interpretation_source) ? (
-                  <Badge tone="accent" icon={<Bot size={14} aria-hidden="true" />}>
-                    {t('transport.sourceModel')}
-                  </Badge>
-                ) : (
-                  <Badge tone="neutral" icon={<Calculator size={14} aria-hidden="true" />}>
-                    {t('transport.sourceMechanical')}
-                  </Badge>
-                )}
-                <p>{site.interpretation}</p>
-                {site.interpretation_source === 'cached' && (
-                  <p className="ene-interpretation__note">{t('pillars.narrativeReused')}</p>
-                )}
-                {MODEL_RUNGS.has(site.interpretation_source) && (
-                  <p className="ene-interpretation__note">{t('energy.interpretationNote')}</p>
-                )}
-              </div>
-            )}
-          </Card>
-        )
-      })}
-    </div>
-=======
         </Foldable>
       }
       limits={
@@ -331,6 +256,5 @@ export default function EnergySurface() {
         </Foldable>
       }
     />
->>>>>>> d019f095e7c650526d456b94dd9ed8fe514680d1
   )
 }

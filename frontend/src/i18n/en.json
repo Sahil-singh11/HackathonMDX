@@ -415,6 +415,7 @@
   "energy.interpretation": "Analyst note",
   "energy.interpretationNote": "Written by the language model from the computed figures above. It cannot alter any figure. Not a yield assessment.",
   "energy.unavailable": "Resource figures could not be loaded. This pillar needs the backend; there is no offline copy because a stale power figure would be misleading.",
+  "energy.noInterpretation": "No written brief available — the language model could not be reached. The figures above are unaffected.",
   "transport.loadingNote": "Waiting for the narrative step — this can take up to a minute while the model is called.",
   "transport.errorBody": "Could not load the approach conditions.",
   "transport.narrativeTitle": "Narrative",
@@ -467,7 +468,6 @@
   "tourism.state.very rough": "Very rough",
   "tourism.state.high": "High",
   "tourism.state.unknown": "Unknown",
-<<<<<<< HEAD
   "transport.bearingCaveat": "AIS reports a distance, not a bearing. Vessels are drawn at their TRUE range along one schematic 315° line so the ranges can be read against the scale bar. Their real bearings are unknown and are not shown.",
   "transport.vesselUnnamed": "Position-only contact — name not broadcast",
   "transport.mapLegendStandIn": "The shaded ring is the 10 nautical mile approach zone this assessment covers, drawn true to scale. The diamonds are stand-in vessels from a demonstration feed, not live traffic — no AIS receiver covers Mauritius. They are labelled as stand-in data below.",
@@ -478,8 +478,7 @@
   "transport.atAnchor": "At anchor",
   "transport.withinApproach": "Within approach",
   "transport.etaIn": "reported ETA in",
-  "pillars.narrativeReused": "Reused from an earlier answer for these same conditions, so no new model call was made. The wording is unchanged from when it was written and checked."
-=======
+  "pillars.narrativeReused": "Reused from an earlier answer for these same conditions, so no new model call was made. The wording is unchanged from when it was written and checked.",
   "energy.answerLead": "{site} is the strongest candidate today, with an indicated wave power density of {value} kW/m.",
   "energy.answerNoData": "No wave power figure could be produced for any candidate site — the forecast inputs were unavailable.",
   "energy.heroCaption": "best candidate, wave power",
@@ -494,5 +493,4 @@
   "energy.limitsTitle": "What this does not account for",
   "energy.limitNearshore": "All candidate points are nearshore. The deep-water formula overstates wave power in shallow water, so these figures are not comparable with published deep-water resource atlases.",
   "energy.unavailableShort": "unavailable"
->>>>>>> d019f095e7c650526d456b94dd9ed8fe514680d1
 }
