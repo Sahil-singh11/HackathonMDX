@@ -143,3 +143,45 @@
   gap: var(--sp-2);
   margin-top: var(--sp-4);
 }
+
+/* --- stand-in arrivals feed ------------------------------------------------
+   Below the live sea state, never above it. Styling is deliberately plain: the
+   loud signal is the synthetic provenance badge, and competing with it here
+   would dilute the one thing a reader must not miss. */
+.tpt-congestion {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2);
+  margin: var(--sp-3) 0;
+}
+@media (min-width: 768px) {
+  .tpt-congestion { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+.tpt-congestion__item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--surface-sunken);
+  border-radius: var(--r-card);
+  min-width: 0;
+}
+.tpt-congestion__label { color: var(--text-muted); font-size: var(--fs-sm); }
+.tpt-congestion__value { color: var(--text); font-size: var(--fs-md); font-weight: 600; }
+
+.tpt-arrivals { display: flex; flex-direction: column; gap: var(--sp-2); }
+.tpt-arrival {
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+}
+.tpt-arrival__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  color: var(--text);
+}
+.tpt-arrival__range { font-size: var(--fs-md); font-weight: 600; }
+.tpt-arrival__meta { margin: var(--sp-1) 0 0; color: var(--text-muted); }

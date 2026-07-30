@@ -28,15 +28,29 @@
  *
  *   - the port, at its published coordinate
  *   - the approach ring, true to scale
- *   - nothing else. Sea state has no position beyond the point it was sampled at,
- *     and nothing on this map pretends otherwise.
+ *   - vessels ONLY when `arrivals` is passed, and only then (see below)
  *
- * If a real AIS feed for Mauritian waters is ever wired up, the vessel layer
- * belongs back here — as MapMarkers with real bearings, not along one axis.
+ * THE OPTIONAL VESSEL LAYER. `arrivals` is opt-in, and the caller that passes it
+ * is responsible for labelling the whole block as stand-in data — TransportSurface
+ * renders a loud `synthetic` provenance badge above it. That is the arrangement
+ * that lets this exist at all: the feed's own `data_kind` is `synthetic`, so it is
+ * shown as a demonstration of the surface, never as observed traffic.
+ *
+ * Two constraints inside the layer itself:
+ *
+ *   AIS GIVES A DISTANCE, NOT A BEARING. Each vessel is drawn at its TRUE range
+ *   along ONE schematic bearing, on a dashed construction line, so ranges can be
+ *   read against the scale bar without implying a direction the data never had.
+ *   315 degrees out of Port Louis is chosen because it is open water for the whole
+ *   ring extent — a westerly or southerly axis would put the further arrivals on
+ *   land, which would look like a plotting bug and read as a claim.
+ *
+ *   THE CAVEAT IS RENDERED IN HTML by the caller, under the map, never baked into
+ *   the graphic where it cannot be translated or read aloud.
  */
-import ChartMap, { type MapMarker, type MapRing } from '../../components/map/LazyChartMap'
+import ChartMap, { type MapLine, type MapMarker, type MapRing } from '../../components/map/LazyChartMap'
 import { useT } from '../../i18n'
-import type { ApproachBrief } from './types'
+import type { ApproachBrief, ArrivalsBrief } from './types'
 
 const NM_TO_M = 1852
 
@@ -56,26 +70,61 @@ function along(lat: number, lon: number, distanceNm: number, bearingDeg: number)
   return [lat + dLat, lon + dLon]
 }
 
-export default function ApproachMap({ brief }: { brief: ApproachBrief }) {
+/** Open water for the whole ring extent out of Port Louis. Presentation axis. */
+const APPROACH_BEARING = 315
+
+export default function ApproachMap({ brief, arrivals }: {
+  brief: ApproachBrief
+  /** Opt-in stand-in vessel layer. The caller must label it. */
+  arrivals?: ArrivalsBrief
+}) {
   const t = useT()
   const { latitude: lat, longitude: lon, name } = brief.port
+
+  const vessels = arrivals?.expected_arrivals ?? []
+  const furthest = vessels.reduce((m, v) => Math.max(m, v.distance_nm), 0)
+  const outer = Math.max(APPROACH_RADIUS_NM, Math.ceil(furthest / 5) * 5)
 
   const rings: MapRing[] = [
     { centre: [lat, lon], radiusMetres: APPROACH_RADIUS_NM * NM_TO_M },
   ]
+  // Extra 5 nm range rings only when there are vessels to read against them.
+  for (let r = 5; r <= outer && vessels.length > 0; r += 5) {
+    if (Math.abs(r - APPROACH_RADIUS_NM) < 2.5) continue
+    rings.push({ centre: [lat, lon], radiusMetres: r * NM_TO_M })
+  }
 
-  const markers: MapMarker[] = [{
-    id: 'port',
-    position: [lat, lon],
-    label: name,
-    status: 'info',
-    shape: 'circle',
-    detail: t('transport.portDetail'),
-  }]
+  // Dashed, so it reads as a construction line and not as a surveyed track.
+  const lines: MapLine[] = vessels.length > 0
+    ? [{ points: [[lat, lon], along(lat, lon, outer, APPROACH_BEARING)], dashed: true }]
+    : []
 
-  // Frame a little outside the ring so the whole approach zone is visible
+  const markers: MapMarker[] = [
+    {
+      id: 'port',
+      position: [lat, lon],
+      label: name,
+      status: 'info',
+      shape: 'circle',
+      detail: t('transport.portDetail'),
+    },
+    // Nearest first, so the side list reads in the order that matters.
+    ...[...vessels].sort((a, b) => a.distance_nm - b.distance_nm).map((v, i) => ({
+      id: `vessel-${v.mmsi ?? i}`,
+      position: along(lat, lon, v.distance_nm, APPROACH_BEARING),
+      // Range is the label because range is what AIS actually reports.
+      label: `${v.distance_nm.toFixed(1)} nm`,
+      status: 'caution' as const,
+      shape: 'diamond' as const,
+      detail: v.identity_known && v.vessel_name
+        ? `${v.vessel_name} — ${v.nav_status}`
+        : t('transport.vesselUnnamed'),
+    })),
+  ]
+
+  // Frame a little outside the outermost ring so the whole zone is visible
   // without the reader having to zoom out.
-  const pad = APPROACH_RADIUS_NM * 1.6
+  const pad = outer * 1.6
   const [nLat, eLon] = along(lat, lon, pad, 45)
   const [sLat, wLon] = along(lat, lon, pad, 225)
 
@@ -83,6 +132,7 @@ export default function ApproachMap({ brief }: { brief: ApproachBrief }) {
     <ChartMap
       markers={markers}
       rings={rings}
+      lines={lines}
       bounds={[sLat, wLon, nLat, eLon]}
       height={420}
       listLabel={t('transport.approachListLabel')}

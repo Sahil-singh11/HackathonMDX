@@ -71,11 +71,40 @@ function CraftCard({ craft }: { craft: CraftWindow }) {
 
 export default function TransportSurface() {
   const t = useT()
+  /* The STAND-IN vessel feed, fetched separately and on purpose.
+   *
+   * Its own provenance says data_kind='synthetic' — terrestrial AIS needs a
+   * receiver within ~40 nm and none covers Mauritius, so this endpoint serves a
+   * committed schema-accurate capture. It is here to show the arrivals surface
+   * working, and it is rendered under a loud synthetic badge with the caveat in
+   * HTML beside it. It is NEVER mixed into the live sea-state block above, and
+   * the page still LEADS with the live data.
+   *
+   * A failure here must not take the live half of the page down, so this query is
+   * independent and its error state is simply "no stand-in feed shown". */
   const { data: brief, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ['transportApproach'],
     queryFn: api.transportApproach,
     staleTime: 5 * 60_000,
     retry: false,           // a single attempt can legitimately take ~60 s
+  })
+
+  /* GATED ON `brief`, and that gate is load-bearing.
+   *
+   * Both endpoints spend 30-100 s waiting on a model narrative, and the backend
+   * serves them from a single worker, so firing them together made them queue —
+   * the live sea state, which is the half that matters, ended up waiting behind a
+   * demonstration feed. Measured: the page stopped rendering its transit windows
+   * inside 200 s once this query ran in parallel.
+   *
+   * Ordering them puts the live data first and costs the demo feed nothing but
+   * arriving second, which is exactly its priority. */
+  const { data: arrivals } = useQuery({
+    queryKey: ['transportArrivals'],
+    queryFn: api.transportArrivals,
+    staleTime: 5 * 60_000,
+    retry: false,
+    enabled: !!brief,
   })
 
   if (isLoading) {
@@ -118,10 +147,12 @@ export default function TransportSurface() {
           </Button>
         }
       >
-        <ApproachMap brief={brief} />
+        <ApproachMap brief={brief} arrivals={arrivals} />
         {/* HTML, not canvas pixels: translatable, screen-readable, and it
             carries the one claim the map must not overstate. */}
-        <p className="small tpt-legend">{t('transport.mapLegend')}</p>
+        <p className="small tpt-legend">
+          {arrivals ? t('transport.mapLegendStandIn') : t('transport.mapLegend')}
+        </p>
 
         <h3 className="tpt-section">{t('transport.transitTitle')}</h3>
         <div className="tpt-crafts">
@@ -186,6 +217,72 @@ export default function TransportSurface() {
         {/* scope_note verbatim, always. */}
         <p className="banner mockline tpt-scope">{brief.scope_note}</p>
       </Card>
+
+      {/* STAND-IN DATA, LAST ON THE PAGE AND LOUDLY LABELLED.
+          Below the live sea state, never above it, because the live half is what
+          the pillar actually knows. ProvenanceBadge renders its `synthetic` state
+          loud by design, and the coverage note and scope note ride verbatim. */}
+      {arrivals && (
+        <Card title={t('transport.arrivalsTitle')}>
+          <ProvenanceBadge provenance={arrivals.provenance} />
+          <p className="small tpt-note">{t('transport.bearingCaveat')}</p>
+
+          <div className="tpt-congestion">
+            {([
+              ['transport.tracked', arrivals.congestion.vessels_tracked],
+              ['transport.underWay', arrivals.congestion.under_way],
+              ['transport.atAnchor', arrivals.congestion.at_anchor],
+              ['transport.withinApproach', arrivals.congestion.within_approach_radius],
+            ] as const).map(([key, value]) => (
+              <div className="tpt-congestion__item" key={key}>
+                <span className="tpt-congestion__label">{t(key)}</span>
+                <span className="tpt-congestion__value pil-data">{value}</span>
+              </div>
+            ))}
+          </div>
+          {/* Verbatim: it says how the tally was made. */}
+          <p className="small tpt-note">{arrivals.congestion.note}</p>
+
+          <h3 className="tpt-section">{t('transport.expectedTitle')}</h3>
+          <div className="tpt-arrivals">
+            {[...arrivals.expected_arrivals]
+              .sort((a, b) => a.distance_nm - b.distance_nm)
+              .map((v) => (
+                <div className="tpt-arrival" key={v.mmsi ?? v.vessel_name}>
+                  <div className="tpt-arrival__head">
+                    <strong>
+                      {v.identity_known && v.vessel_name
+                        ? v.vessel_name
+                        : t('transport.vesselUnnamed')}
+                    </strong>
+                    <span className="tpt-arrival__range pil-data">
+                      {v.distance_nm.toFixed(1)} nm
+                    </span>
+                  </div>
+                  <p className="small tpt-arrival__meta">
+                    {v.vessel_type} · {v.nav_status} ·{' '}
+                    {/* An em-dash, never a 0 — a missing speed is not a stopped
+                        vessel. The compiler caught this: speed_knots is nullable
+                        because AIS position reports can omit it. */}
+                    <span className="pil-data">
+                      {v.speed_knots == null ? '—' : `${v.speed_knots.toFixed(1)} kn`}
+                    </span>
+                    {v.hours_to_reported_eta != null && (
+                      <> · {t('transport.etaIn')}{' '}
+                        <span className="pil-data">
+                          {v.hours_to_reported_eta.toFixed(1)} h
+                        </span>
+                      </>
+                    )}
+                  </p>
+                </div>
+              ))}
+          </div>
+
+          {/* scope_note verbatim, always. */}
+          <p className="banner mockline tpt-scope">{arrivals.scope_note}</p>
+        </Card>
+      )}
     </div>
   )
 }

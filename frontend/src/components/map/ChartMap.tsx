@@ -37,7 +37,7 @@ import 'leaflet/dist/leaflet.css' // must be explicit; Leaflet ships unstyled ot
 import L from 'leaflet'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useT } from '../../i18n'
-import { MAURITIUS_BBOX, MAURITIUS_GEOJSON } from './geometry'
+import { COASTLINE_ATTRIBUTION, MAURITIUS_BBOX, MAURITIUS_GEOJSON } from './geometry'
 import { buildMarkerIcon, decollide, northArrowHtml, type MarkerShape, type MarkerStatus } from './markers'
 import './map.css'
 
@@ -117,8 +117,20 @@ export default function ChartMap({
 
     const map = L.map(hostRef.current, {
       // Default CRS (EPSG3857) — real coordinates must plot correctly.
-      attributionControl: false,
+      // ON, and it must stay on: the coastline is OpenStreetMap data under
+      // ODbL-1.0, which requires the credit to be shown wherever it is displayed.
+      // There is still no tile layer here, so this control carries exactly one
+      // line and it is the licence one.
+      attributionControl: true,
       zoomControl: true,
+      /* FRACTIONAL ZOOM, so fitBounds actually fits.
+         Leaflet snaps to integer zoom by default, and an integer step is a factor
+         of two — so a box that needs zoom 9.4 gets zoom 9 and the island lands at
+         roughly half the size the frame could hold. That is what made this map
+         read as a small diagram floating in empty space. zoomSnap: 0 lets the fit
+         be exact; zoomDelta keeps the +/- buttons stepping a sensible amount. */
+      zoomSnap: 0,
+      zoomDelta: 0.5,
       // The page must still scroll on a phone; wheel zoom arms on focus/click.
       scrollWheelZoom: false,
       fadeAnimation: false,
@@ -129,6 +141,9 @@ export default function ChartMap({
 
     L.geoJSON(MAURITIUS_GEOJSON, {
       style: { className: 'lkmap-land' },
+      // The ODbL credit rides with the layer that carries the data, so it cannot
+      // be separated from it by a later refactor.
+      attribution: COASTLINE_ATTRIBUTION,
     }).addTo(map)
 
     L.control.scale({ metric: true, imperial: false, position: 'bottomleft' }).addTo(map)
