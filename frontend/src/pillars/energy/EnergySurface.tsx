@@ -11,7 +11,7 @@
  *   - model prose is visually separated and labelled as unable to change a figure
  */
 import { useQuery } from '@tanstack/react-query'
-import { AlertTriangle, Calculator, Info, Waves, Wind } from 'lucide-react'
+import { AlertTriangle, Bot, Calculator, Info, Waves, Wind } from 'lucide-react'
 import { api } from '../../api/client'
 import { Badge, Card, Skeleton } from '../../components/ui'
 import { useT } from '../../i18n'
@@ -39,6 +39,12 @@ interface Assessment {
   site_id: string; name: string; region: string; exposure: string
   nearshore: boolean; approx_distance_from_shore_km: number
   measurements: Measurements; resource: Resource; interpretation: string
+  /* 'model' | 'deterministic_fallback'. The backend now always fills
+   * `interpretation` — with a mechanical summary when the model is unusable — so
+   * presence alone no longer means a model wrote it. This field is the only way
+   * to tell, and mislabelling assembled text as model reasoning (or vice versa)
+   * is exactly the overclaim the pillar is meant to avoid. */
+  interpretation_source: string
 }
 interface EnergyBrief {
   provenance: DataProvenance
@@ -140,14 +146,25 @@ export default function EnergySurface() {
               </div>
             </div>
 
-            {site.interpretation ? (
+            {/* Same two-state treatment as TransportSurface, on purpose: one
+                pattern for "who wrote this sentence" across the platform. */}
+            {site.interpretation && (
               <div className="ene-interpretation">
                 <h4>{t('energy.interpretation')}</h4>
+                {site.interpretation_source === 'model' ? (
+                  <Badge tone="accent" icon={<Bot size={14} aria-hidden="true" />}>
+                    {t('transport.sourceModel')}
+                  </Badge>
+                ) : (
+                  <Badge tone="neutral" icon={<Calculator size={14} aria-hidden="true" />}>
+                    {t('transport.sourceMechanical')}
+                  </Badge>
+                )}
                 <p>{site.interpretation}</p>
-                <p className="ene-interpretation__note">{t('energy.interpretationNote')}</p>
+                {site.interpretation_source === 'model' && (
+                  <p className="ene-interpretation__note">{t('energy.interpretationNote')}</p>
+                )}
               </div>
-            ) : (
-              <p className="ene-no-interpretation">{t('energy.noInterpretation')}</p>
             )}
           </Card>
         )

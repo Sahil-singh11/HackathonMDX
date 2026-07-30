@@ -203,9 +203,22 @@ def test_brief_returns_figures_when_no_provider_is_available(monkeypatch, client
 
     monkeypatch.setattr(inference_registry, "select", _boom)
     result = _run(monkeypatch, None, ["se_coast_offshore"])
-    assert result.sites[0].resource.wave_power_kw_per_m is not None
-    assert result.sites[0].interpretation == ""
+    site = result.sites[0]
+    assert site.resource.wave_power_kw_per_m is not None
     assert result.provenance.model_provider == "none"
+
+    # CONTRACT CHANGED DELIBERATELY. This used to assert interpretation == "",
+    # which left the surface rendering a bare "no note available" line whenever
+    # the provider was down — indistinguishable from a broken page. A mechanical
+    # note is now assembled from the already-computed figures instead, matching
+    # what the transport pillar does. The note must SAY it is not model output,
+    # so the two can never be confused.
+    assert site.interpretation, "expected a mechanical note, not an empty string"
+    assert site.interpretation_source == "deterministic_fallback"
+    assert "No model reasoned over these figures" in site.interpretation
+    # And it must still be plain prose — never the fisheries JSON envelope.
+    assert not site.interpretation.lstrip().startswith(("{", "```"))
+    assert '"intent"' not in site.interpretation
 
 
 def test_interpretation_is_capped(monkeypatch, client):
@@ -267,3 +280,82 @@ def test_pillar_listed_with_government_naming(client):
     assert energy["pillar_name"] == "Ocean-Based Renewable Energy"
     assert energy["implemented"] is True
     assert energy["enabled"] is False
+
+
+def test_a_fenced_json_refusal_never_reaches_the_interpretation_field(monkeypatch, client):
+    """Regression pin for the bug that was visible on screen.
+
+    The energy pillar rendered this verbatim as its "Analyst note", fences,
+    `intent` field and all, because the model was answering under the fisheries
+    system prompt and refusing an ocean-energy question:
+
+        ```json
+        {"intent": "other",
+         "reply": "I am sorry, I can only help with identifying and logging fish
+                   catches. I cannot assist with ocean-energy analysis.",
+         "call": null}
+        ```
+
+    The real fix is the pillar-scoped system_instruction, but this asserts the
+    second line of defence: even if a refusal envelope comes back, none of it
+    reaches the user, and the mechanical note serves instead.
+    """
+    class _RefusingEnvelope:
+        name = "refuser"
+
+        def chat(self, prompt: str, language: str = "en",
+                 system_instruction: str | None = None,
+                 timeout_seconds: int | None = None) -> str:
+            return ('```json\n{"intent": "other", "reply": "I am sorry, I can only help with '
+                    'identifying and logging fish catches. I cannot assist with ocean-energy '
+                    'analysis.", "call": null}\n```')
+
+    result = _run(monkeypatch, _RefusingEnvelope(), ["se_coast_offshore"])
+    text = result.sites[0].interpretation
+
+    for forbidden in ("```", '"intent"', '"call"', "I am sorry", "fish catches"):
+        assert forbidden not in text, f"{forbidden!r} leaked into the rendered note"
+    assert result.sites[0].interpretation_source == "deterministic_fallback"
+    assert "No model reasoned over these figures" in text
+
+
+def test_every_site_carries_a_note_not_only_the_ones_sent_to_the_model(monkeypatch, client):
+    """Sites beyond MAX_INTERPRETED_SITES must still get a note, labelled honestly.
+
+    FOUND ON THE RUNNING APP, not in a test. Only the top MAX_INTERPRETED_SITES are
+    sent to the model, because each call costs ~20-30 s. The mechanical fallback
+    looped over that same subset, so the remaining sites kept an EMPTY
+    interpretation while `interpretation_source` still read
+    "deterministic_fallback" — the field claimed a summary that was never written,
+    and the surface rendered a blank where a note belonged.
+
+    Two separate guarantees, both asserted here:
+      1. no site is left with an empty note, and
+      2. `interpretation_source` never describes text that does not exist.
+    """
+    from app.pillars.energy.module import MAX_INTERPRETED_SITES
+
+    class _Silent:
+        """Reachable, but never returns usable prose — forces the fallback path."""
+
+        name = "silent"
+
+        def chat(self, prompt: str, language: str = "en",
+                 system_instruction: str | None = None,
+                 timeout_seconds: int | None = None) -> str:
+            return ""
+
+    result = _run(monkeypatch, _Silent())
+    assert len(result.sites) > MAX_INTERPRETED_SITES, (
+        "this test is only meaningful when some sites are never sent to the model"
+    )
+
+    for site in result.sites:
+        assert site.interpretation.strip(), f"{site.site_id} has no note at all"
+        assert site.interpretation_source in ("model", "deterministic_fallback")
+        if site.interpretation_source == "deterministic_fallback":
+            assert "No model reasoned over these figures" in site.interpretation
+
+    # And the note reads as prose. `exposure` is a whole sentence in the catalogue,
+    # so the old "(<sentence> exposure)" template produced text nobody would write.
+    assert " exposure)." not in result.sites[0].interpretation

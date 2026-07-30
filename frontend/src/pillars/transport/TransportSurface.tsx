@@ -22,7 +22,7 @@ import {
 import { api } from '../../api/client'
 import { Badge, Button, Card, Skeleton } from '../../components/ui'
 import { useT } from '../../i18n'
-import ProvenanceBadge from '../ProvenanceBadge'
+import ProvenanceBadge, { providerLabel } from '../ProvenanceBadge'
 import ApproachMap from './ApproachMap'
 import type { Band, CraftWindow } from './types'
 import './transport.css'
@@ -71,7 +71,7 @@ function CraftCard({ craft }: { craft: CraftWindow }) {
 
 export default function TransportSurface() {
   const t = useT()
-  const { data: brief, isLoading, isError, error, refetch, isFetching } = useQuery({
+  const { data: brief, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ['transportApproach'],
     queryFn: api.transportApproach,
     staleTime: 5 * 60_000,
@@ -90,8 +90,11 @@ export default function TransportSurface() {
   if (isError || !brief) {
     return (
       <Card title={t('transport.approachTitle')}>
+        {/* The raw `error.message` used to print here — "Request failed with
+            status code 503" and friends. A status code is not an explanation for
+            anyone reading this page, and errorBody already says what happened
+            and what to do. The console still has the real message. */}
         <p>{t('transport.errorBody')}</p>
-        <p className="small pil-data">{error instanceof Error ? error.message : ''}</p>
         <Button variant="secondary" onClick={() => refetch()} loading={isFetching}
           icon={<RefreshCw size={16} aria-hidden="true" />}>
           {t('common.retry')}
@@ -161,7 +164,7 @@ export default function TransportSurface() {
             </Badge>
             <p className="small tpt-note tpt-source-why">
               {t('transport.narrativeByModel')}{' '}
-              <span className="pil-data">{brief.provenance.model_provider}</span>
+              {providerLabel(brief.provenance.model_provider, t)}
             </p>
           </>
         ) : (
@@ -169,12 +172,12 @@ export default function TransportSurface() {
             <Badge tone="neutral" icon={<Calculator size={14} aria-hidden="true" />}>
               {t('transport.sourceMechanical')}
             </Badge>
+            {/* `narrative_note` is no longer rendered. It carries the raw reason
+                ("model call failed: The read operation timed out") — a Python
+                exception string, which is for us, not for a reader. That the
+                model was not involved IS user-facing, and the badge plus the
+                sentence above already say it. The field stays on the API. */}
             <p className="small tpt-note tpt-source-why">{t('transport.narrativeFallback')}</p>
-            {brief.narrative_note && (
-              <p className="small tpt-note tpt-fallback-why">
-                {t('transport.fallbackWhy')} <span className="pil-data">{brief.narrative_note}</span>
-              </p>
-            )}
           </>
         )}
 

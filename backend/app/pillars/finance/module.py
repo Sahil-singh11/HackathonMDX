@@ -95,7 +95,7 @@ class BlueFinancePillar:
     def sources(self) -> list[SourceDescriptor]:
         return [SourceDescriptor(
             name="Uploaded documents", url=None,
-            description="User-supplied bond/ESG framework documents; no external feed.",
+            description="Only the document you upload. Nothing is fetched from outside.",
             status="none",
         )]
 

@@ -44,8 +44,17 @@ class SiteAssessment(BaseModel):
     approx_distance_from_shore_km: float = 0.0
     measurements: SiteMeasurements
     resource: SiteResource
-    #: Model-written prose. Empty when no provider was reachable.
+    #: The written note. Always populated by build_brief() — model prose when the
+    #: model produced usable prose, otherwise a summary assembled from the figures.
     interpretation: str = ""
+    #: 'model' when the language model wrote the note; 'deterministic_fallback' when
+    #: it was assembled in code; 'none' when no note was produced at all. The UI
+    #: must render these differently — see energy/module.py.
+    #:
+    #: Defaults to 'none', NOT 'deterministic_fallback': the default describes an
+    #: unpopulated object, and claiming a source for text that does not exist is
+    #: the same class of overclaim as presenting a template as model reasoning.
+    interpretation_source: str = "none"
 
 
 class EnergyBrief(PillarResult):

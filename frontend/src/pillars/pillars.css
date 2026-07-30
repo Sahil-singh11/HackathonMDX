@@ -79,7 +79,34 @@
 .pil-source-list p { margin: var(--sp-1) 0 0; color: var(--text-muted); font-size: var(--fs-sm); }
 .pil-source-list a { color: var(--accent); }
 
-.pil-endpoints { margin: 0; padding-left: var(--sp-4); font-size: var(--fs-sm); color: var(--text-muted); }
+/* `.pil-endpoints` lived here for the /api/ route list. Card and CSS both gone. */
+
+/* Not implemented in this build: one muted sentence, no barrier iconography.
+   A construction barrier reads as "come back later" — a promise we are not in a
+   position to make — and it drew more attention than the live pillars. */
+.pil-not-in-build { margin: 0; color: var(--text-muted); }
+
+/* Fisheries is the main app, so link into it rather than describing it. */
+.pil-jump-list {
+  list-style: none;
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+.pil-jump-list a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-min);   /* gloves and a moving boat */
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-chip);
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+.pil-jump-list a:hover { background: var(--accent-quiet); }
 
 /* --- ProvenanceBadge ---------------------------------------------------- */
 /* Visual weight scales with risk: live/cached quiet, sample marked,

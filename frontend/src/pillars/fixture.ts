@@ -15,81 +15,93 @@
  */
 import type { DataProvenance, PillarDescriptor } from './types'
 
-/** Mirrors register_default_pillars() in backend/app/pillars/registry.py. */
+/** Mirrors register_default_pillars() in backend/app/pillars/registry.py.
+ *
+ * Descriptions are copied from the registry VERBATIM, including the rewrite that
+ * took the task references, file paths and version strings out of them. If the
+ * two drift, the offline view starts claiming things the running app does not.
+ *
+ * `owner` is deliberately blank here. The field still exists on the API, but
+ * nothing renders it any more (it was internal workstream attribution), and a
+ * name left in a file on the render path is a name waiting to reappear.
+ */
 export const FIXTURE_PILLARS: PillarDescriptor[] = [
   {
     pillar_id: 'fisheries',
     pillar_name: 'Sustainable Fisheries & Aquaculture',
     status: 'live', enabled: true, implemented: true,
-    owner: 'team (shipped)',
+    owner: '',
     description:
-      'Production pillar: multimodal catch analysis, GN 167/2016 rule checks, '
-      + 'append-only traceability ledger, declarations.',
+      'Record a catch from a photo, check it against the GN 167/2016 size and '
+      + 'season rules, log it to a tamper-evident record, and prepare a declaration.',
     sources: [
       { name: 'Open-Meteo Marine', url: 'https://marine-api.open-meteo.com/v1/marine',
-        description: 'Marine conditions with startup pre-warm and cache.', status: 'verified' },
-      { name: 'Species rules catalogue', url: null,
-        description: 'data/rules/species_rules.json (v1.1.0) — local, versioned.', status: 'verified' },
+        description: 'Sea state and forecast for Mauritian waters.', status: 'verified' },
+      { name: 'Mauritius fisheries size and season rules', url: null,
+        description: 'Held on the device; works with no signal.', status: 'verified' },
     ],
-    endpoints: ['/api/analyse-catch', '/api/catches', '/api/ledger', '/api/verify/{id}', '/api/declarations'],
+    endpoints: [],
   },
   {
     pillar_id: 'transport',
     pillar_name: 'Marine Transport & Trade',
-    status: 'registered', enabled: false, implemented: false,
-    owner: 'Yadhav (WS1)',
-    description: 'Port Louis arrivals brief from live AIS positions; counts and ETAs stay deterministic.',
-    sources: [{ name: 'aisstream.io', url: 'https://aisstream.io',
-      description: 'Real-time AIS WebSocket. Candidate until a live Port Louis message is captured.',
-      status: 'candidate' }],
+    status: 'registered', enabled: false, implemented: true,
+    owner: '',
+    description:
+      'Live sea state on the Port Louis approach, sorted into good, moderate and '
+      + 'poor transit windows against fixed limits. Vessel tracking is not '
+      + 'included: no public receiver covers Mauritius.',
+    sources: [{ name: 'Open-Meteo Marine', url: 'https://marine-api.open-meteo.com/v1/marine',
+        description: 'Sea state and forecast for Mauritian waters.', status: 'verified' }],
     endpoints: [],
   },
   {
     pillar_id: 'tourism',
     pillar_name: 'Sustainable Ocean Tourism',
-    status: 'registered', enabled: false, implemented: false,
-    owner: 'Dhanesh (WS2)',
-    description: 'Lagoon/beach condition briefs for eco-tourism operators on the existing marine data spine.',
+    status: 'registered', enabled: false, implemented: true,
+    owner: '',
+    description:
+      'Beach and lagoon conditions for tour operators: swimming, snorkelling and '
+      + 'small-boat suitability, site by site.',
     sources: [{ name: 'Open-Meteo Marine', url: 'https://marine-api.open-meteo.com/v1/marine',
-      description: 'Already integrated and cached by the app.', status: 'verified' }],
+        description: 'Sea state and forecast for Mauritian waters.', status: 'verified' }],
     endpoints: [],
   },
   {
     pillar_id: 'energy',
     pillar_name: 'Ocean-Based Renewable Energy',
-    status: 'registered', enabled: false, implemented: false,
-    owner: 'Dhanesh (WS2)',
-    description: 'Wind/wave resource summaries for offshore-energy siting from marine forecast data.',
+    status: 'registered', enabled: false, implemented: true,
+    owner: '',
+    description:
+      'Wind and wave resource at candidate offshore sites, for judging where '
+      + 'marine energy is worth studying.',
     sources: [{ name: 'Open-Meteo Marine', url: 'https://marine-api.open-meteo.com/v1/marine',
-      description: 'Already integrated and cached by the app.', status: 'verified' }],
+        description: 'Sea state and forecast for Mauritian waters.', status: 'verified' }],
     endpoints: [],
   },
   {
     pillar_id: 'finance',
     pillar_name: 'Blue Finance',
-    status: 'registered', enabled: false, implemented: false,
-    owner: 'Shirish (WS3)',
-    description: 'Blue-bond / ESG document checks against blue-finance criteria; findings advisory, read-only.',
+    status: 'registered', enabled: false, implemented: true,
+    owner: '',
+    description:
+      'Checks a blue-bond or ESG document against blue-finance criteria. Findings '
+      + 'are advisory, and nothing is changed or filed.',
     sources: [{ name: 'Uploaded documents', url: null,
-      description: 'User-supplied documents; no external feed.', status: 'none' }],
+      description: 'Only the document you upload. Nothing is fetched from outside.', status: 'none' }],
     endpoints: [],
   },
   {
     pillar_id: 'biotech',
     pillar_name: 'Marine Biotechnology',
     status: 'registered', enabled: false, implemented: false,
-    owner: 'Shirish (WS3, stretch)',
-    description: 'Literature/sample cataloguing assistance for marine research (stretch).',
+    owner: '',
+    description: 'Cataloguing assistance for marine research literature and samples.',
     sources: [{ name: 'Uploaded documents', url: null,
-      description: 'User-supplied documents; no external feed.', status: 'none' }],
+      description: 'Only the document you upload. Nothing is fetched from outside.', status: 'none' }],
     endpoints: [],
   },
 ]
-
-export const FIXTURE_NOTE =
-  'Pillar results always carry a DataProvenance block: source, retrieval time, '
-  + 'data_kind (live|cached|sample|synthetic), inference provider, and what the '
-  + 'data does not cover.'
 
 function isoMinutesAgo(mins: number): string {
   return new Date(Date.now() - mins * 60000).toISOString()

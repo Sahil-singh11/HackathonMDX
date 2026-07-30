@@ -16,7 +16,7 @@
 export { default as ProvenanceBadge } from './ProvenanceBadge'
 export { default as PillarsIndex, PillarStatusBadge } from './PillarsIndex'
 export { default as PillarDetail, PILLAR_SURFACES } from './PillarDetail'
-export { BADGE_EXAMPLES, FIXTURE_NOTE, FIXTURE_PILLARS } from './fixture'
+export { BADGE_EXAMPLES, FIXTURE_PILLARS } from './fixture'
 export type {
   DataKind, DataProvenance, PillarDescriptor, PillarResult, PillarsResponse, SourceDescriptor,
 } from './types'

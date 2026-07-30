@@ -69,13 +69,13 @@ OUTPUT
 _MARINE_SOURCE = SourceDescriptor(
     name="Open-Meteo Marine",
     url="https://marine-api.open-meteo.com/v1/marine",
-    description="Significant wave height, wave period, swell. Already integrated and cached.",
+    description="Significant wave height, wave period and swell.",
     status="verified",
 )
 _FORECAST_SOURCE = SourceDescriptor(
     name="Open-Meteo Forecast",
     url="https://api.open-meteo.com/v1/forecast",
-    description="Wind speed and gusts at 10 m. Separate host; the marine endpoint has no wind.",
+    description="Wind speed and gusts at 10 m above sea level.",
     status="verified",
 )
 
@@ -211,6 +211,29 @@ class EnergyPillar:
         except Exception:  # noqa: BLE001 — figures without prose are still valid
             log.warning("Energy interpretation unavailable; returning figures only", exc_info=True)
 
+        # MECHANICAL FALLBACK, matching what the transport pillar already does.
+        # Runs AFTER the try/except on purpose, so it also covers the case where
+        # provider selection itself threw and no site got as far as a model call.
+        # Without it an unusable response (outage, or an envelope/refusal dropped
+        # by prose_or_empty) left `interpretation` empty and the surface showed a
+        # bare "no note available" line, which reads as a broken page rather than
+        # an honest absence. Every interpreted site now always carries prose, and
+        # `interpretation_source` records which kind so the UI can never present
+        # the assembled summary as model output.
+        # `assessments`, NOT `to_interpret`. Only the top MAX_INTERPRETED_SITES are
+        # sent to the model (each call costs ~20-30 s), so iterating to_interpret
+        # left the remaining sites with an empty interpretation that the schema
+        # default still labelled "deterministic_fallback" — a claim about text that
+        # did not exist, and a blank panel on the page. The mechanical note is pure
+        # string assembly over figures already computed, so every site can have one
+        # at no cost.
+        for assessment in assessments:
+            if assessment.interpretation:
+                assessment.interpretation_source = "model"
+            else:
+                assessment.interpretation = _mechanical_note(assessment)
+                assessment.interpretation_source = "deterministic_fallback"
+
         return EnergyBrief(
             pillar_id=PILLAR_ID,
             generated_at=datetime.now(timezone.utc),
@@ -284,6 +307,40 @@ class EnergyPillar:
         except Exception:  # noqa: BLE001
             log.warning("Interpretation failed for %s", assessment.site_id, exc_info=True)
             return ""
+
+
+def _mechanical_note(a: SiteAssessment) -> str:
+    """Assembled in code from the figures already computed for this site.
+
+    Deliberately says so in its own last sentence, the same way the transport
+    pillar's fallback does: a reader must never have to guess whether they are
+    looking at model prose or a template.
+    """
+    wave = a.resource.wave_power_kw_per_m
+    wind = a.resource.wind_power_w_per_m2
+    # No site name and no exposure sentence: the surface prints both directly above
+    # this note, so repeating them read as padding. `exposure` is also a full
+    # sentence in the catalogue, not an adjective, and the earlier
+    # "(<whole sentence> exposure)" template produced text nobody would write.
+    bits: list[str] = []
+    if wave is not None:
+        bits.append(f"Wave power density is {wave} kW/m.")
+    if wind is not None:
+        bits.append(f"Wind power density is {wind} W/m².")
+    if a.nearshore:
+        bits.append(
+            "This is a nearshore point, and the deep-water wave formula overstates power in "
+            "shallow water, so treat the wave figure as indicative only."
+        )
+    bits.append(
+        "The wave period is used as supplied and is not identified as an energy period, and "
+        "wind is measured at 10 m rather than turbine hub height."
+    )
+    bits.append(
+        "No model reasoned over these figures — this note is assembled mechanically from the "
+        "computed values above."
+    )
+    return " ".join(bits)
 
 
 energy_pillar = EnergyPillar()

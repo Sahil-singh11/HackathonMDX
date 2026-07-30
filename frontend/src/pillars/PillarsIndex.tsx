@@ -23,7 +23,7 @@ import { api } from '../api/client'
 import { Badge, Card, Skeleton } from '../components/ui'
 import { useT } from '../i18n'
 import ProvenanceBadge from './ProvenanceBadge'
-import { BADGE_EXAMPLES, FIXTURE_NOTE, FIXTURE_PILLARS } from './fixture'
+import { BADGE_EXAMPLES, FIXTURE_PILLARS } from './fixture'
 import './pillars.css'
 import type { DataKind, PillarDescriptor, PillarProbe } from './types'
 
@@ -59,7 +59,10 @@ export default function PillarsIndex() {
 
   const usingFixture = isError || !data
   const pillars = data?.pillars ?? FIXTURE_PILLARS
-  const note = data?.note ?? FIXTURE_NOTE
+  // The API's `note` is written in schema language ("a DataProvenance block",
+  // "data_kind (live|cached|sample|synthetic)") — correct for /docs, wrong for a
+  // page a fisher or an officer reads. The same promise is stated in plain
+  // English below. The API field is unchanged; we just stop echoing it.
 
   const { data: probes = {} } = useQuery({
     queryKey: ['pillar-probes', pillars.map((p) => `${p.pillar_id}:${p.status}`).join('|')],
@@ -137,8 +140,10 @@ export default function PillarsIndex() {
                 ) : null}
 
                 <p className="pil-card__desc">{p.description}</p>
+                {/* The "Owner: Dhanesh (WS2)" row is gone — internal workstream
+                    attribution, not information for anyone using the app. The
+                    field still exists on the API for our own bookkeeping. */}
                 <dl className="pil-card__facts">
-                  <div><dt>{t('pillars.owner')}</dt><dd>{p.owner || '—'}</dd></div>
                   <div>
                     <dt>{t('pillars.sources')}</dt>
                     <dd>
@@ -162,7 +167,7 @@ export default function PillarsIndex() {
         </div>
       )}
 
-      <p className="pil-contract-note">{note}</p>
+      <p className="pil-contract-note">{t('pillars.provenanceContract')}</p>
 
       {/* Badge reference, labelled as examples: no live pillar currently produces
           sample or synthetic output, and inventing one to complete the set is the

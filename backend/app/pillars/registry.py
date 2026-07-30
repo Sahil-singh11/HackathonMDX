@@ -151,17 +151,20 @@ def register_default_pillars(registry: PillarRegistry) -> None:
         pillar_name="Sustainable Fisheries & Aquaculture",
         implemented=True,
         owner="team (shipped)",
+        # DESCRIPTIONS ARE RENDERED ON /pillars AND /pillars/:id. Write them for
+        # a fisher or an officer: what the pillar does, not how it is wired. No
+        # task references, no module layout, no file paths — that belongs in code
+        # comments like this one, where it is useful and out of sight.
         description=(
-            "Production pillar: multimodal catch analysis, GN 167/2016 rule "
-            "checks, append-only traceability ledger, declarations. Served by "
-            "the existing routes; deliberately not refactored into a pillar "
-            "module (Task 4a §5)."
+            "Record a catch from a photo, check it against the GN 167/2016 size "
+            "and season rules, log it to a tamper-evident record, and prepare a "
+            "declaration."
         ),
         sources=[
             SourceDescriptor(name="Open-Meteo Marine", url="https://marine-api.open-meteo.com/v1/marine",
-                             description="Marine conditions with startup pre-warm and cache.", status="verified"),
-            SourceDescriptor(name="Species rules catalogue", url=None,
-                             description="data/rules/species_rules.json (v1.1.0) — local, versioned.", status="verified"),
+                             description="Sea state and forecast for Mauritian waters.", status="verified"),
+            SourceDescriptor(name="Mauritius fisheries size and season rules", url=None,
+                             description="Held on the device; works with no signal.", status="verified"),
         ],
         endpoints=["/api/analyse-catch", "/api/catches", "/api/ledger", "/api/verify/{id}", "/api/declarations"],
     ))
@@ -169,10 +172,12 @@ def register_default_pillars(registry: PillarRegistry) -> None:
         pillar_id="transport",
         pillar_name="Marine Transport & Trade",
         owner="Yadhav (WS1)",
-        description=("Live transit conditions at the Port Louis approach: Open-Meteo sea state "
-                     "turned into transit windows by fixed thresholds in Python, with Gemma "
-                     "writing the note. An AIS arrivals brief also exists but is not surfaced "
-                     "— no terrestrial receiver covers Mauritius, so it can only be synthetic."),
+        # Keeps both honesty facts, drops the implementation words: the bands are
+        # fixed rather than guessed, and vessel tracking is genuinely unavailable
+        # here (no terrestrial AIS receiver reaches Mauritius) rather than omitted.
+        description=("Live sea state on the Port Louis approach, sorted into good, moderate "
+                     "and poor transit windows against fixed limits. Vessel tracking is not "
+                     "included: no public receiver covers Mauritius."),
         sources=list(transport_pillar.sources()),
         # /approach first: it is what the UI leads with, and the only one of the
         # two that returns genuinely live data.
@@ -182,33 +187,33 @@ def register_default_pillars(registry: PillarRegistry) -> None:
         pillar_id="tourism",
         pillar_name="Sustainable Ocean Tourism",
         owner="Dhanesh (WS2)",
-        description="Lagoon/beach condition briefs for eco-tourism operators on the existing marine data spine.",
+        description="Beach and lagoon conditions for tour operators: swimming, snorkelling and small-boat suitability, site by site.",
         sources=[SourceDescriptor(name="Open-Meteo Marine", url="https://marine-api.open-meteo.com/v1/marine",
-                                  description="Already integrated and cached by the app.", status="verified")],
+                                  description="Sea state and forecast for Mauritian waters.", status="verified")],
     ))
     registry.register_descriptor(PillarDescriptor(
         pillar_id="energy",
         pillar_name="Ocean-Based Renewable Energy",
         owner="Dhanesh (WS2)",
-        description="Wind/wave resource summaries for offshore-energy siting from marine forecast data.",
+        description="Wind and wave resource at candidate offshore sites, for judging where marine energy is worth studying.",
         sources=[SourceDescriptor(name="Open-Meteo Marine", url="https://marine-api.open-meteo.com/v1/marine",
-                                  description="Already integrated and cached by the app.", status="verified")],
+                                  description="Sea state and forecast for Mauritian waters.", status="verified")],
     ))
     registry.register_descriptor(PillarDescriptor(
         pillar_id="finance",
         pillar_name="Blue Finance",
         owner="Shirish (WS3)",
-        description="Blue-bond / ESG document checks against blue-finance criteria; findings advisory, read-only.",
+        description="Checks a blue-bond or ESG document against blue-finance criteria. Findings are advisory, and nothing is changed or filed.",
         sources=[SourceDescriptor(name="Uploaded documents", url=None,
-                                  description="User-supplied documents; no external feed.", status="none")],
+                                  description="Only the document you upload. Nothing is fetched from outside.", status="none")],
     ))
     registry.register_descriptor(PillarDescriptor(
         pillar_id="biotech",
         pillar_name="Marine Biotechnology",
         owner="Shirish (WS3, stretch)",
-        description="Literature/sample cataloguing assistance for marine research (stretch).",
+        description="Cataloguing assistance for marine research literature and samples.",
         sources=[SourceDescriptor(name="Uploaded documents", url=None,
-                                  description="User-supplied documents; no external feed.", status="none")],
+                                  description="Only the document you upload. Nothing is fetched from outside.", status="none")],
     ))
 
     # Implementations. Declaring a descriptor above and attaching a module here

@@ -44,16 +44,20 @@ PILLAR_NAME = "Marine Transport & Trade"
 SOURCE_AISSTREAM = SourceDescriptor(
     name="aisstream.io",
     url="https://aisstream.io",
-    description=("Real-time AIS WebSocket, bounding-box subscription over Port Louis and "
-                 "its approach. Until a live message is captured, the pillar serves a "
-                 "committed synthetic capture constructed from the documented message "
-                 "schema and labelled data_kind='synthetic'."),
+    # RENDERED on /pillars/transport under "Declared data sources". The previous
+    # wording described the transport ("WebSocket, bounding-box subscription")
+    # and named the field it sets (data_kind='synthetic'), which told a reader
+    # nothing and told them it in our vocabulary. The honest fact — no live
+    # vessel data, and what stands in for it — is what survives.
+    description=("Vessel position feed for Port Louis. No live position has been received, "
+                 "so vessel data here is stand-in data and is labelled as such wherever "
+                 "it appears."),
     status="candidate",
 )
 SOURCE_MARINE = SourceDescriptor(
     name="Open-Meteo Marine",
     url="https://marine-api.open-meteo.com/v1/marine",
-    description="Sea state at the port approach; already integrated and cached by the app.",
+    description="Sea state and forecast at the port approach.",
     status="verified",
 )
 

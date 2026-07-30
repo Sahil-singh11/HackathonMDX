@@ -71,14 +71,13 @@ OUTPUT
 _MARINE_SOURCE = SourceDescriptor(
     name="Open-Meteo Marine",
     url="https://marine-api.open-meteo.com/v1/marine",
-    description="Wave, swell and sea-surface temperature. Already integrated and cached.",
+    description="Wave, swell and sea-surface temperature.",
     status="verified",
 )
 _FORECAST_SOURCE = SourceDescriptor(
     name="Open-Meteo Forecast",
     url="https://api.open-meteo.com/v1/forecast",
-    description=("Wind speed/direction/gusts and visibility. Separate host from the marine "
-                 "endpoint, which carries no atmospheric wind."),
+    description="Wind speed, direction, gusts and visibility.",
     status="verified",
 )
 
