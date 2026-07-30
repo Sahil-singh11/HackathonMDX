@@ -1,6 +1,7 @@
 /* Thin API client. The frontend never sees any API key — everything is server-side. */
 import { RateLimitError, emitRateLimited } from '../lib/httpError'
 import type { PillarProbe, PillarResult, PillarsResponse } from '../pillars/types'
+import type { ArrivalsBrief } from '../pillars/transport/types'
 
 export interface PublicConfig {
   app: string
@@ -305,6 +306,18 @@ export const api = {
   },
   tourismSites: () =>
     fetch('/api/pillars/tourism/sites').then((r) => jsonOrThrow<Record<string, unknown>>(r)),
+
+  /**
+   * Port Louis arrivals brief. Counts, ETAs and ordering are deterministic;
+   * `narrative` / `risk_reasoning` are model prose ABOUT those numbers and are
+   * never parsed back into data — read `narrative_source` to know which of the
+   * two actually served, and render that distinction.
+   *
+   * Can legitimately take up to ~60 s: the narrative step waits on hosted
+   * Gemma before the backend falls back. Callers should not retry on timeout.
+   */
+  transportArrivals: () =>
+    fetch('/api/pillars/transport/arrivals').then((r) => jsonOrThrow<ArrivalsBrief>(r)),
 
   verifyCertificate: (recordId: string) =>
     fetch(`/api/verify/${recordId}`).then((r) => jsonOrThrow<CertificateVerification>(r)),

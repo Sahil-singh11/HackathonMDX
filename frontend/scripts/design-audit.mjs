@@ -99,6 +99,8 @@ const THEMES = argVal('themes', '').trim()
 const CHECKS = argVal('checks', '').trim()
   ? argVal('checks', '').split(',')
   : ['headings', 'touch', 'typography', 'contrast', 'scaling', 'motion'];
+/** ms to wait after navigation before measuring. See goto(). */
+const SETTLE = Number(argVal('settle', '1400'));
 
 /* ----------------------------------------------------------- diagnostics */
 
@@ -157,9 +159,22 @@ async function openPage(browser, { width, height, themeKey, textScale = '100', r
   return { ctx, page };
 }
 
+/**
+ * `domcontentloaded`, NOT `networkidle`.
+ *
+ * networkidle never fires on a route whose API is genuinely slow: the transport
+ * pillar waits up to 60 s on hosted Gemma before falling back, so the whole
+ * audit died on a 30 s navigation timeout and measured nothing at all. The
+ * navigation error is swallowed for the same reason — a still-pending request is
+ * no reason to abandon the page, and whatever HAS rendered is worth measuring.
+ * Routes that need longer before their content exists take --settle, e.g.
+ *   node scripts/design-audit.mjs --routes=/pillars/transport --settle=65000
+ */
 const goto = async (page, route) => {
-  await page.goto(BASE + route, { waitUntil: 'networkidle' });
-  await page.waitForTimeout(1400); // entry animations + first data paint
+  try {
+    await page.goto(BASE + route, { waitUntil: 'domcontentloaded', timeout: 30000 });
+  } catch { /* slow or hung request — measure what did render */ }
+  await page.waitForTimeout(SETTLE);
 };
 
 /* ------------------------------------------- in-page measurement helpers */
