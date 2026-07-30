@@ -140,6 +140,9 @@ export default function EnergySurface() {
 
   return (
     <PillarPage
+      /* Amber, resolved from --warning by accents.css. Opt-in per page: the frame
+         renders unaccented without it. */
+      pillar="energy"
       title={t('energy.title')}
       answer={
         <Answer

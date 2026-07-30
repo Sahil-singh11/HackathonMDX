@@ -1,0 +1,139 @@
+/* ============================================================================
+   PILLAR ACCENTS — six hues, derived from the semantic tokens only.
+   ----------------------------------------------------------------------------
+     fisheries lagoon teal · shipping steel-indigo · tourism turquoise
+     energy amber · finance deep green · biotech violet
+
+   OPT-IN. Nothing here applies unless PillarPage is given a `pillar` prop, which
+   sets data-pillar on the frame. A page that passes no pillar renders exactly as
+   it did before this file existed — that is what keeps it safe to add to a
+   framework other pages are already converted onto.
+
+   Three of the six ARE semantic tokens already (--accent is lagoon teal,
+   --warning is amber, --success is deep green). The other three are mixed from
+   semantic tokens in oklch, so they follow every theme repoint instead of pinning
+   a hex. No raw palette value and no hex literal appears in this file.
+
+   WHY THE RECIPES DIFFER PER THEME. Hue interpolation between two tokens depends
+   on where those tokens sit, and the themes move them. Measured (oklch hue, plus
+   WCAG against that theme's --surface and --bg):
+
+     Night: --text is achromatic foam, so mixing --accent with it cannot bend a
+            hue at all — shipping came out pale teal, indistinguishable from
+            fisheries. --border-strong IS a steel blue in Night, so it is the
+            partner there instead.
+
+   WHY SUNLIGHT AND NIGHT VISION COLLAPSE TO ONE ACCENT. Not a shortcut — two
+   measured findings:
+
+     Night vision deliberately removes blue light so a fisher's dark adaptation
+     survives. Deriving biotech violet there produced #00BEE0, a bright cyan:
+     the single most hostile colour that theme could emit. Six hues actively
+     defeat the theme's purpose.
+
+     Sunlight is flat, maximal-contrast, no decoration, because glare eats
+     mid-tones. It also has no violet-ish token to mix from, and the biotech
+     recipe landed on #4E5E00 olive, colliding with finance green.
+
+   In both, pillar identity comes from the title and the chips. Colour is never
+   the only signal here, so nothing is lost but decoration.
+
+   ACCENT USE IS RESTRICTED TO NON-TEXT: a rule under the title, the answer
+   block's leading edge, and the comparison bars. All body copy stays --text /
+   --text-muted. That is what keeps the 4.5:1 body floor a property of the design
+   system rather than of these mixes — the accents only ever have to clear 3:1.
+   ========================================================================= */
+
+/* Fallback, and NOT via a second declaration: a custom property holding an
+   unsupported function is not invalid at parse time, only at use time, so the
+   usual two-declaration trick does not work for --custom-props. @supports is the
+   honest gate. Without color-mix every pillar simply gets --accent. */
+.pil-page-frame[data-pillar] {
+  --pil-accent: var(--accent);
+  --pil-accent-quiet: var(--accent-quiet);
+}
+
+@supports (color: color-mix(in oklch, red 50%, blue)) {
+  /* ---- Day (and the :root default) ------------------------------------- */
+  .pil-page-frame[data-pillar='fisheries'] { --pil-accent: var(--accent); }
+  .pil-page-frame[data-pillar='energy']    { --pil-accent: var(--warning); }
+  .pil-page-frame[data-pillar='finance']   { --pil-accent: var(--success); }
+
+  /* teal 205deg toward navy 250deg -> 225deg steel-indigo */
+  .pil-page-frame[data-pillar='shipping'] {
+    --pil-accent: color-mix(in oklch, var(--accent) 55%, var(--text));
+  }
+  /* teal 205deg toward green 156deg -> 186deg turquoise */
+  .pil-page-frame[data-pillar='tourism'] {
+    --pil-accent: color-mix(in oklch, var(--accent) 62%, var(--success));
+  }
+  /* teal 205deg and red 29deg are near antipodes; the LONG way round the hue
+     circle passes through 297deg violet. Verified in Day and Night; the two
+     themes that cannot take it are overridden below. */
+  .pil-page-frame[data-pillar='biotech'] {
+    --pil-accent: color-mix(in oklch longer hue, var(--accent) 50%, var(--danger));
+  }
+
+  /* A tint of the pillar's own hue. 12% keeps --text above 9.8:1 on it in every
+     theme that uses these. */
+  .pil-page-frame[data-pillar] {
+    --pil-accent-quiet: color-mix(in oklch, var(--pil-accent) 12%, var(--surface));
+  }
+
+  /* ---- Night: only shipping needs a different partner ------------------ */
+  [data-theme='night'] .pil-page-frame[data-pillar='shipping'] {
+    --pil-accent: color-mix(in oklch, var(--accent) 40%, var(--border-strong));
+  }
+
+  /* ---- Night vision: one accent, by design (see header) ---------------- */
+  [data-theme='night'][data-night-vision='on'] .pil-page-frame[data-pillar] {
+    --pil-accent: var(--accent);
+    --pil-accent-quiet: var(--accent-quiet);
+  }
+
+  /* ---- Sunlight: one accent, by design (see header) -------------------- */
+  [data-theme='sunlight'] .pil-page-frame[data-pillar] {
+    --pil-accent: var(--accent);
+    --pil-accent-quiet: var(--surface);
+  }
+}
+
+/* ---------------------------------------------------------------- applied ---
+   Three restrained places, all non-text. */
+
+/* A rule under the page title — the only place the hue appears at size.
+   ::after rather than a new element, so PillarPage's markup is unchanged. */
+.pil-page-frame[data-pillar] > .pil-frame__title::after {
+  content: '';
+  display: block;
+  width: var(--sp-8);
+  height: 3px;
+  margin-top: var(--sp-2);
+  border-radius: var(--r-chip);
+  background: var(--pil-accent);
+}
+
+/* The answer block's leading edge and tint.
+   :not() on the semantic variants is load-bearing: --positive and --caution
+   carry MEANING (a good or cautionary conclusion) and decoration must never
+   overwrite a signal. Those two keep their own border entirely. */
+.pil-page-frame[data-pillar] .pil-answer:not(.pil-answer--positive):not(.pil-answer--caution) {
+  border-left-width: 6px;
+  border-left-color: var(--pil-accent);
+  /* Opaque base first, then the tint composited over it: --accent-quiet is
+     translucent in Night, and every ancestor up to <html> is transparent in this
+     app (a separate ambient layer paints the page), so a bare translucent
+     background would take its effective colour from whatever sits behind. */
+  background-color: var(--surface-raised);
+  background-image: linear-gradient(var(--pil-accent-quiet), var(--pil-accent-quiet));
+}
+
+/* Comparison bars take the pillar's hue instead of the generic accent.
+   `.is-top` keeps --action, because marking the leading item is a signal. */
+.pil-page-frame[data-pillar] .pil-bars__fill { background: var(--pil-accent); }
+.pil-page-frame[data-pillar] .pil-bars__row.is-top .pil-bars__fill { background: var(--action); }
+
+/* Sunlight is flat by design: hard edges, no tint carrying meaning. */
+[data-theme='sunlight'] .pil-page-frame[data-pillar] .pil-answer {
+  background-image: none;
+}
