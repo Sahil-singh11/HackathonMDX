@@ -49,9 +49,19 @@ def create_app() -> FastAPI:
                      "Species suggestions and regulatory checks must be confirmed against official sources."),
         version="1.0.0",
     )
+    # Mode A of the team setup has each teammate run ONLY the frontend, against the shared
+    # deployed backend — so this deployment must accept a browser origin on their laptop.
+    # An exact-match list on port 5173 was not enough: run.ps1 walks the port upward when
+    # 5173 is taken, so a teammate whose 5173 was busy landed on 5174 and every request was
+    # CORS-blocked with no clue why. The regex accepts any loopback port; the explicit list
+    # stays for the common case, and CORS_EXTRA_ORIGINS adds deployed origins (a Netlify
+    # preview, say) without a code change. Nothing here widens access to secrets: the key is
+    # never in a response, and the browser still cannot read one.
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+        allow_origins=["http://localhost:5173", "http://127.0.0.1:5173",
+                       *settings.cors_extra_origins_list],
+        allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
         allow_methods=["*"], allow_headers=["*"],
     )
 

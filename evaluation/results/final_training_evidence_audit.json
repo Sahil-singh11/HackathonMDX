@@ -1,0 +1,264 @@
+{
+  "audited_at": "2026-07-30T00:20:33.780046+00:00",
+  "claims_checked": 36,
+  "supported": 36,
+  "unsupported": 0,
+  "passed": true,
+  "claims": [
+    {
+      "claim": "dataset records = 338",
+      "documented": 338,
+      "artifact_value": 338,
+      "source": "master_records_v2.jsonl",
+      "supported": true
+    },
+    {
+      "claim": "semantic families = 164",
+      "documented": 164,
+      "artifact_value": 164,
+      "source": "master_records_v2.jsonl",
+      "supported": true
+    },
+    {
+      "claim": "train = 248",
+      "documented": 248,
+      "artifact_value": 248,
+      "source": "split field",
+      "supported": true
+    },
+    {
+      "claim": "validation = 42",
+      "documented": 42,
+      "artifact_value": 42,
+      "source": "split field",
+      "supported": true
+    },
+    {
+      "claim": "internal test = 34",
+      "documented": 34,
+      "artifact_value": 34,
+      "source": "internal_test_v1_34.jsonl",
+      "supported": true
+    },
+    {
+      "claim": "external test = 32",
+      "documented": 32,
+      "artifact_value": 32,
+      "source": "morisyen_cases.json",
+      "supported": true
+    },
+    {
+      "claim": "challenge test = 24",
+      "documented": 24,
+      "artifact_value": 24,
+      "source": "v2_challenge_test.jsonl",
+      "supported": true
+    },
+    {
+      "claim": "external benchmark checksum matches manifest",
+      "documented": "966c54640cde7d4d6a9052317b247e03ac59e803bb6ffdc38ccfd4cc9f820250",
+      "artifact_value": "966c54640cde7d4d6a9052317b247e03ac59e803bb6ffdc38ccfd4cc9f820250",
+      "source": "external_test_manifest.json",
+      "supported": true
+    },
+    {
+      "claim": "challenge set checksum matches manifest",
+      "documented": "23327eae5f7e8ef00b2e6833f826acf27daca2e218c92e57aaf623e8fa00234f",
+      "artifact_value": "23327eae5f7e8ef00b2e6833f826acf27daca2e218c92e57aaf623e8fa00234f",
+      "source": "v2_challenge_manifest.json",
+      "supported": true
+    },
+    {
+      "claim": "Kaggle GPU = Tesla T4",
+      "documented": "Tesla T4",
+      "artifact_value": "Tesla T4",
+      "source": "v2_training_metrics.json",
+      "supported": true
+    },
+    {
+      "claim": "training duration ~552 s",
+      "documented": 552,
+      "artifact_value": 552,
+      "source": "v2_training_metrics.json",
+      "supported": true
+    },
+    {
+      "claim": "peak VRAM = 9.21 GiB",
+      "documented": 9.21,
+      "artifact_value": 9.21,
+      "source": "v2_training_metrics.json",
+      "supported": true
+    },
+    {
+      "claim": "best validation loss = 0.0577",
+      "documented": 0.0577,
+      "artifact_value": 0.0577,
+      "source": "v2_training_metrics.json",
+      "supported": true
+    },
+    {
+      "claim": "trainable parameters = 12,079,104",
+      "documented": 12079104,
+      "artifact_value": 12079104,
+      "source": "v2_training_metrics.json",
+      "supported": true
+    },
+    {
+      "claim": "adapter size ~48.4 MB (fp32 safetensors)",
+      "documented": 48.4,
+      "artifact_value": 48.4,
+      "source": "kaggle/outputs (gitignored)",
+      "supported": true
+    },
+    {
+      "claim": "v1 internal intent = 73.5%",
+      "documented": 0.7353,
+      "artifact_value": 0.7353,
+      "source": "archive/v1/evaluation_metrics.json",
+      "supported": true
+    },
+    {
+      "claim": "v1 external intent = 75.0%",
+      "documented": 0.75,
+      "artifact_value": 0.75,
+      "source": "archive/v1/evaluation_metrics.json",
+      "supported": true
+    },
+    {
+      "claim": "v1 tool accuracy = 58.8%",
+      "documented": 0.5882,
+      "artifact_value": 0.5882,
+      "source": "archive/v1/evaluation_metrics.json",
+      "supported": true
+    },
+    {
+      "claim": "v1 declaration recall = 0.455",
+      "documented": 0.4545,
+      "artifact_value": 0.4545,
+      "source": "archive/v1/evaluation_metrics.json",
+      "supported": true
+    },
+    {
+      "claim": "v2 internal intent = 85.3%",
+      "documented": 0.8529,
+      "artifact_value": 0.8529,
+      "source": "v2_evaluation_metrics.json",
+      "supported": true
+    },
+    {
+      "claim": "v2 external intent = 78.1%",
+      "documented": 0.7812,
+      "artifact_value": 0.7812,
+      "source": "v2_evaluation_metrics.json",
+      "supported": true
+    },
+    {
+      "claim": "v2 challenge intent = 70.8%",
+      "documented": 0.7083,
+      "artifact_value": 0.7083,
+      "source": "v2_evaluation_metrics.json",
+      "supported": true
+    },
+    {
+      "claim": "v2 tool accuracy = 58.8%",
+      "documented": 0.5882,
+      "artifact_value": 0.5882,
+      "source": "v2_evaluation_metrics.json",
+      "supported": true
+    },
+    {
+      "claim": "structured validity = 100%",
+      "documented": 1.0,
+      "artifact_value": 1.0,
+      "source": "v2_evaluation_metrics.json",
+      "supported": true
+    },
+    {
+      "claim": "safety = 100%",
+      "documented": 1.0,
+      "artifact_value": 1.0,
+      "source": "v2_evaluation_metrics.json",
+      "supported": true
+    },
+    {
+      "claim": "unknown-function rate = 0%",
+      "documented": 0.0,
+      "artifact_value": 0.0,
+      "source": "v2_evaluation_metrics.json",
+      "supported": true
+    },
+    {
+      "claim": "routing latency ~4.6 s",
+      "documented": 4600,
+      "artifact_value": 4571,
+      "source": "v2_evaluation_metrics.json",
+      "supported": true
+    },
+    {
+      "claim": "v2 internal declaration recall = 100%",
+      "documented": 1.0,
+      "artifact_value": 1.0,
+      "source": "v2_per_intent_metrics.csv",
+      "supported": true
+    },
+    {
+      "claim": "v2 external declaration recall = 100%",
+      "documented": 1.0,
+      "artifact_value": 1.0,
+      "source": "v2_evaluation_metrics.json",
+      "supported": true
+    },
+    {
+      "claim": "v2 challenge declaration recall = 72.7%",
+      "documented": 0.7273,
+      "artifact_value": 0.7273,
+      "source": "v2_evaluation_metrics.json",
+      "supported": true
+    },
+    {
+      "claim": "gate A rejected",
+      "documented": false,
+      "artifact_value": false,
+      "source": "v2_evaluation_metrics.json",
+      "supported": true
+    },
+    {
+      "claim": "gate B rejected",
+      "documented": false,
+      "artifact_value": false,
+      "source": "v2_evaluation_metrics.json",
+      "supported": true
+    },
+    {
+      "claim": "decision = REJECTED",
+      "documented": "REJECTED",
+      "artifact_value": "REJECTED",
+      "source": "v2_evaluation_metrics.json",
+      "supported": true
+    },
+    {
+      "claim": "gate doc pre-registered before training",
+      "documented": true,
+      "artifact_value": true,
+      "source": "V2_PRE_REGISTERED_ACCEPTANCE_GATE.md",
+      "supported": true
+    },
+    {
+      "claim": "no forbidden claim in submission documents",
+      "documented": "none",
+      "artifact_value": "none",
+      "source": "docs/AI_SUBMISSION_SUMMARY.md, docs/AI_JUDGE_TECHNICAL_PROOF.md, docs/AI_DEMO_SCRIPT.md, docs/AI_LIMITATIONS.md, docs/AI_FINAL_HANDOFF.md, docs/AI_MODEL_SELECTION_DECISION.md, docs/AI_STEP4_FINAL_REPORT.md, kaggle/writeup.md",
+      "supported": true
+    },
+    {
+      "claim": "approved rejection phrasing used",
+      "documented": "training succeeded, but the adapter did not pass the production acceptance",
+      "artifact_value": [
+        "docs/AI_SUBMISSION_SUMMARY.md",
+        "kaggle/writeup.md"
+      ],
+      "source": "submission documents",
+      "supported": true
+    }
+  ]
+}

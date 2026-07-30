@@ -58,29 +58,47 @@ def mock_submit(session: Session, declaration_id: str) -> Declaration | None:
     return decl
 
 
+# fpdf's built-in core fonts are Latin-1 only, so a single em-dash in MOCK_LABEL made
+# every PDF export raise FPDFUnicodeEncodingException (a real 500 on
+# GET /api/declarations/{id}/pdf). Transliterate the handful of typographic characters
+# our strings use instead of swapping in a Unicode font — the MOCK wording is
+# safety-critical and must survive verbatim apart from the dash.
+_PDF_TRANSLITERATE = {
+    "—": "-", "–": "-", "‘": "'", "’": "'",
+    "“": '"', "”": '"', "…": "...", " ": " ",
+}
+
+
+def _pdf_safe(text: str) -> str:
+    """Latin-1-safe text for fpdf core fonts, preserving meaning."""
+    for bad, good in _PDF_TRANSLITERATE.items():
+        text = text.replace(bad, good)
+    return text.encode("latin-1", "replace").decode("latin-1")
+
+
 def export_pdf(decl: Declaration) -> Path:
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Helvetica", "B", 14)
-    pdf.cell(0, 10, "Lamer Konekte - Catch Declaration Draft", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 10, _pdf_safe("Lamer Konekte - Catch Declaration Draft"), new_x="LMARGIN", new_y="NEXT")
     pdf.set_font("Helvetica", "B", 10)
     pdf.set_text_color(200, 30, 30)
-    pdf.cell(0, 8, MOCK_LABEL, new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 8, _pdf_safe(MOCK_LABEL), new_x="LMARGIN", new_y="NEXT")
     pdf.set_text_color(0, 0, 0)
     pdf.set_font("Helvetica", size=10)
-    pdf.cell(0, 8, f"Fisher: {decl.fisher_name}   Area: {decl.fishing_area}", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 8, f"Period: {decl.period_start} to {decl.period_end}   Status: {decl.status}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 8, _pdf_safe(f"Fisher: {decl.fisher_name}   Area: {decl.fishing_area}"), new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 8, _pdf_safe(f"Period: {decl.period_start} to {decl.period_end}   Status: {decl.status}"), new_x="LMARGIN", new_y="NEXT")
     if decl.mock_receipt_id:
-        pdf.cell(0, 8, f"Mock receipt: {decl.mock_receipt_id}", new_x="LMARGIN", new_y="NEXT")
+        pdf.cell(0, 8, _pdf_safe(f"Mock receipt: {decl.mock_receipt_id}"), new_x="LMARGIN", new_y="NEXT")
     pdf.ln(2)
     for c in json.loads(decl.catches_json):
         line = (f"- {c['capture_date']}  {c['species_id']}  x{c['count']}  "
                 f"{c['measured_length_cm'] or '?'} cm  legal: {c['legal_status']}")
-        pdf.cell(0, 7, line, new_x="LMARGIN", new_y="NEXT")
+        pdf.cell(0, 7, _pdf_safe(line), new_x="LMARGIN", new_y="NEXT")
     pdf.ln(4)
     pdf.set_font("Helvetica", "I", 8)
-    pdf.multi_cell(0, 5, "Species suggestions and regulatory checks must be confirmed against official "
-                          "sources and by the fisher or an authorised officer.")
+    pdf.multi_cell(0, 5, _pdf_safe("Species suggestions and regulatory checks must be confirmed against official "
+                          "sources and by the fisher or an authorised officer."))
     out = get_settings().storage_dir / f"declaration_{decl.id}.pdf"
     pdf.output(str(out))
     return out

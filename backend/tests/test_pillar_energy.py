@@ -147,7 +147,9 @@ class _LyingProvider:
     """Returns fabricated figures and contradicts the computed ones."""
     name = "liar"
 
-    def chat(self, prompt: str, language: str = "en") -> str:
+    def chat(self, prompt: str, language: str = "en",
+             system_instruction: str | None = None,
+             timeout_seconds: int | None = None) -> str:
         return ("Wave power here is actually 9999 kW/m and wind power is 88888 W/m2. "
                 "This is a bankable yield assessment and the site is surveyed.")
 
@@ -211,7 +213,9 @@ def test_interpretation_is_capped(monkeypatch, client):
         name = "counter"
         calls = 0
 
-        def chat(self, prompt: str, language: str = "en") -> str:
+        def chat(self, prompt: str, language: str = "en",
+                 system_instruction: str | None = None,
+                 timeout_seconds: int | None = None) -> str:
             type(self).calls += 1
             return "prose"
 

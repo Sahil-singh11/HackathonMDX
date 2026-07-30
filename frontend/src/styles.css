@@ -48,6 +48,12 @@
   --banner-mockline-border: #aab4c4;
   --banner-mockline-text: #333f52;
 
+  /* Background for `.badge.mock`. Defaults to --text-secondary so Day and
+     Sunlight render EXACTLY as they always have; only Night overrides it. See
+     the note in the Night block for why a text token cannot serve as a
+     background once the theme inverts. */
+  --badge-mock-bg: var(--text-secondary);
+
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
@@ -115,6 +121,23 @@
   --banner-danger-text: #ffb4ae;
   --banner-mockline-bg: rgba(255, 255, 255, 0.06);
   --banner-mockline-text: #c9d2de;
+
+  /* Night was missing overrides for two values that are only legible against a
+     LIGHT surface. Both were found by scripts/design-audit.mjs measuring real
+     painted pixels in this theme; neither is a new regression — they have been
+     wrong since the Night theme was folded in.
+
+     --accent-teal-text is "darkened for AA text contrast on white" (see :root).
+     On Night's #14233b card that is dark-on-dark: 2.76:1. Repointed at the
+     lighter brand teal, which measures 6.2:1 here. It is a text-only token, so
+     nothing gains a teal background from this.
+
+     --badge-mock-bg exists because `.badge.mock` used var(--text-secondary) as
+     a BACKGROUND. That token is dark in Day (white label reads fine, 5.5:1) and
+     deliberately light in Night, where the same white label dropped to 2.2:1.
+     A text colour cannot double as a background across an inverting theme. */
+  --accent-teal-text: var(--accent-teal-2);
+  --badge-mock-bg: #3f4b5c;      /* 9.0:1 against white */
 }
 
 /* Sunlight theme, LEGACY tokens.
@@ -175,10 +198,22 @@
 [data-theme='sunlight'] .stat-chip,
 [data-theme='sunlight'] .banner { box-shadow: none; border: 2px solid #000; }
 [data-theme='sunlight'] .hero-banner,
-[data-theme='sunlight'] .bento-feature,
-[data-theme='sunlight'] button.primary,
-[data-theme='sunlight'] a.primary { background-image: none; }
+[data-theme='sunlight'] .bento-feature { background-image: none; }
 [data-theme='sunlight'] .hero-banner { background-color: #000; }
+
+/* Primary buttons need background-COLOR here, not background-image:none.
+   `button.primary` paints itself with `background: linear-gradient(...)`, and
+   that shorthand also resets background-color to transparent. Removing only
+   the image therefore left the button with NO background at all — while its
+   label stays `color: #fff`. Result: white text on the white card behind it,
+   contrast 1.00, a completely invisible primary action, and only in Sunlight —
+   the theme that exists specifically to be readable in direct equatorial sun
+   on a deck. Found by scripts/design-audit.mjs and confirmed on screen.
+   --primary-coral is #c22e14 in this theme, so white-on-coral measures 5.7:1
+   here (it is the undarkened #ff6b57 elsewhere that fails at 2.8:1 — see the
+   pre-existing white-on-coral note in CLAUDE.md, untouched by this fix). */
+[data-theme='sunlight'] button.primary,
+[data-theme='sunlight'] a.primary { background: var(--primary-coral); }
 
 * { box-sizing: border-box; }
 html, body, #root { margin: 0; min-height: 100%; }
@@ -264,7 +299,7 @@ main.narrow { max-width: 720px; }
 }
 .badge.sim { background: var(--badge-sim-bg); color: #fff; }
 .badge.offline { background: var(--warn); color: #fff; }
-.badge.mock { background: var(--text-secondary); color: #fff; }
+.badge.mock { background: var(--badge-mock-bg); color: #fff; }
 .badge.hosted { background: var(--ok); color: #fff; }
 .badge.quality-acceptable { background: var(--ok); color: #fff; }
 .badge.quality-poor { background: var(--warn); color: #fff; }
@@ -502,10 +537,25 @@ textarea { resize: vertical; }
 .avatar-hue-1 { background: var(--primary-coral); }
 .avatar-hue-2 { background: var(--primary-navy-2); }
 
-.more-tools-row { display: flex; justify-content: space-between; gap: var(--space-2); margin-bottom: var(--space-5); }
+/* flex-wrap is load-bearing: this row was `display:flex` with no wrap, so its
+   width was the SUM of its children. At five 48px-min children that fit a
+   360px phone; adding /assistant and /pillars made seven, which overflowed the
+   viewport by 40px and introduced a horizontal scrollbar on the fisher's most-
+   used screen. Caught by scripts/design-audit.mjs --checks=scaling. Wrapping
+   costs nothing on desktop (all seven still sit on one line, flex:1 as before)
+   and lets the phone reflow to two rows instead of overflowing. */
+.more-tools-row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-2); margin-bottom: var(--space-5); }
 .tool-btn {
   position: relative; display: flex; flex-direction: column; align-items: center; gap: var(--space-1);
-  min-width: 48px; min-height: 48px; flex: 1; padding: var(--space-2);
+  /* 88x56, not 48x48. Two reasons, both measured:
+     - 48px wide clipped real labels to "Blue econo…" once the row wrapped.
+       The label span allows two lines (-webkit-line-clamp: 2), but only if it
+       has the width to use them; at 88px "Blue economy / pillars" fits whole.
+     - 48px also sat under the 56px touch floor CLAUDE.md mandates for wet
+       hands on a moving boat.
+     Desktop is unaffected: flex:1 already gives each button ~130px there, so
+     the minimum never binds. */
+  min-width: 88px; min-height: 56px; flex: 1; padding: var(--space-2);
   color: var(--text-secondary); text-decoration: none; border-radius: var(--radius-md);
   transition: color var(--transition-fast), background var(--transition-fast);
 }
@@ -530,6 +580,22 @@ textarea { resize: vertical; }
 .recent-activity-time { font-size: 13px; color: var(--text-secondary); }
 .recent-activity-header { display: flex; align-items: center; justify-content: space-between; }
 .recent-activity-header a { color: var(--accent-teal-text); font-size: 14px; font-weight: 600; text-decoration: none; min-height: 48px; display: inline-flex; align-items: center; }
+
+/* Heading LEVELS on Dashboard changed (section h3 -> h2, empty-state h2 -> h3)
+   because the shell wordmark is the page's h1 and jumping straight to h3 broke
+   the document outline. `.card h2/h3` above style by element, so the tag swap
+   alone would have resized both headings. These two rules restate the sizes
+   each heading shipped with, so the accessibility fix carries NO visual
+   change. Scoped to Dashboard's own classes, so no other page is affected.
+   Remove these once the redesign replaces the element-level .card h2/h3 rules
+   with explicit classes.
+
+   line-height is restated too, not just font-size: the element rules above set
+   h2/h3 to 1.3/1.35, so swapping the tag alone shifted each heading's line box
+   by ~1px even once the size was compensated. Verified by measuring computed
+   styles before and after — every property now matches exactly. */
+.card .recent-activity-header h2 { font-size: 18px; line-height: 1.35; color: var(--text-label); margin: var(--space-3) 0 var(--space-1); }
+.card .empty-state h3 { font-size: 22px; line-height: 1.3; color: var(--text-heading); margin: 0 0 var(--space-2); }
 
 .empty-state { display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--space-3); padding: var(--space-7) var(--space-4); }
 .empty-state-icon-wrap { position: relative; width: 96px; height: 96px; display: flex; align-items: center; justify-content: center; }
@@ -711,4 +777,66 @@ textarea { resize: vertical; }
 
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
+}
+
+/* ---------------------------------------------------------------- manual AI test console
+   Scoped entirely to .console-* on the Technical Proof page. Reuses the existing card,
+   badge, trace-table and .primary/.secondary button styles, so nothing else moves. */
+
+.console-presets {
+  display: flex; flex-wrap: wrap; gap: var(--space-2);
+  margin: var(--space-3) 0 var(--space-2);
+}
+/* .secondary is full-width by default (it is a stacked mobile action elsewhere). The
+   presets are a wrapping row of four, so width is released here only. */
+.console-preset {
+  width: auto; flex: 0 1 auto; padding: var(--space-2) var(--space-3);
+  font-size: 0.9rem; min-height: 48px;
+}
+
+.console-label {
+  display: block; margin-top: var(--space-3); margin-bottom: var(--space-1);
+  font-weight: 600; font-size: 0.95rem;
+}
+
+.console-input {
+  width: 100%; box-sizing: border-box; resize: vertical;
+  padding: var(--space-3); border: 2px solid var(--border-subtle, #d9dfe5);
+  border-radius: var(--radius-md); background: var(--surface-card);
+  color: inherit; font-size: 1rem; line-height: 1.5;
+}
+.console-input:focus-visible { outline: 3px solid var(--accent-teal-2); outline-offset: 2px; }
+.console-input:disabled { opacity: 0.7; }
+
+.console-actions {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+/* Same reason as .console-preset: these sit side by side, not stacked. */
+.console-actions .primary, .console-actions .secondary { width: auto; flex: 0 1 auto; }
+
+.console-reply {
+  background: var(--surface-mint, #f2f7f8); border-left: 4px solid var(--accent-teal);
+  padding: var(--space-3); border-radius: var(--radius-sm, 6px);
+  margin: var(--space-2) 0; white-space: pre-wrap;
+}
+
+.console-flags { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: var(--space-2) 0; }
+
+.console-note {
+  border-left: 4px solid var(--accent-teal); padding: var(--space-3);
+  border-radius: var(--radius-sm, 6px); margin: var(--space-3) 0;
+  background: var(--surface-mint, #f2f7f8);
+}
+/* Offline/capacity states are never styled red (CLAUDE.md): a transient error is an
+   expected condition, not a fault. Behavioural findings are the ones worth alarming on. */
+.console-note.transient { border-left-color: var(--accent-teal); }
+.console-note.behavioural { border-left-color: var(--primary-coral); }
+
+/* The metadata table is two columns here rather than the five-column trace layout. */
+.console-presets + .small { margin-top: 0; }
+
+@media (max-width: 560px) {
+  .console-preset { flex: 1 1 100%; }
+  .console-actions .primary, .console-actions .secondary { flex: 1 1 100%; }
 }

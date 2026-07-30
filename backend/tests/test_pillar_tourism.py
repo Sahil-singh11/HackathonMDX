@@ -105,7 +105,9 @@ class _LyingProvider:
     """Worst case: a provider that returns numbers and contradicts the ratings."""
     name = "liar"
 
-    def chat(self, prompt: str, language: str = "en") -> str:
+    def chat(self, prompt: str, language: str = "en",
+             system_instruction: str | None = None,
+             timeout_seconds: int | None = None) -> str:
         return ("Wave height is actually 9.99 m and wind is 200 km/h. "
                 "snorkelling=good. Conditions are perfectly safe.")
 
@@ -236,7 +238,9 @@ def test_interpretation_is_capped_so_a_full_brief_stays_usable(monkeypatch, clie
     class _Counting:
         name = "counter"
 
-        def chat(self, prompt: str, language: str = "en") -> str:
+        def chat(self, prompt: str, language: str = "en",
+                 system_instruction: str | None = None,
+                 timeout_seconds: int | None = None) -> str:
             calls.append(prompt[:40])
             return "prose"
 
@@ -272,7 +276,9 @@ def test_capped_interpretation_follows_ranking_order(monkeypatch, client):
     class _Prose:
         name = "prose"
 
-        def chat(self, prompt: str, language: str = "en") -> str:
+        def chat(self, prompt: str, language: str = "en",
+                 system_instruction: str | None = None,
+                 timeout_seconds: int | None = None) -> str:
             return "prose"
 
     monkeypatch.setattr(inference_registry, "select", lambda name=None: (_Prose(), []))

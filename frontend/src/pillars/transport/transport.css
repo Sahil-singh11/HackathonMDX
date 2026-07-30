@@ -1,0 +1,95 @@
+/* Marine Transport & Trade surface. Semantic tokens only, no hex literals —
+   the other pillar stylesheets hold that line at zero and this one matches. */
+
+.tpt { display: grid; gap: var(--sp-4); }
+/* Grid items default to min-width:auto and refuse to shrink below their own
+   min-content, so one unbreakable string (a long coverage note, an ETA cell)
+   made every child 492px wide inside a 390px viewport and overflowed the page
+   by 118px. Same trap as .lk-onboard__inner in onboarding.css. */
+.tpt > * { min-width: 0; }
+
+/* ------------------------------------------------------------------ chart */
+.tpt-chart {
+  margin: var(--sp-4) 0 var(--sp-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  overflow: hidden;
+  background: var(--surface-sunken);
+  /* The canvas is aria-hidden decoration; it must never intercept a tap meant
+     for the table below it. */
+  pointer-events: none;
+}
+.tpt-chart canvas { display: block; }
+
+/* The legend carries the one claim the chart must not overstate (ranges are
+   true, bearings are not reported), so it gets a real border rather than
+   sitting as quiet grey text a viewer can skim past. */
+.tpt-legend {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-2) var(--sp-3);
+  border-left: 3px solid var(--border-strong);
+  color: var(--text-muted);
+  background: var(--surface-sunken);
+  border-radius: 0 var(--r-input) var(--r-input) 0;
+}
+
+.tpt-patience { color: var(--text-muted); margin-top: var(--sp-3); }
+
+/* ---------------------------------------------------------------- tallies */
+.tpt-tally {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+
+.tpt-note { color: var(--text-muted); margin: var(--sp-2) 0 0; }
+
+/* A position-only AIS contact. Italic + explicit wording, never a blank cell:
+   an empty name would read as a data glitch rather than a real unknown. */
+.tpt-unknown { font-style: italic; color: var(--text-muted); }
+
+/* ------------------------------------------------------------- conditions */
+.tpt-conditions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--sp-3);
+}
+.tpt-conditions > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tpt-cond-label {
+  font-size: calc(var(--fs-sm) * var(--text-scale));
+  color: var(--text-muted);
+}
+
+/* -------------------------------------------------------------- narrative */
+.tpt-narrative {
+  margin: var(--sp-3) 0 0;
+  line-height: var(--lh-body);
+  /* Model prose is the one place on this page where text can run long, so it
+     gets a comfortable measure rather than the full card width. */
+  max-width: 68ch;
+}
+
+.tpt-risk-head {
+  margin: var(--sp-4) 0 0;
+  font-size: calc(var(--fs-base) * var(--text-scale));
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.tpt-fallback-why { margin-top: var(--sp-2); }
+
+.tpt-scope { margin-top: var(--sp-4); }
+
+/* ========================================================= Sunlight theme
+   No canvas is rendered at all in this theme (handled in ApproachChart), and
+   flat hard edges replace the tinted panels. */
+[data-theme='sunlight'] .tpt-legend,
+[data-theme='sunlight'] .tpt-chart {
+  background: var(--surface);
+  border-color: var(--border);
+}
+[data-theme='sunlight'] .tpt-legend { border-left-width: 4px; }
+
+.tpt-source-why { margin-top: var(--sp-2); }

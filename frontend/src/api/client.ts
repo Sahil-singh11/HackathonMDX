@@ -1,6 +1,8 @@
 /* Thin API client. The frontend never sees any API key — everything is server-side. */
 import { RateLimitError, emitRateLimited } from '../lib/httpError'
+import { apiUrl } from './base'
 import type { PillarProbe, PillarResult, PillarsResponse } from '../pillars/types'
+import type { ArrivalsBrief } from '../pillars/transport/types'
 
 export interface PublicConfig {
   app: string
@@ -40,6 +42,29 @@ export interface AnalyseResponse {
   function_trace: import('../store/app').FunctionTraceEntry[]
   provider: import('../store/app').ProviderInfo
   limitations: string[]
+}
+
+/** Manual AI test console result. A narrow, safe projection of the production
+ *  pipeline — deliberately carries no argument values, no prompt, no reasoning. */
+export interface ConsoleResult {
+  final_response: string
+  reply_morisyen: string
+  intent: string
+  provider: string
+  model: string
+  real_inference: boolean
+  latency_ms: number
+  selected_function: string | null
+  functions_called: string[]
+  argument_names: string[]
+  tool_round_trip_completed: boolean
+  schema_valid: boolean
+  safety_flags: Record<string, boolean>
+  mock_used: boolean
+  mock_label: string
+  disclosures: string[]
+  function_trace: import('../store/app').FunctionTraceEntry[]
+  controlled_error: { kind: 'transient' | 'behavioural'; message: string } | null
 }
 
 export interface LegalCheck {
@@ -201,27 +226,36 @@ async function jsonOrThrow<T>(res: Response): Promise<T> {
  *              submitDeclaration, verifyCertificate, verifyLedger
  */
 export const api = {
-  analyse(form: FormData): Promise<AnalyseResponse> {
-    return fetch('/api/analyse-catch', { method: 'POST', body: form }).then((r) => jsonOrThrow<AnalyseResponse>(r))
+  /** Manual AI test console (Technical Proof page). Runs one free-text prompt through the
+   *  SAME production inference path as `analyse` and returns only safe metadata — no key,
+   *  no prompt text, no reasoning, argument names only. */
+  aiTestConsole(prompt: string, language: 'en' | 'mfe'): Promise<ConsoleResult> {
+    return fetch(apiUrl('/api/ai/test-console'), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, language }),
+    }).then((r) => jsonOrThrow<ConsoleResult>(r))
   },
-  catches: () => fetch('/api/catches').then((r) => jsonOrThrow<{ catches: Record<string, unknown>[] }>(r)),
-  config: () => fetch('/api/config/public').then((r) => jsonOrThrow<PublicConfig>(r)),
+  analyse(form: FormData): Promise<AnalyseResponse> {
+    return fetch(apiUrl('/api/analyse-catch'), { method: 'POST', body: form }).then((r) => jsonOrThrow<AnalyseResponse>(r))
+  },
+  catches: () => fetch(apiUrl('/api/catches')).then((r) => jsonOrThrow<{ catches: Record<string, unknown>[] }>(r)),
+  config: () => fetch(apiUrl('/api/config/public')).then((r) => jsonOrThrow<PublicConfig>(r)),
   confirm(analysisId: string, body: Record<string, unknown>): Promise<ConfirmResponse> {
-    return fetch(`/api/analyses/${analysisId}/confirm`, {
+    return fetch(apiUrl(`/api/analyses/${analysisId}/confirm`), {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
     }).then((r) => jsonOrThrow<ConfirmResponse>(r))
   },
   createCatch(body: Record<string, unknown>): Promise<ConfirmResponse> {
-    return fetch('/api/catches', {
+    return fetch(apiUrl('/api/catches'), {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
     }).then((r) => jsonOrThrow<ConfirmResponse>(r))
   },
-  demoReset: () => fetch('/api/demo/reset', { method: 'POST' }).then((r) => jsonOrThrow<Record<string, unknown>>(r)),
+  demoReset: () => fetch(apiUrl('/api/demo/reset'), { method: 'POST' }).then((r) => jsonOrThrow<Record<string, unknown>>(r)),
 
   /** Wave/wind resource indication. Figures are computed server-side in Python. */
   energyResource: (siteIds?: string[]) => {
     const qs = siteIds?.length ? `?site_ids=${siteIds.join(',')}` : ''
-    return fetch(`/api/pillars/energy/resource${qs}`)
+    return fetch(apiUrl(`/api/pillars/energy/resource${qs}`))
       .then((r) => jsonOrThrow<Record<string, unknown>>(r))
   },
 
@@ -231,29 +265,29 @@ export const api = {
     const form = new FormData()
     if (params.sampleId) form.append('sample_id', params.sampleId)
     if (params.file) form.append('document', params.file)
-    return fetch('/api/pillars/finance/analyse', { method: 'POST', body: form })
+    return fetch(apiUrl('/api/pillars/finance/analyse'), { method: 'POST', body: form })
       .then((r) => jsonOrThrow<FinanceResult>(r))
   },
   financeCriteria: () =>
-    fetch('/api/pillars/finance/criteria').then((r) => jsonOrThrow<{ criteria: Record<string, unknown>[] }>(r)),
+    fetch(apiUrl('/api/pillars/finance/criteria')).then((r) => jsonOrThrow<{ criteria: Record<string, unknown>[] }>(r)),
   financeSamples: () =>
-    fetch('/api/pillars/finance/samples').then((r) => jsonOrThrow<{ samples: FinanceSample[] }>(r)),
+    fetch(apiUrl('/api/pillars/finance/samples')).then((r) => jsonOrThrow<{ samples: FinanceSample[] }>(r)),
 
   getSubmission: (declarationId: string) =>
-    fetch(`/api/submissions/${declarationId}`).then((r) => jsonOrThrow<Record<string, unknown>>(r)),
+    fetch(apiUrl(`/api/submissions/${declarationId}`)).then((r) => jsonOrThrow<Record<string, unknown>>(r)),
 
   /** Officer view. Walks the whole hash chain; use for the ledger inspector. */
   ledger: (limit = 200) =>
-    fetch(`/api/ledger?limit=${limit}`).then((r) => jsonOrThrow<LedgerChain>(r)),
+    fetch(apiUrl(`/api/ledger?limit=${limit}`)).then((r) => jsonOrThrow<LedgerChain>(r)),
 
   listSubmissions: () =>
-    fetch('/api/submissions').then((r) => jsonOrThrow<{ submissions: SubmissionSummary[]; count: number; mock_label: string }>(r)),
+    fetch(apiUrl('/api/submissions')).then((r) => jsonOrThrow<{ submissions: SubmissionSummary[]; count: number; mock_label: string }>(r)),
 
-  marine: () => fetch('/api/marine-conditions').then((r) => jsonOrThrow<Record<string, unknown>>(r)),
+  marine: () => fetch(apiUrl('/api/marine-conditions')).then((r) => jsonOrThrow<Record<string, unknown>>(r)),
   mockSubmit(declarationId: string) {
     const form = new FormData()
     form.append('declaration_id', declarationId)
-    return fetch('/api/declarations/mock-submit', { method: 'POST', body: form }).then((r) => jsonOrThrow<Record<string, unknown>>(r))
+    return fetch(apiUrl('/api/declarations/mock-submit'), { method: 'POST', body: form }).then((r) => jsonOrThrow<Record<string, unknown>>(r))
   },
   /**
    * Cheap data-source probe for one pillar (fetch() only, no inference).
@@ -261,26 +295,26 @@ export const api = {
    * convention — callers must render that absence, never guess a data_kind.
    */
   pillarProvenance: (pillarId: string) =>
-    fetch(`/api/pillars/${pillarId}/provenance`).then((r) => jsonOrThrow<PillarProbe>(r)),
+    fetch(apiUrl(`/api/pillars/${pillarId}/provenance`)).then((r) => jsonOrThrow<PillarProbe>(r)),
 
   /** All six blue-economy pillars with their real registry state (Task 4a). */
-  pillars: () => fetch('/api/pillars').then((r) => jsonOrThrow<PillarsResponse>(r)),
+  pillars: () => fetch(apiUrl('/api/pillars')).then((r) => jsonOrThrow<PillarsResponse>(r)),
 
   prepareDeclaration(data: Record<string, string>) {
     const form = new FormData()
     Object.entries(data).forEach(([k, v]) => form.append(k, v))
-    return fetch('/api/declarations/prepare', { method: 'POST', body: form }).then((r) => jsonOrThrow<Record<string, unknown>>(r))
+    return fetch(apiUrl('/api/declarations/prepare'), { method: 'POST', body: form }).then((r) => jsonOrThrow<Record<string, unknown>>(r))
   },
-  processSync: () => fetch('/api/sync/process', { method: 'POST' }).then((r) => jsonOrThrow<Record<string, unknown>>(r)),
-  providerStatus: () => fetch('/api/provider/status').then((r) => jsonOrThrow<Record<string, unknown>>(r)),
-  reportToday: () => fetch('/api/reports/today').then((r) => jsonOrThrow<Record<string, unknown>>(r)),
-  rulesStatic: () => fetch('/api/rules/static').then((r) => jsonOrThrow<StaticRules>(r)),
+  processSync: () => fetch(apiUrl('/api/sync/process'), { method: 'POST' }).then((r) => jsonOrThrow<Record<string, unknown>>(r)),
+  providerStatus: () => fetch(apiUrl('/api/provider/status')).then((r) => jsonOrThrow<Record<string, unknown>>(r)),
+  reportToday: () => fetch(apiUrl('/api/reports/today')).then((r) => jsonOrThrow<Record<string, unknown>>(r)),
+  rulesStatic: () => fetch(apiUrl('/api/rules/static')).then((r) => jsonOrThrow<StaticRules>(r)),
   setDemoDate(date: string) {
     const form = new FormData()
     form.append('simulated_date', date)
-    return fetch('/api/demo/set-date', { method: 'POST', body: form }).then((r) => jsonOrThrow<Record<string, unknown>>(r))
+    return fetch(apiUrl('/api/demo/set-date'), { method: 'POST', body: form }).then((r) => jsonOrThrow<Record<string, unknown>>(r))
   },
-  species: () => fetch('/api/species').then((r) => jsonOrThrow<{ species: SpeciesCandidate[] }>(r)),
+  species: () => fetch(apiUrl('/api/species')).then((r) => jsonOrThrow<{ species: SpeciesCandidate[] }>(r)),
 
   /**
    * TODO(Shirish): named slot for the /declaration rebuild. Currently delegates
@@ -291,7 +325,7 @@ export const api = {
     return api.mockSubmit(declarationId)
   },
 
-  syncQueue: () => fetch('/api/sync/queue').then((r) => jsonOrThrow<{ items: Record<string, unknown>[]; queued: number }>(r)),
+  syncQueue: () => fetch(apiUrl('/api/sync/queue')).then((r) => jsonOrThrow<{ items: Record<string, unknown>[]; queued: number }>(r)),
 
   /** Public, no auth. Backs /verify/:id. Render status AND scope_note. */
   /** Condition briefs. `activity` ranks sites on FORECAST CONDITIONS only. */
@@ -300,16 +334,28 @@ export const api = {
     if (params.siteIds?.length) q.set('site_ids', params.siteIds.join(','))
     if (params.activity) q.set('activity', params.activity)
     const qs = q.toString()
-    return fetch(`/api/pillars/tourism/brief${qs ? `?${qs}` : ''}`)
+    return fetch(apiUrl(`/api/pillars/tourism/brief${qs ? `?${qs}` : ''}`))
       .then((r) => jsonOrThrow<Record<string, unknown>>(r))
   },
   tourismSites: () =>
-    fetch('/api/pillars/tourism/sites').then((r) => jsonOrThrow<Record<string, unknown>>(r)),
+    fetch(apiUrl('/api/pillars/tourism/sites')).then((r) => jsonOrThrow<Record<string, unknown>>(r)),
+
+  /**
+   * Port Louis arrivals brief. Counts, ETAs and ordering are deterministic;
+   * `narrative` / `risk_reasoning` are model prose ABOUT those numbers and are
+   * never parsed back into data — read `narrative_source` to know which of the
+   * two actually served, and render that distinction.
+   *
+   * Can legitimately take up to ~60 s: the narrative step waits on hosted
+   * Gemma before the backend falls back. Callers should not retry on timeout.
+   */
+  transportArrivals: () =>
+    fetch(apiUrl('/api/pillars/transport/arrivals')).then((r) => jsonOrThrow<ArrivalsBrief>(r)),
 
   verifyCertificate: (recordId: string) =>
-    fetch(`/api/verify/${recordId}`).then((r) => jsonOrThrow<CertificateVerification>(r)),
+    fetch(apiUrl(`/api/verify/${recordId}`)).then((r) => jsonOrThrow<CertificateVerification>(r)),
 
   /** Chain integrity. Reports the FIRST broken record, or intact. */
   verifyLedger: () =>
-    fetch('/api/ledger/verify').then((r) => jsonOrThrow<LedgerVerification>(r)),
+    fetch(apiUrl('/api/ledger/verify')).then((r) => jsonOrThrow<LedgerVerification>(r)),
 }

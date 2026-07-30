@@ -1,0 +1,306 @@
+{
+  "run_at": "2026-07-29T23:59:38.626296+00:00",
+  "base_url": "http://127.0.0.1:8020",
+  "provider_mode": "hosted",
+  "flows_passed": 7,
+  "flows_total": 7,
+  "browser_automated": false,
+  "note_fallback": "a hosted 503 that falls back to the DISCLOSED mock is the designed safety behaviour and is recorded as degraded, not failed; a mock without disclosure fails",
+  "note": "API layer automated end-to-end. Browser RENDERING of these flows is not automated — see docs/AI_USER_TEST_GUIDE.md for the exact manual steps.",
+  "flows": [
+    {
+      "flow": "preflight",
+      "description": "API reachable, production model reported",
+      "steps": [
+        {
+          "step": "health endpoint",
+          "ok": true,
+          "detail": "{'status': 'ok', 'service': 'lamer-konekte'}"
+        },
+        {
+          "step": "provider status reachable",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "step": "production model reported",
+          "ok": true,
+          "detail": "gemma-4-26b-a4b-it"
+        },
+        {
+          "step": "hosted configured (real inference possible)",
+          "ok": true,
+          "detail": "True"
+        },
+        {
+          "step": "capability surface exposed",
+          "ok": true,
+          "detail": "additive field from the Step-2 provider work"
+        },
+        {
+          "step": "mock labelled simulated",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "step": "no secret in status payload",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "passed": true
+    },
+    {
+      "flow": "A_marine_conditions",
+      "description": "Morisyen -> Gemma function selection -> validated args -> real Open-Meteo -> disclaimer",
+      "steps": [
+        {
+          "step": "request accepted",
+          "ok": true,
+          "detail": "27ee8135"
+        },
+        {
+          "step": "inference real OR disclosed fallback (never silent mock)",
+          "ok": true,
+          "detail": "real · mode=hosted model=gemma-4-26b-a4b-it"
+        },
+        {
+          "step": "production model reported when real",
+          "ok": true,
+          "detail": "gemma-4-26b-a4b-it"
+        },
+        {
+          "step": "get_marine_conditions selected",
+          "ok": true,
+          "detail": "['get_marine_conditions']"
+        },
+        {
+          "step": "arguments validated (no invalid_arguments)",
+          "ok": true,
+          "detail": "['ok']"
+        },
+        {
+          "step": "argument names only in trace (no coordinate values)",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "step": "marine disclaimer present in limitations",
+          "ok": true,
+          "detail": "Lamer Konekte provides AI-assisted catch documentation and informational guidanc"
+        },
+        {
+          "step": "no safety guarantee",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "step": "latency recorded (16342 ms)",
+          "ok": true,
+          "detail": "13140"
+        }
+      ],
+      "passed": true
+    },
+    {
+      "flow": "B_catch_analysis",
+      "description": "image -> quality gate -> candidates -> Gemma -> suggestion + mandatory confirmation",
+      "steps": [
+        {
+          "step": "image accepted by quality gate",
+          "ok": true,
+          "detail": "acceptable"
+        },
+        {
+          "step": "inference real OR disclosed fallback (never silent mock)",
+          "ok": true,
+          "detail": "real · mode=hosted model=gemma-4-26b-a4b-it"
+        },
+        {
+          "step": "species suggestion constrained or null",
+          "ok": true,
+          "detail": "epinephelus_merra"
+        },
+        {
+          "step": "species_confirmation_required = true",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "step": "measured_size_required = true",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "step": "legal check still pending (no premature decision)",
+          "ok": true,
+          "detail": "pending_confirmation"
+        },
+        {
+          "step": "no authoritative identification",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "step": "no legality statement",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "passed": true
+    },
+    {
+      "flow": "C_confirmed_catch",
+      "description": "confirmed species + measured length -> deterministic rules -> recorded",
+      "steps": [
+        {
+          "step": "confirmation accepted",
+          "ok": true,
+          "detail": "c8f644e4-6a6a-4788-b9db-62f6c860b97a"
+        },
+        {
+          "step": "deterministic rule engine returned a status",
+          "ok": true,
+          "detail": "unknown"
+        },
+        {
+          "step": "rule carries source attribution",
+          "ok": true,
+          "detail": "S1"
+        },
+        {
+          "step": "measured length recorded",
+          "ok": true,
+          "detail": "45.0"
+        },
+        {
+          "step": "catch persisted",
+          "ok": true,
+          "detail": "octopus_cyanea"
+        }
+      ],
+      "passed": true
+    },
+    {
+      "flow": "D_declaration",
+      "description": "prepare -> PDF -> clearly labelled MOCK submission + receipt",
+      "steps": [
+        {
+          "step": "declaration prepared",
+          "ok": true,
+          "detail": "7fcf6f69-4c41-440e-9f78-a191034038d1"
+        },
+        {
+          "step": "prepare labelled MOCK",
+          "ok": true,
+          "detail": "MOCK DEMONSTRATION — NOT AN OFFICIAL GOVERNMENT SUBMISSION"
+        },
+        {
+          "step": "PDF generated",
+          "ok": true,
+          "detail": "200, 1642 bytes"
+        },
+        {
+          "step": "submission labelled MOCK",
+          "ok": true,
+          "detail": "MOCK DEMONSTRATION — NOT AN OFFICIAL GOVERNMENT SUBMISSION"
+        },
+        {
+          "step": "mock receipt issued",
+          "ok": true,
+          "detail": "MOCK-20260730-CEB7A4"
+        },
+        {
+          "step": "explicitly states no official system was contacted",
+          "ok": true,
+          "detail": "This is a demonstration receipt. No official government system was con"
+        }
+      ],
+      "passed": true
+    },
+    {
+      "flow": "E_offline_queue",
+      "description": "queue -> visible -> sync -> duplicate prevented",
+      "steps": [
+        {
+          "step": "operation queued while offline",
+          "ok": true,
+          "detail": "3b091d97-8891-4d1a-858e-8db8a4b07b9e"
+        },
+        {
+          "step": "queue visible to the user",
+          "ok": true,
+          "detail": "4 item(s), queued=1"
+        },
+        {
+          "step": "sync applied the queued item",
+          "ok": true,
+          "detail": "{'processed': 1, 'failed': 0}"
+        },
+        {
+          "step": "second sync is a no-op (no duplicate application)",
+          "ok": true,
+          "detail": "{'processed': 0, 'failed': 0}"
+        }
+      ],
+      "passed": true
+    },
+    {
+      "flow": "F_technical_proof",
+      "description": "trace exposes provider/model/real_inference/function/latency/safety, redacted",
+      "steps": [
+        {
+          "step": "provider reported",
+          "ok": true,
+          "detail": "google-genai"
+        },
+        {
+          "step": "exact model reported",
+          "ok": true,
+          "detail": "gemma-4-26b-a4b-it"
+        },
+        {
+          "step": "real_inference flag present and honest",
+          "ok": true,
+          "detail": "True (real)"
+        },
+        {
+          "step": "latency present",
+          "ok": true,
+          "detail": "11812"
+        },
+        {
+          "step": "function trace with names + status",
+          "ok": true,
+          "detail": "['get_marine_conditions']"
+        },
+        {
+          "step": "argument validation status in trace",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "step": "safety metadata present",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "step": "limitations disclosed",
+          "ok": true,
+          "detail": "1"
+        },
+        {
+          "step": "no secret in trace payload",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "step": "internal diagnostics NOT exposed",
+          "ok": true,
+          "detail": ""
+        }
+      ],
+      "passed": true
+    }
+  ]
+}

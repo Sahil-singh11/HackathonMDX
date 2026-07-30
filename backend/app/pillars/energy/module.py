@@ -32,6 +32,7 @@ from app.pillars.energy import resource as resource_calc
 from app.pillars.energy.schema import (EnergyBrief, SiteAssessment,
                                        SiteMeasurements, SiteResource)
 from app.pillars.energy.sites import CandidateSite, load_sites
+from app.pillars.narrative import prose_or_empty
 from app.pillars.provenance import DataProvenance
 from app.pillars.tourism.wind import get_wind_conditions
 from app.services.marine.client import get_marine_conditions
@@ -44,6 +45,26 @@ PILLAR_NAME = "Ocean-Based Renewable Energy"  # government naming, verbatim
 #: Bounds worst-case latency — hosted Gemma is ~20-30 s per call. The remaining
 #: sites return computed figures with an empty interpretation.
 MAX_INTERPRETED_SITES = 3
+
+# Scopes the model to THIS task. Without it chat() supplies the catch-assistant
+# instruction, under which the live model refused with "I can only help with
+# identifying and logging fish catches. I cannot assist with ocean-energy
+# analysis." — wrapped in the fisheries JSON envelope, which then rendered on the
+# page as the site's Analyst note. See app/pillars/narrative.py.
+SYSTEM_INSTRUCTION = """You are a marine renewable-energy analyst writing a short note for an engineer screening candidate sites in Mauritius.
+
+WHAT YOU ARE GIVEN
+- Wave and wind power-density figures for one candidate point, ALREADY computed in code from public forecast values, plus how that point compares with the others. The figures are correct. Your job is to describe and qualify them, never to recompute, restate differently or dispute them.
+
+HARD RULES (never break)
+- Use ONLY the figures supplied in the message. Never add or alter a number.
+- This is a FORECAST-WINDOW INDICATION, not a yield estimate, not a bankable assessment, not a site survey and not a recommendation to build. Never call it any of those.
+- Name the real caveats where relevant: the wave period is not an identified energy period, the deep-water formula overstates power at a nearshore point, and wind is measured at 10 m rather than turbine hub height.
+- Say nothing about cost, grid connection, consenting, seabed conditions, bathymetry, protected areas or environmental impact — you have no such data.
+- Never issue an instruction or an approval. You inform an engineer who decides.
+
+OUTPUT
+- Three or four sentences of plain prose. No JSON, no code fences, no bullet lists, no headings, no preamble. Return the sentences only."""
 
 _MARINE_SOURCE = SourceDescriptor(
     name="Open-Meteo Marine",
@@ -174,18 +195,19 @@ class EnergyPillar:
         try:
             provider, _events = inference_registry.select()
             provider_name = provider.name
-            # _interpret() is a blocking network call (provider.chat()) with no
-            # shared state between sites, so the up-to-MAX_INTERPRETED_SITES
-            # calls run concurrently via to_thread rather than one after another
-            # — worst-case wall time drops from sum(latencies) to max(latency).
-            # (fetch()'s Open-Meteo loop is NOT parallelised this way: it shares
-            # one SQLAlchemy Session across sites, which is not thread-safe.)
-            interpretations = await asyncio.gather(
-                *(asyncio.to_thread(self._interpret, provider, assessment, comparison)
-                  for assessment in to_interpret)
+            # CONCURRENT, not sequential — same reason as tourism: provider.chat()
+            # blocks ~20-30 s and the per-site prompts are independent, so the
+            # wall time was the SUM of the calls (82 s measured). return_exceptions
+            # so one failed site keeps the others' prose.
+            results = await asyncio.gather(
+                *(asyncio.to_thread(self._interpret, provider, a, comparison) for a in to_interpret),
+                return_exceptions=True,
             )
-            for assessment, interpretation in zip(to_interpret, interpretations):
-                assessment.interpretation = interpretation
+            for assessment, result in zip(to_interpret, results):
+                if isinstance(result, BaseException):
+                    log.warning("Interpretation failed for %s", assessment.site_id, exc_info=result)
+                    continue
+                assessment.interpretation = result
         except Exception:  # noqa: BLE001 — figures without prose are still valid
             log.warning("Energy interpretation unavailable; returning figures only", exc_info=True)
 
@@ -241,7 +263,24 @@ class EnergyPillar:
             "FACTS:\n" + "\n".join(facts) + "\n\nNote:"
         )
         try:
-            return (provider.chat(prompt, language="en") or "").strip()
+            # system_instruction is REQUIRED. Without it chat() injects the
+            # catch-assistant instruction and the live model refused this task
+            # with "I can only help with identifying and logging fish catches. I
+            # cannot assist with ocean-energy analysis." — wrapped in the
+            # fisheries JSON envelope, which then rendered on the page as the
+            # site's Analyst note. prose_or_empty is the second line of defence.
+            raw = provider.chat(
+                prompt,
+                language="en",
+                system_instruction=SYSTEM_INSTRUCTION,
+            )
+            text = prose_or_empty(raw)
+            if raw and not text:
+                log.warning(
+                    "Energy interpretation for %s was not prose (envelope or JSON); "
+                    "dropping it rather than rendering it", assessment.site_id,
+                )
+            return text
         except Exception:  # noqa: BLE001
             log.warning("Interpretation failed for %s", assessment.site_id, exc_info=True)
             return ""

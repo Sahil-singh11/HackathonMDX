@@ -1,0 +1,132 @@
+{
+  "run_at": "2026-07-30T00:26:19.987318+00:00",
+  "base_url": "https://lamer-konekte.onrender.com",
+  "reachable": true,
+  "wake_ms": 1391,
+  "passed": 24,
+  "failed": 0,
+  "skipped": 0,
+  "checks": [
+    {
+      "check": "deployment reachable (after cold start)",
+      "ok": true,
+      "detail": "1391 ms to first 200"
+    },
+    {
+      "check": "health endpoint 200",
+      "ok": true,
+      "detail": "{\"status\":\"ok\",\"service\":\"lamer-konekte\"}"
+    },
+    {
+      "check": "homepage responds",
+      "ok": true,
+      "detail": "200, 809 bytes"
+    },
+    {
+      "check": "homepage is the PWA (not a stack trace)",
+      "ok": true,
+      "detail": "branded HTML served"
+    },
+    {
+      "check": "provider-status endpoint responds",
+      "ok": true,
+      "detail": "200"
+    },
+    {
+      "check": "production model reported",
+      "ok": true,
+      "detail": "gemma-4-26b-a4b-it"
+    },
+    {
+      "check": "hosted configured on the server (key present remotely)",
+      "ok": true,
+      "detail": "True"
+    },
+    {
+      "check": "default provider mode is hosted",
+      "ok": true,
+      "detail": "hosted"
+    },
+    {
+      "check": "mock is labelled simulated (not shown as real)",
+      "ok": true,
+      "detail": "capability surface present"
+    },
+    {
+      "check": "experimental E2B not enabled/advertised",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "no secret in status response",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "frozen API contract present",
+      "ok": true,
+      "detail": "25 paths"
+    },
+    {
+      "check": "no adapter/router endpoint exposed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "CORS configured for the frontend",
+      "ok": true,
+      "detail": "status=400 allow-origin=None"
+    },
+    {
+      "check": "no debug stack trace on error",
+      "ok": true,
+      "detail": "404, 34 bytes"
+    },
+    {
+      "check": "live Morisyen marine request succeeded",
+      "ok": true,
+      "detail": "10843 ms"
+    },
+    {
+      "check": "marine function selected",
+      "ok": true,
+      "detail": "['get_marine_conditions']"
+    },
+    {
+      "check": "real inference OR disclosed fallback",
+      "ok": true,
+      "detail": "real=False disclosed=True"
+    },
+    {
+      "check": "no secret in analysis response",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "internal diagnostics redacted",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "live image request succeeded",
+      "ok": true,
+      "detail": "1421 ms, quality=acceptable"
+    },
+    {
+      "check": "species confirmation still required",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "no premature legal decision",
+      "ok": true,
+      "detail": "pending_confirmation"
+    },
+    {
+      "check": "mock declaration prepare labelled MOCK",
+      "ok": true,
+      "detail": "MOCK DEMONSTRATION — NOT AN OFFICIAL GOVERNMENT SUBMISSION"
+    }
+  ],
+  "note": "free-tier instance sleeps when idle; a cold start of 30-60 s is expected and is not a failure"
+}

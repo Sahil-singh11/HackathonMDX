@@ -1,0 +1,109 @@
+/* MauritiusMap — semantic tokens only, no hex literals.
+   MapLibre's own stylesheet is imported by the component; everything here either
+   frames the map or re-skins MapLibre's controls to match the app's themes. */
+
+.lk-map {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  overflow: hidden;
+  background: var(--surface-sunken);
+}
+.lk-map__canvas { position: absolute; inset: 0; }
+
+.lk-map__failed {
+  margin: 0;
+  padding: var(--sp-4);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--warning);
+  border-radius: var(--r-input);
+  background: var(--surface-sunken);
+  color: var(--text-muted);
+  font-size: calc(var(--fs-sm) * var(--text-scale));
+}
+
+/* ------------------------------------------------- MapLibre control re-skin
+   MapLibre ships light-mode controls with hard-coded colours; untouched they
+   are a white box on a dark map in Night. Re-pointed at semantic tokens so all
+   three themes stay coherent. */
+.lk-map .maplibregl-ctrl-group {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-input);
+  box-shadow: var(--elev-1);
+}
+.lk-map .maplibregl-ctrl-group button + button { border-top: 1px solid var(--border); }
+.lk-map .maplibregl-ctrl-group button { width: 34px; height: 34px; background: transparent; }
+.lk-map .maplibregl-ctrl-group button:hover { background: var(--accent-quiet); }
+.lk-map .maplibregl-ctrl-group button:focus-visible {
+  outline: var(--focus-ring-width) solid var(--accent);
+  outline-offset: -2px;
+}
+/* The +/- glyphs are inline SVG data-URIs coloured for a light background;
+   invert them when the surface is dark so they do not vanish. */
+[data-theme='night'] .lk-map .maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+  filter: invert(1) brightness(1.6);
+}
+
+.lk-map .maplibregl-ctrl-scale {
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  border: 1px solid var(--border-strong);
+  border-top: none;
+  color: var(--text);
+  font-family: var(--font-data);
+  font-size: calc(var(--fs-xs) * var(--text-scale));
+  padding: 1px var(--sp-2);
+}
+
+/* ------------------------------------------------------------- HTML markers
+   Markers are DOM, not sprites: no glyph/sprite fetch (which would be network),
+   and the labels stay translatable and inspectable. */
+.lk-mk {
+  display: grid;
+  place-items: center;
+  cursor: default;
+}
+.lk-mk__dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--surface);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+/* Label placement. Callers alternate --below/--above on clustered markers so
+   nearby labels do not cover each other; the default (no modifier) is below. */
+.lk-mk--above { flex-direction: column-reverse; display: flex; align-items: center; }
+.lk-mk--above .lk-mk__label { margin: 0 0 2px; }
+
+.lk-mk__label {
+  margin-top: 2px;
+  padding: 1px var(--sp-1);
+  border-radius: var(--r-input);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  color: var(--text);
+  font-family: var(--font-data);
+  font-size: calc(var(--fs-xs) * var(--text-scale));
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* A marker the user has selected: bigger, ringed, and lifted above its
+   neighbours so overlapping sites can still be told apart. */
+.lk-mk--on .lk-mk__dot {
+  width: 20px; height: 20px;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.lk-mk--on .lk-mk__label { font-weight: 700; }
+
+/* Entry: markers fade and settle in once, staggered by the caller via
+   animation-delay. Never loops — a pulsing map is noise, not information. */
+@keyframes lk-mk-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.85); }
+  to   { opacity: 1; transform: none; }
+}
+.lk-mk--animate { animation: lk-mk-in 320ms var(--ease-out) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lk-mk--animate { animation: none; }
+}
+html[data-reduce-motion='on'] .lk-mk--animate { animation: none; }

@@ -18,6 +18,7 @@ import json
 import os
 import re
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -38,11 +39,50 @@ pytestmark = [
 ]
 
 
+# Google-side transients observed when this tier runs its calls back to back. These never
+# reach a behavioural assertion, so scoring them as failures would be a false alarm — but
+# swallowing them would be dishonest, hence a *bounded* retry that still raises in the end.
+_TRANSIENT = re.compile(r"\b(429|500 INTERNAL|502|503|504)\b|RESOURCE_EXHAUSTED|UNAVAILABLE"
+                        r"|DEADLINE_EXCEEDED", re.I)
+
+
+class _RetryingModels:
+    def __init__(self, models, attempts=3, delay=8.0):
+        self._models, self._attempts, self._delay = models, attempts, delay
+
+    def generate_content(self, **kw):
+        for attempt in range(self._attempts):
+            try:
+                return self._models.generate_content(**kw)
+            except Exception as exc:  # noqa: BLE001 — re-raised below unless transient
+                if attempt + 1 == self._attempts or not _TRANSIENT.search(str(exc)):
+                    raise
+                time.sleep(self._delay * (attempt + 1))
+        raise AssertionError("unreachable")
+
+    def __getattr__(self, name):
+        return getattr(self._models, name)
+
+
+class _RetryingClient:
+    def __init__(self, client):
+        self._client = client
+        self.models = _RetryingModels(client.models)
+
+    def __getattr__(self, name):
+        return getattr(self._client, name)
+
+
 @pytest.fixture(scope="module")
 def genai_client():
-    """Named to avoid shadowing conftest's `client` TestClient fixture."""
+    """Named to avoid shadowing conftest's `client` TestClient fixture.
+
+    Wrapped so a transient server error is retried rather than reported as a model or
+    safety regression. Non-transient errors (e.g. NOT_FOUND for a bogus model) pass
+    straight through, so the negative test below is unaffected.
+    """
     from google import genai
-    return genai.Client(api_key=API_KEY)
+    return _RetryingClient(genai.Client(api_key=API_KEY))
 
 
 @pytest.fixture(scope="module")

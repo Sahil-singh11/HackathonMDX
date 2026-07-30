@@ -17,7 +17,9 @@
  */
 import { useState, type ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
-import { Anchor, BookOpen, Camera, Home, Settings2, Sun, Moon, Contrast, Waves } from 'lucide-react'
+import {
+  Anchor, BookOpen, Camera, Compass, Home, Scale, Settings2, Sun, Moon, Contrast, Waves,
+} from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../../api/client'
 import { useT } from '../../i18n'
@@ -85,12 +87,36 @@ export function FisherShell({ narrow, children }: { narrow?: boolean; children: 
   const t = useT()
   const [a11yOpen, setA11yOpen] = useState(false)
 
+  // The five primary fisher tasks. These appear in BOTH the desktop side nav
+  // and the phone tab bar.
   const navItems = [
     { to: '/', end: true, icon: Home, label: t('nav.dashboard') },
     { to: '/sea', end: false, icon: Waves, label: t('nav.marine') },
     { to: '/record', end: false, icon: Camera, label: t('nav.catch') },
     { to: '/log', end: false, icon: BookOpen, label: t('nav.history') },
     { to: '/declaration', end: false, icon: Anchor, label: t('nav.declaration') },
+  ]
+
+  /**
+   * Side nav ONLY — deliberately not in the phone tab bar.
+   *
+   * /assistant (Lane B's offline rules browser) and /pillars (Lane A's blue-
+   * economy surface) shipped as routes in App.tsx with nothing linking to
+   * them, so both were reachable only by typing a URL. The nav lives in this
+   * file, which is Sahil's lane, so their owners could not have added these
+   * without crossing a lane boundary — hence the gap.
+   *
+   * They go here rather than into navItems because seven targets in a phone
+   * tab bar breaks the 56px touch floor at 360px width. Dashboard's tool grid
+   * carries them on small screens instead. How the IA should really absorb
+   * seven surfaces is a redesign decision, not one to guess at here.
+   *
+   * Labels reuse the owners' existing page-title keys rather than adding
+   * nav.* keys, so this touches no shared i18n file.
+   */
+  const secondaryNavItems = [
+    { to: '/assistant', end: false, icon: Scale, label: t('assistant.title') },
+    { to: '/pillars', end: false, icon: Compass, label: t('pillars.title') },
   ]
 
   return (
@@ -103,7 +129,7 @@ export function FisherShell({ narrow, children }: { narrow?: boolean; children: 
 
         <div className="app-body">
           <nav className="side-nav" aria-label="Main">
-            {navItems.map((item) => (
+            {[...navItems, ...secondaryNavItems].map((item) => (
               <NavLink key={item.to} to={item.to} end={item.end}
                 className={({ isActive }) => (isActive ? 'active' : '')}>
                 <item.icon size={20} aria-hidden="true" /><span>{item.label}</span>
