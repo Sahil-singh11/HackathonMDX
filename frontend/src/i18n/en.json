@@ -123,7 +123,7 @@
   "history.empty": "No catches recorded yet.",
   "decl.title": "Declaration",
   "decl.subtitle": "Prepare a draft and send it to a DEMONSTRATION (mock) ministry endpoint.",
-  "decl.mockWarning": "MOCK demonstration — this is NOT an official government submission.",
+  "decl.mockWarning": "MOCK demonstration. This is NOT an official government submission.",
   "decl.periodStart": "Period start",
   "decl.periodEnd": "Period end",
   "decl.prepare": "Prepare draft",

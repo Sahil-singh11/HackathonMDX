@@ -6,7 +6,7 @@ Native-speaker review is REQUIRED for the strings below before the demo. Team me
 |---|---|---|---|---|---|---|
 | 1 | `marine.disclaimer` | "Previzion lamer zis pou lenformasion; kapav manke presizion pre ar lakot. Verifie avek bilten ofisiel avan sorti lor lamer." | Safety-critical marine wording | _pending_ | | |
 | 2 | `limitation.permanent` | "Lamer Konekte donn dokimantasion lapes asiste par AI…" | Legal/AI disclosure | _pending_ | | |
-| 3 | `decl.mockWarning` | "DEMONSTRASION (MOCK) — sa PA enn soumision ofisiel guvernman." | Mock-ministry disclosure | _pending_ | | |
+| 3 | `decl.mockWarning` | "DEMONSTRASION (MOCK). Sa PA enn soumision ofisiel guvernman." (em dash replaced with a full stop 2026-07-30 — punctuation only, wording unchanged) | Mock-ministry disclosure | _pending_ | | |
 | 4 | `catch.rule.verify` | "Verifie avek dernie lavi ofisiel lapes." | Rule-verification notice | _pending_ | | |
 | 5 | `catch.estimatedSize` | "Groser AI estime (pa verifie — zame servi pou regleman)" | Unverified-size disclosure | _pending_ | | |
 | 6 | Species names (5) | ourite / kapitenn / kordonye / vye / likorn | Provisional names must not mislead | _pending_ | | |
