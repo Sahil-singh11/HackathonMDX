@@ -239,7 +239,9 @@ def test_interpretation_calls_run_concurrently_not_sequentially(monkeypatch, cli
     class _Slow:
         name = "slow"
 
-        def chat(self, prompt: str, language: str = "en") -> str:
+        def chat(self, prompt: str, language: str = "en",
+                 system_instruction: str | None = None,
+                 timeout_seconds: int | None = None) -> str:
             time.sleep(SLEEP_S)
             return "prose"
 
