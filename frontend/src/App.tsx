@@ -58,9 +58,13 @@ import { useAppStore } from './store/app'
  * cap at 720px instead of 960px. Route names changed in Phase 0 — keep this list
  * in sync or those pages silently stretch to full dashboard width.
  */
-const NARROW_ROUTES = ['/record', '/demo', '/queue', '/privacy', '/about']
+const NARROW_ROUTES = ['/demo', '/queue', '/privacy', '/about']
 /** Data-dense pages that use the full viewport instead of the reading column. */
-const WIDE_ROUTES = ['/sea']
+/* /record moved out of NARROW_ROUTES: the narrow reading column is right for
+   prose-ish forms, but the capture step is a TWO-COLUMN form. At 720px each
+   column was ~340px, which forced the five context chips onto three 56px rows
+   (214px measured) and pushed the step past the viewport. */
+const WIDE_ROUTES = ['/sea', '/record']
 
 /** Fisher-side routes, wrapped in the full shell. */
 function FisherRoutes() {

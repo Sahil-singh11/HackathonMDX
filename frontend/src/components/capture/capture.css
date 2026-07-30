@@ -48,14 +48,23 @@
   justify-content: center;
   margin-top: var(--space-3);
 }
-.capture-btn {
+/* NOTE THE DOUBLE-CLASS SELECTORS BELOW — they are not redundant.
+   styles.css carries `button.primary` / `button.secondary` / `button, a` rules
+   with `min-height: 48px`. `button.secondary` is specificity (0,1,1), which
+   BEATS a lone `.capture-btn` (0,1,0), so the 56px floor these buttons are
+   supposed to have was silently losing and every capture control rendered at
+   48px. Measured in Chrome on 2026-07-30: capture buttons 48px, mic 48px,
+   Analyse 52px — all under the 56px minimum CLAUDE.md sets for gloves and a
+   moving boat. Scoping by the wrapper takes these to (0,2,0) so the intent wins. */
+.capture-zone-wrap .capture-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  min-height: 56px; /* gloves, moving boat */
-  padding-inline: var(--space-5);
-  flex: 1 1 12rem;
+  min-height: 56px;
+  padding-inline: var(--space-4);
+  flex: 1 1 9rem;
+  white-space: nowrap;
 }
 
 .precheck-warning {
@@ -67,8 +76,8 @@
 .precheck-retake { margin-left: auto; min-height: 44px; }
 
 /* --- note field --------------------------------------------------------- */
-.note-field { display: flex; flex-direction: column; gap: var(--space-2); }
-.note-hint { color: var(--text-secondary); margin: 0; }
+.note-field { display: flex; flex-direction: column; gap: var(--space-1); }
+.note-hint { color: var(--text-secondary); margin: 0; font-size: 0.8125rem; }
 
 .audio-attached {
   display: flex;
@@ -83,13 +92,13 @@
 .audio-attached audio { max-width: 100%; }
 
 /* --- context chips ------------------------------------------------------ */
-.context-chips { border: 0; padding: 0; margin: var(--space-4) 0 0; }
+.context-chips { border: 0; padding: 0; margin: 0; }
 .context-chips legend {
   padding: 0;
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--text-label);
-  margin-bottom: var(--space-2);
+  margin-bottom: var(--space-1);
 }
 .context-chips-row { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 
@@ -97,8 +106,9 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
-  min-height: 56px;
-  padding: 0 var(--space-4);
+  min-height: 56px;      /* a11y floor — never reduce this */
+  padding: 0 var(--space-3);  /* horizontal only: packs 5 chips onto one row */
+  white-space: nowrap;
   border-radius: 999px;
   border: 2px solid var(--border-subtle);
   background: var(--surface-card);
@@ -179,8 +189,8 @@
    margin, so the gaps between photo / note / chips / button were all different
    and two sections read as touching. A single `gap` makes them uniform by
    construction. */
-.catch-step { display: grid; gap: var(--space-4); }
-.catch-step__col { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
+.catch-step { display: grid; gap: var(--space-3); }
+.catch-step__col { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
 
 /* Two columns once there is room. Below this the form is a phone form and a
    single column is correct. */
@@ -196,11 +206,19 @@
 /* AI disclaimer. A quiet standing note, not a boxed banner: it is always true,
    so styling it as an alert taught people to skip it. */
 .catch-ai-disclaimer {
-  margin: var(--space-4) 0 0;
-  padding-top: var(--space-3);
+  margin: var(--space-3) 0 0;
+  padding-top: var(--space-2);
   border-top: 1px solid var(--border-subtle);
   font-size: 0.8125rem;
   line-height: 1.5;
   color: var(--text-secondary);
 }
 .catch-ai-disclaimer strong { color: var(--text-primary); }
+
+
+/* --- 56px touch-target floor, reasserted over the legacy button rules ------
+   Same specificity problem as .capture-btn above. Do not flatten these back to
+   single-class selectors: styles.css will win again and the floor breaks
+   silently, with nothing failing except usability in a wet boat. */
+.catch-step__col > .analyse-btn { min-height: 56px; }
+.note-field .note-wrap .mic-btn { min-height: 56px; min-width: 56px; }
