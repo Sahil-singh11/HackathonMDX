@@ -24,7 +24,7 @@
  * implying a yield figure.
  */
 import { useQuery } from '@tanstack/react-query'
-import { Waves, Wind } from 'lucide-react'
+import { Bot, Calculator, Waves, Wind } from 'lucide-react'
 import { api } from '../../api/client'
 import {
   Answer, BarComparison, FigureRow, Foldable, PillarPage,
@@ -35,6 +35,9 @@ import { useT } from '../../i18n'
 import ProvenanceBadge from '../ProvenanceBadge'
 import type { DataProvenance } from '../types'
 import './energy.css'
+
+/** Rungs that mean "a language model wrote these sentences". */
+const MODEL_RUNGS = new Set(['model', 'cached'])
 
 interface Measurements {
   wave_height_m: number | null
@@ -56,6 +59,12 @@ interface Assessment {
   site_id: string; name: string; region: string; exposure: string
   nearshore: boolean; approx_distance_from_shore_km: number
   measurements: Measurements; resource: Resource; interpretation: string
+  /* 'model' | 'deterministic_fallback'. The backend now always fills
+   * `interpretation` — with a mechanical summary when the model is unusable — so
+   * presence alone no longer means a model wrote it. This field is the only way
+   * to tell, and mislabelling assembled text as model reasoning (or vice versa)
+   * is exactly the overclaim the pillar is meant to avoid. */
+  interpretation_source: string
 }
 interface EnergyBrief {
   provenance: DataProvenance
@@ -190,8 +199,28 @@ export default function EnergySurface() {
 
                   {site.interpretation ? (
                     <div className="ene-interpretation">
+                      {/* 'cached' IS model prose — the same sentences, already checked by
+                          the envelope guard and the number firewall before they were
+                          stored, reused instead of paying for an identical second call.
+                          Rendering it under a "Mechanical summary" badge would be a plain
+                          misattribution, so both rungs get the model badge and only the
+                          reuse note distinguishes them. */}
+                      {MODEL_RUNGS.has(site.interpretation_source) ? (
+                        <Badge tone="accent" icon={<Bot size={14} aria-hidden="true" />}>
+                          {t('transport.sourceModel')}
+                        </Badge>
+                      ) : (
+                        <Badge tone="neutral" icon={<Calculator size={14} aria-hidden="true" />}>
+                          {t('transport.sourceMechanical')}
+                        </Badge>
+                      )}
                       <p>{site.interpretation}</p>
-                      <p className="ene-interpretation__note">{t('energy.interpretationNote')}</p>
+                      {site.interpretation_source === 'cached' && (
+                        <p className="ene-interpretation__note">{t('pillars.narrativeReused')}</p>
+                      )}
+                      {MODEL_RUNGS.has(site.interpretation_source) && (
+                        <p className="ene-interpretation__note">{t('energy.interpretationNote')}</p>
+                      )}
                     </div>
                   ) : (
                     <p className="ene-no-interpretation">{t('energy.noInterpretation')}</p>

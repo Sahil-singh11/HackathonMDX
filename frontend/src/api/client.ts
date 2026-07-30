@@ -2,7 +2,7 @@
 import { RateLimitError, emitRateLimited } from '../lib/httpError'
 import { apiUrl } from './base'
 import type { PillarProbe, PillarResult, PillarsResponse } from '../pillars/types'
-import type { ArrivalsBrief } from '../pillars/transport/types'
+import type { ApproachBrief, ArrivalsBrief } from '../pillars/transport/types'
 
 export interface PublicConfig {
   app: string
@@ -381,13 +381,24 @@ export const api = {
     fetch(apiUrl('/api/pillars/tourism/sites')).then((r) => jsonOrThrow<Record<string, unknown>>(r)),
 
   /**
-   * Port Louis arrivals brief. Counts, ETAs and ordering are deterministic;
-   * `narrative` / `risk_reasoning` are model prose ABOUT those numbers and are
-   * never parsed back into data — read `narrative_source` to know which of the
-   * two actually served, and render that distinction.
+   * LIVE transit conditions at the Port Louis approach — the transport pillar's
+   * primary surface. Every band and figure is computed in Python from a real
+   * Open-Meteo reading, so `data_kind` is genuinely `live`/`cached`, never
+   * synthetic. `narrative` is model prose ABOUT those numbers and is never
+   * parsed back into data; `narrative_source` says which of the two served.
    *
-   * Can legitimately take up to ~60 s: the narrative step waits on hosted
-   * Gemma before the backend falls back. Callers should not retry on timeout.
+   * Can legitimately take ~60 s: the narrative step waits on hosted Gemma
+   * before the backend falls back. Callers should not retry on timeout.
+   */
+  transportApproach: () =>
+    fetch(apiUrl('/api/pillars/transport/approach')).then((r) => jsonOrThrow<ApproachBrief>(r)),
+
+  /**
+   * Port Louis arrivals brief. STILL HONEST, BUT NO LONGER SURFACED IN THE UI:
+   * terrestrial AIS has no receiver within range of Mauritius and satellite AIS
+   * is a paid product, so this can only ever return `data_kind: "synthetic"`.
+   * The pillar leads with transportApproach() rather than display generated
+   * vessels. Kept typed and callable for anyone hitting the endpoint directly.
    */
   transportArrivals: () =>
     fetch(apiUrl('/api/pillars/transport/arrivals')).then((r) => jsonOrThrow<ArrivalsBrief>(r)),

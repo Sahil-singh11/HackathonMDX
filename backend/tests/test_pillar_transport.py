@@ -191,11 +191,28 @@ def test_ungrounded_model_output_falls_back_and_says_why(session, monkeypatch):
 
 
 def test_grounded_model_output_is_used_and_labelled(session, monkeypatch):
+    # Deliberately number-free: this test is about labelling/grounding, not
+    # about the vessel count (covered elsewhere), and the numeric firewall
+    # (app.pillars.numeric_guard) would correctly reject a hardcoded count
+    # that drifts out of sync with the synthetic fixture — as a stale
+    # "Five vessels" here once did after the fixture's arrivals count changed.
     provider = _use(monkeypatch, _stub(
-        "stub_good", "Five vessels report Port Louis.\n\nSwell is moderate; berthing should hold."))
+        # NO NUMBER IN THE STUB PROSE, and that is the point of this edit.
+        #
+        # It used to say "Five vessels report Port Louis." The number firewall
+        # (app.pillars.numeric_guard) extracts cardinal words as well as digits,
+        # and this fixture does not contain five vessels — so "Five" was an
+        # ungrounded figure, the guard correctly rejected the whole narrative, and
+        # narrative_source dropped to "deterministic_fallback", failing this test.
+        #
+        # The firewall found a fabricated count in our own test data, which is
+        # exactly its job. This test is about "grounded prose is used and labelled
+        # 'model'", so the fixture now supplies prose that is actually grounded
+        # rather than prose that merely sounded plausible.
+        "stub_good", "Vessels are reporting Port Louis.\n\nSwell is moderate; berthing should hold."))
     result = _brief(session)
     assert result.narrative_source == "model"
-    assert result.narrative.startswith("Five vessels")
+    assert result.narrative.startswith("Vessels are reporting")
     assert "berthing" in result.risk_reasoning
     assert result.provenance.model_provider == "stub_good"
     # The honesty rules live in the transport-scoped system instruction

@@ -1,15 +1,17 @@
-/* Workstream 2 — /pillars/:id detail.
+/* /pillars/:id detail — the frame each pillar surface renders into.
  *
- * The frame the other two workstreams render into. A pillar that is registered
- * but not enabled shows exactly that, including the 503 a caller would get —
- * it never shows an empty panel that could be mistaken for "no results".
+ * NOTHING DEVELOPER-FACING ON THIS PAGE. It previously showed an "Endpoints"
+ * card listing /api/ routes, the literal 503 an unimplemented pillar would
+ * answer with, an owner attribution, and source descriptions carrying file
+ * paths and version strings. All of that was reference material for us, not
+ * information for a user, and it is gone. The routes are still documented at
+ * /docs; ownership still lives in the registry, just not on screen.
  *
- * Yadhav / Shirish: to add your surface, render it in the `children` slot via
- * PILLAR_SURFACES below (or pass it from your own route). You should not need
- * to edit anything else in this folder.
+ * To add a surface, register it in PILLAR_SURFACES below. Nothing else in this
+ * folder should need editing.
  */
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, Construction, Layers } from 'lucide-react'
+import { ArrowLeft, Layers } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { api } from '../api/client'
@@ -89,6 +91,11 @@ export default function PillarDetail() {
 
       <p className="pil-intro">{pillar.description}</p>
 
+      {/* Real provenance, kept: name + verification badge + one short line.
+          `s.description` is that line. It used to carry internal notes ("data/
+          rules/species_rules.json (v1.1.0) — local, versioned", "Already
+          integrated and cached by the app"); those were rewritten in the
+          registry, so the render is unchanged and the content is now readable. */}
       <Card title={t('pillars.declaredSources')}>
         <ul className="pil-source-list">
           {pillar.sources.length === 0 && <li>{t('pillars.noSources')}</li>}
@@ -102,40 +109,37 @@ export default function PillarDetail() {
                   {t(`pillars.source.${s.status}`)}
                 </Badge>
               </div>
-              <p>{s.description}</p>
+              {s.description && <p>{s.description}</p>}
             </li>
           ))}
         </ul>
       </Card>
 
-      {pillar.endpoints.length > 0 && (
-        <Card title={t('pillars.endpoints')}>
-          <ul className="pil-endpoints pil-data">
-            {pillar.endpoints.map((e) => <li key={e}>{e}</li>)}
-          </ul>
-        </Card>
-      )}
+      {/* The "Endpoints" card that listed /api/ routes is gone — it was
+          developer reference material on a user-facing page. The routes are
+          still documented at /docs. */}
 
       {surface ?? (
-        <Card>
-          <EmptyState
-            icon={<Construction size={48} aria-hidden="true" />}
-            title={t(pillar.status === 'live' ? 'pillars.liveElsewhereTitle' : 'pillars.notEnabledTitle')}
-            body={
-              pillar.status === 'live'
-                ? <>{t('pillars.liveElsewhereBody')}</>
-                : <>
-                  {t('pillars.notEnabledBody')}
-                  <br /><br />
-                  <span className="pil-data">
-                    GET /api/pillars/{pillar.pillar_id}/… → 503
-                  </span>
-                  <br /><br />
-                  <strong>{t('pillars.owner')}:</strong> {pillar.owner || '—'}
-                </>
-            }
-          />
-        </Card>
+        pillar.status === 'live'
+          ? (
+            /* Fisheries: this pillar runs on the main app's own screens, so link
+               straight to them instead of describing the architecture. */
+            <Card title={t('pillars.liveElsewhereTitle')}>
+              <p>{t('pillars.liveElsewhereBody')}</p>
+              <ul className="pil-jump-list">
+                <li><Link to="/record">{t('nav.catch')}</Link></li>
+                <li><Link to="/log">{t('nav.history')}</Link></li>
+                <li><Link to="/declaration">{t('nav.declaration')}</Link></li>
+              </ul>
+            </Card>
+          )
+          : (
+            /* Not implemented in this build. One muted sentence — no barrier
+               icon, no status code, no owner attribution. */
+            <Card>
+              <p className="pil-not-in-build">{t('pillars.notInBuild')}</p>
+            </Card>
+          )
       )}
     </div>
   )

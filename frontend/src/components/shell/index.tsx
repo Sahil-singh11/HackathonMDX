@@ -18,7 +18,7 @@
 import { useState, type ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
 import {
-  Anchor, BookOpen, Camera, Compass, Home, Scale, Settings2, Sun, Moon, Contrast, Waves,
+  Anchor, BookOpen, Camera, Compass, Home, Scale, Sun, Moon, Contrast, Waves,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../../api/client'
@@ -33,6 +33,30 @@ import './shell.css'
 
 export function SkipLink() {
   return <a className="lk-skip-link" href="#main">Skip to content</a>
+}
+
+/**
+ * Universal-access pictogram (circle + figure, arms out, legs spread) —
+ * requested as a specific reference image. No icon library used elsewhere in
+ * this app ships an exact match (lucide's closest is a dynamic running
+ * figure, not this static "starfish" pose), and this app cannot pull an
+ * external icon asset — self-hosted only, must work with no signal — so it is
+ * authored inline instead, matching the stroke conventions (2px round-capped
+ * strokes, 24x24 viewBox, no fill) every lucide-react icon already uses here.
+ */
+function AccessibilityMark({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
+      aria-hidden="true">
+      <circle cx="12" cy="12" r="10" />
+      <circle cx="12" cy="6" r="2" fill="currentColor" stroke="none" />
+      <path d="M12 8.5v6" />
+      <path d="M4.5 9h15" />
+      <path d="M12 14.5l-5 5.5" />
+      <path d="M12 14.5l5 5.5" />
+    </svg>
+  )
 }
 
 const THEME_ICON = { day: Sun, night: Moon, sunlight: Contrast } as const
@@ -63,14 +87,14 @@ function ShellHeader({ onOpenA11y }: { onOpenA11y: () => void }) {
         </button>
         <button type="button" className="lk-header-btn" onClick={onOpenA11y}
           aria-label="Display and accessibility settings">
-          <Settings2 size={20} aria-hidden="true" />
+          <AccessibilityMark size={20} />
         </button>
         <button
           className="lang-switch"
           onClick={() => setLanguage(language === 'en' ? 'mfe' : 'en')}
           aria-label={t('common.language')}
         >
-          {language === 'en' ? 'MFE' : 'EN'}
+          {language === 'en' ? 'KR' : 'EN'}
         </button>
       </div>
     </header>

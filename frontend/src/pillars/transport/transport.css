@@ -70,14 +70,6 @@
   max-width: 68ch;
 }
 
-.tpt-risk-head {
-  margin: var(--sp-4) 0 0;
-  font-size: calc(var(--fs-base) * var(--text-scale));
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
 .tpt-fallback-why { margin-top: var(--sp-2); }
 
 .tpt-scope { margin-top: var(--sp-4); }
@@ -93,3 +85,103 @@
 [data-theme='sunlight'] .tpt-legend { border-left-width: 4px; }
 
 .tpt-source-why { margin-top: var(--sp-2); }
+
+/* ------------------------------------------------- transit windows (bands) */
+.tpt-section {
+  margin: var(--sp-5) 0 var(--sp-3);
+  font-size: calc(var(--fs-base) * var(--text-scale));
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.tpt-crafts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--sp-3);
+}
+
+.tpt-craft {
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  /* Band shows as colour AND icon AND word; this stripe is a fourth cue, not
+     the only one. */
+  border-left: 3px solid var(--border-strong);
+  border-radius: var(--r-input);
+  background: var(--surface-sunken);
+  min-width: 0;
+}
+.tpt-craft--good     { border-left-color: var(--success); }
+.tpt-craft--moderate { border-left-color: var(--warning); }
+.tpt-craft--poor     { border-left-color: var(--danger); }
+
+.tpt-craft__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
+}
+.tpt-craft__why { margin: 0 0 var(--sp-1); }
+
+/* -------------------------------------------------------------- readings */
+.tpt-readings {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: var(--sp-3);
+}
+.tpt-reading { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tpt-reading__label {
+  font-size: calc(var(--fs-sm) * var(--text-scale));
+  color: var(--text-muted);
+}
+.tpt-reading__value { font-size: calc(var(--fs-md) * var(--text-scale)); font-weight: 600; }
+
+.tpt-swell {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
+}
+
+/* --- stand-in arrivals feed ------------------------------------------------
+   Below the live sea state, never above it. Styling is deliberately plain: the
+   loud signal is the synthetic provenance badge, and competing with it here
+   would dilute the one thing a reader must not miss. */
+.tpt-congestion {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2);
+  margin: var(--sp-3) 0;
+}
+@media (min-width: 768px) {
+  .tpt-congestion { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+.tpt-congestion__item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--surface-sunken);
+  border-radius: var(--r-card);
+  min-width: 0;
+}
+.tpt-congestion__label { color: var(--text-muted); font-size: var(--fs-sm); }
+.tpt-congestion__value { color: var(--text); font-size: var(--fs-md); font-weight: 600; }
+
+.tpt-arrivals { display: flex; flex-direction: column; gap: var(--sp-2); }
+.tpt-arrival {
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+}
+.tpt-arrival__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  color: var(--text);
+}
+.tpt-arrival__range { font-size: var(--fs-md); font-weight: 600; }
+.tpt-arrival__meta { margin: var(--sp-1) 0 0; color: var(--text-muted); }

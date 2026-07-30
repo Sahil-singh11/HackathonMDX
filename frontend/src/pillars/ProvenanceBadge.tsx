@@ -52,6 +52,22 @@ function ageLabel(retrievedAt: string, t: (k: string) => string): string | null 
   return `${Math.floor(hours / 24)} ${t('pillars.age.daysAgo')}`
 }
 
+/** Registry key -> the label the app already shows for that provider. */
+const PROVIDER_LABEL: Record<string, string> = {
+  gemma_hosted: 'common.provider.hosted',
+  gemma_local: 'common.provider.local',
+  mock: 'common.provider.mock',
+}
+
+export function providerLabel(id: string, t: (k: string) => string): string {
+  if (!id || id === 'none') return t('pillars.modelProviderNone')
+  const key = PROVIDER_LABEL[id]
+  // No raw key ever reaches the page: an unmapped provider is described, not
+  // printed. If a new provider is added, this reads as "a language model" until
+  // someone gives it a label — wrong-but-harmless rather than leaking an id.
+  return key ? t(key) : t('pillars.modelProviderGeneric')
+}
+
 export default function ProvenanceBadge({ provenance, compact = false }: Props) {
   const t = useT()
   const { data_kind, source_name, source_url, retrieved_at, model_provider, coverage_note } = provenance
@@ -106,8 +122,14 @@ export default function ProvenanceBadge({ provenance, compact = false }: Props) 
         )}
       </p>
 
+      {/* WHICH model answered is an honesty requirement; its INTERNAL IDENTIFIER
+          is not. "gemma_hosted" / "gemma_local" are registry keys that leaked
+          onto the page as-is. They map to the labels the app already uses in its
+          header, so the disclosure survives and the developer token does not.
+          Anything unrecognised falls back to a neutral phrase rather than
+          printing a raw key. */}
       <p className="pil-prov__provider">
-        {t('pillars.modelProvider')} <span className="pil-data">{model_provider || '—'}</span>
+        {t('pillars.modelProvider')} {providerLabel(model_provider, t)}
       </p>
     </div>
   )
