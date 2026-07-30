@@ -92,7 +92,12 @@
 .audio-attached audio { max-width: 100%; }
 
 /* --- context chips ------------------------------------------------------ */
-.context-chips { border: 0; padding: 0; margin: 0; }
+/* The section follows the note field's pattern exactly — label above, bordered
+   box below — so the two read as the same kind of control rather than one
+   floating group of buttons and one field.
+   `min-width: 0` matters: a <fieldset> defaults to min-width: min-content, which
+   stops it shrinking with its grid column and is a classic source of overflow. */
+.context-chips { border: 0; padding: 0; margin: 0; min-width: 0; }
 .context-chips legend {
   padding: 0;
   font-size: 0.875rem;
@@ -109,12 +114,20 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr));
   gap: var(--space-2);
+  /* Same border, radius and surface as the note textarea, so this sits in the
+     column as a peer of the other fields. Height comes from the grid, so the
+     card grows by exactly one row when the chips wrap — no fixed height to go
+     stale. */
+  padding: var(--space-2);
+  border: 1.5px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-input);
 }
 
 .context-chip {
+  position: relative;   /* the tick is positioned against this */
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
   justify-content: center;
   min-height: 56px;      /* a11y floor — never reduce this */
   padding: 0 var(--space-2);
@@ -135,7 +148,17 @@
   background: var(--surface-coral-tint);
   font-weight: 600;
 }
-.chip-tick { display: inline-flex; width: 16px; }
+/* Absolute, so the label is centred in the chip whether or not the tick is
+   showing — in flow it reserved 16px permanently, pushing every label off
+   centre, and the text shifted sideways each time a chip was toggled. */
+.chip-tick {
+  position: absolute;
+  left: var(--space-2);
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  width: 16px;
+}
 
 /* --- analyse progress --------------------------------------------------- */
 .analyse-progress { display: flex; flex-direction: column; gap: var(--space-2); align-items: flex-start; }
