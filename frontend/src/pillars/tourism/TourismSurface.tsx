@@ -41,6 +41,9 @@ interface Measurements {
   visibility_m: number | null
   sea_surface_temperature_c: number | null
   observed_at: string | null
+  sea_state: string | null
+  reading_offset_km: number | null
+  shares_grid_cell_with: string[]
 }
 interface Rating { activity: string; rating: string; score: number; reasons: string[] }
 interface SiteBrief {
@@ -54,6 +57,7 @@ interface TourismBrief {
   ranked_for_activity: string | null
   ranking: Array<{ site_id: string; rating: string; score: number; reasons: string[] }>
   ranking_basis: string
+  rating_basis: string
 }
 
 /** GET /api/pillars/tourism/sites — the versioned catalogue on disk. */
@@ -259,6 +263,9 @@ export default function TourismSurface() {
         </label>
 
         {/* The caveat lives here, next to the ranking it qualifies. */}
+        <p className="tou-rating-basis" role="note">
+          <Info size={16} aria-hidden="true" /> {brief.rating_basis}
+        </p>
         <p className="tou-ranking-basis" role="note">
           <Info size={16} aria-hidden="true" /> {brief.ranking_basis}
         </p>
@@ -392,7 +399,7 @@ export default function TourismSurface() {
 
               <h3 className="tou-section"><Waves size={16} aria-hidden="true" /> {t('tourism.measured')}</h3>
               <dl className="tou-figures">
-                <Figure label={t('tourism.waveHeight')} value={site.measurements.wave_height_m} unit="m" />
+                <Figure label={t('tourism.waveHeightOffshore')} value={site.measurements.wave_height_m} unit="m" />
                 <Figure label={t('tourism.wavePeriod')} value={site.measurements.wave_period_s} unit="s" />
                 <Figure label={t('tourism.swell')} value={site.measurements.swell_height_m} unit="m" />
                 <Figure label={t('tourism.wind')} value={site.measurements.wind_speed_kmh} unit="km/h" />

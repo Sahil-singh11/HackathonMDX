@@ -423,5 +423,18 @@
   "transport.portDetail": "Por, lor so pozision pibliye",
   "transport.vesselUnnamed": "Kontak pozision zis — nom pa difize",
   "transport.approachListLabel": "Por ek bann arive atann par distans",
-  "transport.bearingCaveat": "AIS rapport enn distans, pa enn direksion. Bann bato desine lor zot VRE distans lor enn sel liyn skematik 315° pou ki distans la kapav lir kont bar lesel. Zot vre direksion pa kone ek pa montre."
+  "transport.bearingCaveat": "AIS rapport enn distans, pa enn direksion. Bann bato desine lor zot VRE distans lor enn sel liyn skematik 315° pou ki distans la kapav lir kont bar lesel. Zot vre direksion pa kone ek pa montre.",
+  "tourism.waveHeightOffshore": "Oter vag (o larz)",
+  "tourism.readingFrom": "Lektir lamer pran",
+  "tourism.readingFromTail": "depi sit la, deor resif — lagon pou pli kalm",
+  "tourism.seaState": "Leta lamer",
+  "tourism.sharesCell": "Mem seli previzion ki",
+  "tourism.state.calm": "Kalm",
+  "tourism.state.smooth": "Lis",
+  "tourism.state.slight": "Leze",
+  "tourism.state.moderate": "Modere",
+  "tourism.state.rough": "Azite",
+  "tourism.state.very rough": "Bien azite",
+  "tourism.state.high": "Ot",
+  "tourism.state.unknown": "Pa kone"
 }

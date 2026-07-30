@@ -464,5 +464,18 @@
   "transport.portDetail": "Port, at its published position",
   "transport.vesselUnnamed": "Position-only contact — name not broadcast",
   "transport.approachListLabel": "Port and expected arrivals by range",
-  "transport.bearingCaveat": "AIS reports a distance, not a bearing. Vessels are drawn at their TRUE range along one schematic 315° line so the ranges can be read against the scale bar. Their real bearings are unknown and are not shown."
+  "transport.bearingCaveat": "AIS reports a distance, not a bearing. Vessels are drawn at their TRUE range along one schematic 315° line so the ranges can be read against the scale bar. Their real bearings are unknown and are not shown.",
+  "tourism.waveHeightOffshore": "Wave height (offshore)",
+  "tourism.readingFrom": "Sea reading taken",
+  "tourism.readingFromTail": "from the site, outside the reef — the lagoon will be calmer",
+  "tourism.seaState": "Sea state",
+  "tourism.sharesCell": "Same forecast grid cell as",
+  "tourism.state.calm": "Calm",
+  "tourism.state.smooth": "Smooth",
+  "tourism.state.slight": "Slight",
+  "tourism.state.moderate": "Moderate",
+  "tourism.state.rough": "Rough",
+  "tourism.state.very rough": "Very rough",
+  "tourism.state.high": "High",
+  "tourism.state.unknown": "Unknown"
 }
