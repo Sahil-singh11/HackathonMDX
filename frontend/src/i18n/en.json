@@ -123,7 +123,7 @@
   "history.empty": "No catches recorded yet.",
   "decl.title": "Declaration",
   "decl.subtitle": "Prepare a draft and send it to a DEMONSTRATION (mock) ministry endpoint.",
-  "decl.mockWarning": "MOCK demonstration — this is NOT an official government submission.",
+  "decl.mockWarning": "MOCK demonstration. This is NOT an official government submission.",
   "decl.periodStart": "Period start",
   "decl.periodEnd": "Period end",
   "decl.prepare": "Prepare draft",
@@ -492,8 +492,10 @@
   "energy.limitsTitle": "What this does not account for",
   "energy.limitNearshore": "All candidate points are nearshore. The deep-water formula overstates wave power in shallow water, so these figures are not comparable with published deep-water resource atlases.",
   "energy.unavailableShort": "unavailable",
+  "tourism.activityPending": "Still loading the {wanted} ranking. The ratings below are for {shown} until it arrives.",
   "catch.aiDisclaimerTitle": "AI Disclaimer:",
   "catch.aiDisclaimerBody": "AI-generated information is provided for decision support only and may contain errors. Users must verify species, measurements, regulations, and marine conditions with official sources. AI does not replace the judgement of authorised officers or guarantee safety or legal compliance.",
+<<<<<<< HEAD
 
   "bot.launch": "Ask Nemo",
   "bot.title": "Nemo",
@@ -522,4 +524,22 @@
   "bot.failed": "I could not reach the assistant, and the rules saved on this phone do not cover that. Open Fishing rules to see everything the app holds.",
   "bot.disclaimer": "Advisory only. Nemo can read this app's data but cannot record a catch, change your log or send anything to any authority. Confirm rules against the latest official fisheries notice.",
   "bot.a11y.answered": "Nemo has replied."
+=======
+  "decl.records": "Records",
+  "decl.totalFish": "Total fish",
+  "decl.speciesCount": "Species",
+  "decl.colSpecies": "Species",
+  "decl.colCount": "Count",
+  "decl.colDate": "Date",
+  "decl.colLength": "Length",
+  "decl.colStatus": "Rule status",
+  "decl.reviewRows": "Records in this draft ({n})",
+  "catch.cameraTitle": "Take a photo",
+  "catch.cameraLive": "Live camera view",
+  "catch.cameraStarting": "Starting the camera…",
+  "catch.cameraShoot": "Capture",
+  "catch.cameraCancel": "Cancel",
+  "catch.cameraDenied": "Camera permission was refused, so the photo cannot be taken here. Allow camera access in your browser, or choose an existing photo instead.",
+  "catch.cameraNone": "No camera is available on this device. Choose an existing photo instead."
+>>>>>>> 5bc39e9b35c6bf27d4de874af39a3a2ce1d1cb2b
 }

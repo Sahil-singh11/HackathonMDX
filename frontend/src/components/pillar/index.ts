@@ -9,7 +9,7 @@
  * the conclusion is. Need a variant? Compose it inside YOUR pillar folder and
  * pass it into a slot. Never edit this directory.
  */
-export { default as PillarPage, type PillarPageProps } from './PillarPage'
+export { default as PillarPage, type PillarPageProps, type PillarId } from './PillarPage'
 export { default as Answer, type HeroNumber } from './Answer'
 export { default as FigureRow, type Figure } from './FigureRow'
 export { default as Foldable } from './Foldable'

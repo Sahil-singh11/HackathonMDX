@@ -15,11 +15,11 @@
  * before. Selecting on the chart or in the button list moves you to a card —
  * it never hides one. Nothing on this page is reachable only by pointer.
  */
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { Activity, Compass, Info, MapPin, ShieldAlert, Waves, Wind } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { api } from '../../api/client'
-import { Badge, Card, Select, Skeleton } from '../../components/ui'
+import { Badge, Card, Select, Skeleton, Spinner } from '../../components/ui'
 import { useT } from '../../i18n'
 import { useAnnounce } from '../../lib/announce'
 import { useOffline } from '../../lib/offline'
@@ -156,6 +156,21 @@ export default function TourismSurface() {
     queryFn: () => api.tourismBrief({ activity }).then((r) => r as unknown as TourismBrief),
     retry: 0,
     enabled: online,
+    /* KEEP THE PREVIOUS BRIEF ON SCREEN WHILE THE NEXT ONE LOADS.
+     *
+     * `activity` is part of the query key, so changing the dropdown starts a
+     * brand-new query with no data. Without this the component fell through to
+     * the `!brief` early return and replaced the ENTIRE surface with three
+     * skeletons — including the dropdown the reader had just used — for as long
+     * as the request took. Measured on the running app: 63 s of a page that
+     * looked broken, with no way to change your mind because the control itself
+     * had been unmounted.
+     *
+     * Keeping the previous data means nothing unmounts. What it must NOT mean is
+     * showing the old ratings under the new activity's name, so every rating
+     * lookup below keys off `shownActivity` — the activity the DISPLAYED brief
+     * was actually computed for — never off the dropdown. */
+    placeholderData: keepPreviousData,
   })
 
   // The catalogue is static versioned JSON, so it is fetched once and never
@@ -188,6 +203,20 @@ export default function TourismSurface() {
 
   const brief = data ?? cached?.payload ?? null
   const servedFromCache = !data && !!cached
+
+  /* THE ACTIVITY THE DISPLAYED BRIEF WAS COMPUTED FOR — not the dropdown.
+   *
+   * With placeholderData the two diverge for as long as a new activity's brief is
+   * in flight: the control already reads "Swimming" while the ratings on screen
+   * are still Snorkelling's. Every rating lookup keys off THIS value, so what is
+   * shown always matches the brief it came from. The backend tells us directly
+   * via `ranked_for_activity`, so this is read from the data rather than tracked
+   * in a second piece of state that could drift out of step with it. */
+  const shownActivity = brief?.ranked_for_activity ?? activity
+  /* True while the reader is waiting for the activity they just picked. The page
+   * must say so, otherwise it silently presents one activity's ratings under
+   * another's name. */
+  const awaitingActivity = shownActivity !== activity
   const catalogue = catalogueData ?? cachedSites?.payload ?? null
   const catalogueFromCache = !catalogueData && !!cachedSites
 
@@ -215,11 +244,11 @@ export default function TourismSurface() {
         latitude: s.latitude,
         longitude: s.longitude,
         protected_area: s.protected_area,
-        band: bandOf(briefOf.get(s.site_id)!.ratings.find((r) => r.activity === activity)?.rating),
+        band: bandOf(briefOf.get(s.site_id)!.ratings.find((r) => r.activity === shownActivity)?.rating),
         rank: rankOf.get(s.site_id) ?? null,
       }))
       .sort((a, b) => (a.rank ?? 99) - (b.rank ?? 99))
-  }, [catalogue, brief, activity])
+  }, [catalogue, brief, shownActivity])
 
   const select = useCallback((siteId: string) => {
     setSelectedId(siteId)
@@ -261,6 +290,20 @@ export default function TourismSurface() {
             {ACTIVITIES.map((a) => <option key={a} value={a}>{t(`tourism.activity.${a}`)}</option>)}
           </Select>
         </label>
+
+        {/* Says plainly that the ratings below are still the PREVIOUS activity's.
+            Without this the page would show Snorkelling's ratings under the word
+            Swimming for the ~60 s the new brief takes — a silent mislabel, and
+            the one thing keeping the old data on screen could otherwise cost.
+            role="status" so it is announced rather than only seen. */}
+        {awaitingActivity && (
+          <p className="tou-activity-pending" role="status">
+            <Spinner size="sm" label="" />{' '}
+            {t('tourism.activityPending')
+              .replace('{wanted}', t(`tourism.activity.${activity}`))
+              .replace('{shown}', t(`tourism.activity.${shownActivity}`))}
+          </p>
+        )}
 
         {/* The caveat lives here, next to the ranking it qualifies. */}
         <p className="tou-rating-basis" role="note">
@@ -363,7 +406,7 @@ export default function TourismSurface() {
       </Card>
 
       {sitesInOrder.map((site, i) => {
-        const forActivity = site.ratings.find((r) => r.activity === activity)
+        const forActivity = site.ratings.find((r) => r.activity === shownActivity)
         const on = site.site_id === selectedId
         return (
           <div

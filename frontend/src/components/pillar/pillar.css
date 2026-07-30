@@ -1,5 +1,10 @@
 /* Pillar presentation framework. Semantic tokens only; no hex, no legacy tokens. */
 
+/* Per-pillar accent hues. Opt-in via PillarPage's `pillar` prop; a page that
+   passes none is unaffected. Imported here so the framework ships as one
+   stylesheet and a consumer cannot forget it. */
+@import './accents.css';
+
 .pil-page-frame { display: flex; flex-direction: column; gap: var(--sp-4); }
 .pil-frame__title { margin: 0; }
 

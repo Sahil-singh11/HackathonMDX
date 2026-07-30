@@ -24,13 +24,24 @@
   outline-offset: 2px;
 }
 
-/* Land: thin stroke, low-opacity fill — chart, not satellite. */
+/* Land: a nautical chart, not satellite imagery — but land must READ as land.
+   The fill was --surface-raised at 0.55 over --surface-sunken sea, which in Day
+   computes to about #E9EBE8 against #DCE8EA: a measured 1.05:1, so land and sea
+   were the same lightness and the only thing separating them was a 1px stroke at
+   0.75 opacity. On a wide frame that made the island read as a pale smudge.
+
+   The fill is now opaque --surface (white in Day, the card tone elsewhere) so the
+   land/sea boundary carries real lightness difference, and the coastline is a
+   full-opacity 1.5px --text stroke so it survives at small sizes and in glare.
+   Still flat, still no imagery. */
 .lkmap-land {
-  fill: var(--surface-raised);
-  fill-opacity: 0.55;
+  fill: var(--surface);
+  fill-opacity: 1;
   stroke: var(--text);
-  stroke-width: 1;
-  stroke-opacity: 0.75;
+  stroke-width: 1.5;
+  stroke-opacity: 1;
+  /* The coastline keeps its weight when the reader zooms in. */
+  vector-effect: non-scaling-stroke;
 }
 
 .lkmap-ring {

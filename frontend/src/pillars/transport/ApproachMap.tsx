@@ -134,6 +134,10 @@ export default function ApproachMap({ brief, arrivals }: {
       rings={rings}
       lines={lines}
       bounds={[sLat, wLon, nLat, eLon]}
+      /* The approach rings alone framed a pale fragment of the north-west coast
+         with the island running off two edges. Framing the island too costs some
+         ring zoom and tells the reader where Port Louis actually is. */
+      includeIsland
       height={420}
       listLabel={t('transport.approachListLabel')}
     />

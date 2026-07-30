@@ -4,7 +4,15 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api, type AnalyseResponse, type ConfirmResponse, type SpeciesCandidate } from '../api/client'
 import '../components/capture/capture.css'
-import AssistantBot from '../components/assistantbot/AssistantBot'
+/* AssistantBot was imported here but never rendered — nowhere in the app does
+ * <AssistantBot /> appear. With noUnusedLocals that stopped `npm run build`
+ * (and start.sh --prod) from completing on main at all; dev mode does not
+ * typecheck, so it went unnoticed.
+ *
+ * The import is removed rather than the component mounted, because WHERE the
+ * bot belongs on this page is a layout decision for whoever built it. Restore
+ * the import and render it when that is decided.
+ */
 import AnalyseProgress from '../components/capture/AnalyseProgress'
 import ContextChips from '../components/capture/ContextChips'
 import NoteField from '../components/capture/NoteField'

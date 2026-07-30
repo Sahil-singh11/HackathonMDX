@@ -28,6 +28,10 @@
 import type { ReactNode } from 'react'
 import './pillar.css'
 
+/** The six national blue-economy pillars. Drives accent resolution only. */
+export type PillarId =
+  | 'fisheries' | 'shipping' | 'tourism' | 'energy' | 'finance' | 'biotech'
+
 export interface PillarPageProps {
   /** Government pillar name, verbatim. */
   title: string
@@ -39,6 +43,17 @@ export interface PillarPageProps {
   visual?: ReactNode
   /** Provenance / data-kind chip row, shown beside the figures. */
   chips?: ReactNode
+  /**
+   * Which pillar this page is, for its accent hue. OPTIONAL and additive: omit it
+   * and the page renders exactly as it did before accents existed, which is why
+   * adding this could not disturb the pages already converted onto this frame.
+   *
+   * The six hues are mixed from semantic tokens in CSS (accents.css), so they
+   * follow every theme repoint — including the two themes that deliberately
+   * collapse them back to one accent. Accents are used for non-text only, so the
+   * body contrast floor never depends on them.
+   */
+  pillar?: PillarId
   /** Folded sections. Use <Foldable>. */
   detail?: ReactNode
   method?: ReactNode
@@ -46,10 +61,10 @@ export interface PillarPageProps {
 }
 
 export default function PillarPage({
-  title, answer, figures, visual, chips, detail, method, limits,
+  title, answer, figures, visual, chips, detail, method, limits, pillar,
 }: PillarPageProps) {
   return (
-    <div className="pil-page-frame">
+    <div className="pil-page-frame" data-pillar={pillar}>
       <h2 className="pil-frame__title">{title}</h2>
 
       <section className="pil-frame__answer" aria-label={title}>
