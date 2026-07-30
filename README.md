@@ -30,7 +30,36 @@ FastAPI (Python 3.12, SQLModel/SQLite) + React/TypeScript PWA (offline-first, In
 
 ## Quick start
 
-> **New to the project? Follow [`docs/SETUP_GUIDE.md`](docs/SETUP_GUIDE.md)** — a verified step-by-step walkthrough (clone → running app in ~5 minutes, no API key needed), with file locations, per-role instructions and troubleshooting. The condensed version:
+**One command, from a fresh clone.** Creates the virtualenv, installs backend and
+frontend dependencies, starts both servers, waits until they answer, and opens the
+app. No API key needed — without one the app runs in deterministic mock mode.
+
+```powershell
+.\run.ps1              # Windows (PowerShell)
+```
+```bash
+./scripts/start.sh     # Linux / WSL / Git Bash
+```
+
+| Command | What it does |
+|---|---|
+| `.\run.ps1` | Dev mode: backend `:8000`, Vite `:5173`, hot reload |
+| `.\run.ps1 -Prod` | Build the PWA and serve it from one port — **the only mode where the service worker runs**, so use it to test offline |
+| `.\run.ps1 -Test` | Backend pytest + frontend build (run before pushing) |
+| `.\run.ps1 -Audit` | Accessibility audit — contrast, touch targets, headings, text scaling |
+| `.\run.ps1 -Stop` / `-Status` | Stop everything / see what's running |
+
+`Get-Help .\run.ps1 -Detailed` documents every flag. Both scripts pick a
+different port automatically if the default is taken *or* falls inside a Windows
+reserved range — the cause of the `WinError 10013` that looks like a firewall
+problem but isn't.
+
+<details>
+<summary>Manual setup, step by step</summary>
+
+> Also see [`docs/SETUP_GUIDE.md`](docs/SETUP_GUIDE.md) for a verified walkthrough with per-role instructions and troubleshooting.
+>
+> On Windows a virtualenv puts its interpreter in `.venv\Scripts\`, not `.venv/bin/` — substitute accordingly in the commands below.
 
 ```bash
 # backend
@@ -47,6 +76,8 @@ cd .. && backend/.venv/bin/python evaluation/run_all.py --provider mock
 # hosted Gemma gates (needs key)
 backend/.venv/bin/python backend/scripts/run_gemma_gates.py
 ```
+
+</details>
 
 ## Dataset & evaluation
 
