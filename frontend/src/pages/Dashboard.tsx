@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import {
-  Anchor, BookOpen, Calendar, Camera, CloudOff, Compass, Fish, Info, Scale,
-  ShieldCheck, SlidersHorizontal, Thermometer, Waves, Wrench,
+  Anchor, BookOpen, Calendar, Camera, CloudOff, Compass, Fish, Scale,
+  SlidersHorizontal, Thermometer, Waves, Wrench,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -93,14 +93,17 @@ export default function Dashboard() {
   // tab bar is full at five, and seven targets would break the 56px touch
   // floor at 360px). Desktop also surfaces them in the side nav. See the
   // secondaryNavItems comment in components/shell.
+  //
+  // Privacy and About moved OFF this row and into that same side nav, by
+  // direct request. See the KNOWN GAP note on secondaryNavItems in
+  // components/shell/index.tsx: the side nav is desktop-only, so this leaves
+  // both pages unreachable on a phone without typing the URL directly.
   const toolButtons = [
     { to: '/assistant', icon: Scale, label: t('assistant.title') },
     { to: '/pillars', icon: Compass, label: t('pillars.title') },
     { to: '/queue', icon: CloudOff, label: t('nav.queue'), badge: queuedCount > 0 ? queuedCount : undefined },
     { to: '/proof', icon: Wrench, label: t('nav.proof') },
     { to: '/demo', icon: SlidersHorizontal, label: t('nav.demo') },
-    { to: '/privacy', icon: ShieldCheck, label: t('nav.privacy') },
-    { to: '/about', icon: Info, label: t('nav.about') },
   ]
 
   return (
@@ -118,6 +121,16 @@ export default function Dashboard() {
             <span>{waveHeight}m {t('dashboard.waves')}{seaTemp != null ? ` · ${seaTemp}°C` : ''}</span>
           </div>
         )}
+      </div>
+
+      <div className="more-tools-row">
+        {toolButtons.map((btn) => (
+          <Link key={btn.to} to={btn.to} className="tool-btn" aria-label={btn.label}>
+            <btn.icon size={20} aria-hidden="true" />
+            <span>{btn.label}</span>
+            {btn.badge != null && <span className="tool-btn-badge">{btn.badge}</span>}
+          </Link>
+        ))}
       </div>
 
       <div className="stats-row">
@@ -179,16 +192,6 @@ export default function Dashboard() {
         </Link>
       </div>
 
-      <div className="more-tools-row">
-        {toolButtons.map((btn) => (
-          <Link key={btn.to} to={btn.to} className="tool-btn" aria-label={btn.label}>
-            <btn.icon size={20} aria-hidden="true" />
-            <span>{btn.label}</span>
-            {btn.badge != null && <span className="tool-btn-badge">{btn.badge}</span>}
-          </Link>
-        ))}
-      </div>
-
       <div className="card">
         {/* h2, not h3: the shell wordmark is this page's h1, so a section
             heading at h3 skipped a level (h1 -> h3). The empty-state title
@@ -220,8 +223,6 @@ export default function Dashboard() {
           ))
         )}
       </div>
-
-      <p className="banner info">{t('limitation.permanent')}</p>
     </>
   )
 }

@@ -18,7 +18,7 @@
 import { useState, type ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
 import {
-  Anchor, BookOpen, Camera, Compass, Home, Scale, Sun, Moon, Contrast, Waves,
+  Anchor, BookOpen, Camera, Compass, Home, Info, Scale, ShieldCheck, Sun, Moon, Contrast, Waves,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../../api/client'
@@ -136,10 +136,19 @@ export function FisherShell({ narrow, wide, children }:
    * file, which is Sahil's lane, so their owners could not have added these
    * without crossing a lane boundary — hence the gap.
    *
-   * They go here rather than into navItems because seven targets in a phone
-   * tab bar breaks the 56px touch floor at 360px width. Dashboard's tool grid
-   * carries them on small screens instead. How the IA should really absorb
-   * seven surfaces is a redesign decision, not one to guess at here.
+   * /privacy and /about joined them by direct request, moved off Dashboard's
+   * own tool row onto this list instead. KNOWN GAP left open by that request:
+   * this nav is desktop-only (see <nav className="side-nav"> below, hidden
+   * under 1024px), and neither page has any OTHER link pointing at it once
+   * removed from Dashboard — so on a phone, /privacy and /about are currently
+   * unreachable without typing the URL. Flagging rather than silently
+   * "fixing" it, since a privacy policy being unreachable on the device most
+   * fishers actually use is worth a deliberate call, not a guess.
+   *
+   * They go here rather than into navItems because seven-plus targets in a
+   * phone tab bar breaks the 56px touch floor at 360px width. How the IA
+   * should really absorb this many surfaces on mobile is a redesign
+   * decision, not one to guess at here.
    *
    * Labels reuse the owners' existing page-title keys rather than adding
    * nav.* keys, so this touches no shared i18n file.
@@ -147,6 +156,8 @@ export function FisherShell({ narrow, wide, children }:
   const secondaryNavItems = [
     { to: '/assistant', end: false, icon: Scale, label: t('assistant.title') },
     { to: '/pillars', end: false, icon: Compass, label: t('pillars.title') },
+    { to: '/privacy', end: false, icon: ShieldCheck, label: t('nav.privacy') },
+    { to: '/about', end: false, icon: Info, label: t('nav.about') },
   ]
 
   return (
