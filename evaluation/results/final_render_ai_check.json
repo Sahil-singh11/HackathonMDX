@@ -1,8 +1,8 @@
 {
-  "run_at": "2026-07-29T23:58:24.136425+00:00",
+  "run_at": "2026-07-30T00:26:19.987318+00:00",
   "base_url": "https://lamer-konekte.onrender.com",
   "reachable": true,
-  "wake_ms": 3750,
+  "wake_ms": 1391,
   "passed": 24,
   "failed": 0,
   "skipped": 0,
@@ -10,7 +10,7 @@
     {
       "check": "deployment reachable (after cold start)",
       "ok": true,
-      "detail": "3750 ms to first 200"
+      "detail": "1391 ms to first 200"
     },
     {
       "check": "health endpoint 200",
@@ -85,7 +85,7 @@
     {
       "check": "live Morisyen marine request succeeded",
       "ok": true,
-      "detail": "24297 ms"
+      "detail": "10843 ms"
     },
     {
       "check": "marine function selected",
@@ -95,7 +95,7 @@
     {
       "check": "real inference OR disclosed fallback",
       "ok": true,
-      "detail": "real=True disclosed=False"
+      "detail": "real=False disclosed=True"
     },
     {
       "check": "no secret in analysis response",
@@ -110,7 +110,7 @@
     {
       "check": "live image request succeeded",
       "ok": true,
-      "detail": "13577 ms, quality=acceptable"
+      "detail": "1421 ms, quality=acceptable"
     },
     {
       "check": "species confirmation still required",

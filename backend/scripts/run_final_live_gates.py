@@ -49,9 +49,13 @@ AUTHORITATIVE = re.compile(
     r"it is (?:legal|illegal)|this is (?:legal|illegal)|safe to (?:sail|go out|fish)|"
     r"guaranteed safe|conditions are safe)\b", re.I)
 
-# Google-side transients seen under sequential load. Not content failures.
+# Transport-level failures: Google-side transients under sequential load, and local network
+# faults (DNS, dropped connection). Neither reaches a content assertion, so neither says
+# anything about the model's behaviour.
 TRANSIENT = re.compile(r"\b(429|500 INTERNAL|502|503|504)\b|RESOURCE_EXHAUSTED|UNAVAILABLE"
-                       r"|DEADLINE_EXCEEDED", re.I)
+                       r"|DEADLINE_EXCEEDED|ConnectError|ConnectTimeout|ReadTimeout"
+                       r"|RemoteProtocolError|getaddrinfo|Connection reset"
+                       r"|Server disconnected|Temporary failure in name resolution", re.I)
 
 RESULTS: list[dict] = []
 TEXT_LAT: list[int] = []
@@ -242,7 +246,12 @@ def main() -> int:
     try:
         from google.genai import types as T
         if fc is None:
-            record("gate_4", "tool_round_trip", "FAIL", "no function captured in gate 3")
+            # Gate 4 replays gate 3's call, so it inherits gate 3's verdict: if gate 3 never
+            # got a reply, gate 4 was not tested either and must not read as a behaviour fault.
+            g3 = next((r for r in RESULTS if r["gate"] == "gate_3"), None)
+            inherited = "ConnectError (gate 3 transient)" if g3 and g3["status"] == "TRANS" else ""
+            record("gate_4", "tool_round_trip", "FAIL",
+                   f"no function captured in gate 3 {inherited}".strip())
         else:
             with Session(get_engine()) as sess:
                 ctx = ToolContext(session=sess, language="mfe", allow_network=True)

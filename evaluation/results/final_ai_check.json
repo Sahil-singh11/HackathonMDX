@@ -1,5 +1,5 @@
 {
-  "run_at": "2026-07-29T23:50:51.729893+00:00",
+  "run_at": "2026-07-30T00:19:31.381044+00:00",
   "mode": "live",
   "api_key_available": true,
   "checks_total": 10,
@@ -12,28 +12,28 @@
       "check": "backend unit + AI + safety tests",
       "ok": true,
       "required": true,
-      "seconds": 43.5,
-      "detail": "476 passed, 8 deselected, 3 warnings in 41.88s"
+      "seconds": 45.5,
+      "detail": "477 passed, 8 deselected, 3 warnings in 43.51s"
     },
     {
       "check": "final acceptance regression tests",
       "ok": true,
       "required": true,
-      "seconds": 4.7,
-      "detail": "29 passed, 3 warnings in 3.48s"
+      "seconds": 5.5,
+      "detail": "30 passed, 3 warnings in 3.70s"
     },
     {
       "check": "dataset + leakage + family + args + safety validators",
       "ok": true,
       "required": true,
-      "seconds": 7.8,
+      "seconds": 8.4,
       "detail": "ALL PASS"
     },
     {
       "check": "function-calling audit",
       "ok": true,
       "required": true,
-      "seconds": 2.4,
+      "seconds": 2.6,
       "detail": "PASS"
     },
     {
@@ -47,35 +47,35 @@
       "check": "frontend production build",
       "ok": true,
       "required": true,
-      "seconds": 17.0,
-      "detail": "\u001b[32m✓ built in 6.66s\u001b[39m"
+      "seconds": 20.2,
+      "detail": "\u001b[32m✓ built in 7.89s\u001b[39m"
     },
     {
       "check": "release gate (13 checks)",
       "ok": true,
       "required": true,
-      "seconds": 89.3,
+      "seconds": 91.9,
       "detail": "RELEASE GATE: ALL CHECKS PASSED — safe to make the repository public."
     },
     {
       "check": "hosted Gemma live gates (10, real inference)",
       "ok": true,
       "required": true,
-      "seconds": 217.0,
+      "seconds": 155.6,
       "detail": "10/10 gates passed — artifacts written"
     },
     {
       "check": "hosted integration tests (live tier)",
       "ok": true,
       "required": true,
-      "seconds": 69.8,
-      "detail": "8 passed, 3 warnings in 68.28s (0:01:08)"
+      "seconds": 78.1,
+      "detail": "8 passed, 3 warnings in 76.44s (0:01:16)"
     },
     {
       "check": "deployed Render checks",
       "ok": true,
       "required": false,
-      "seconds": 45.1,
+      "seconds": 16.4,
       "detail": "24 passed / 0 failed / 0 skipped — artifacts written"
     }
   ]

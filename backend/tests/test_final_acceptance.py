@@ -323,3 +323,23 @@ def test_weather_gate_follows_the_tool_chain_instead_of_assuming_the_first_turn(
     assert '"requested_get_marine_conditions": "get_marine_conditions" in chain' in src
     assert '"allow_listed_only": all(n in REGISTRY for n in chain)' in src
     assert '"round_trips_the_marine_tool": fc.name == "get_marine_conditions"' in src
+
+
+def test_transient_classifier_covers_network_faults_not_just_google_errors():
+    """A DNS failure or dropped connection also never reaches an assertion. Classifying it
+    as a gate failure would report a model regression for a Wi-Fi drop."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "_gates2", Path(__file__).resolve().parents[1] / "scripts" / "run_final_live_gates.py")
+    gates = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gates)
+
+    for fault in ("ConnectError: [Errno 11004] getaddrinfo failed",
+                  "RemoteProtocolError: Server disconnected without sending a response.",
+                  "ConnectTimeout", "ReadTimeout", "Connection reset by peer",
+                  "Temporary failure in name resolution"):
+        assert gates.TRANSIENT.search(fault), fault
+    for behavioural in ("species_confirmation_required was false",
+                        "AUTHORITATIVE claim present", "schema validation failed"):
+        assert not gates.TRANSIENT.search(behavioural), behavioural
