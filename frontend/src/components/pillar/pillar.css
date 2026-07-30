@@ -1,0 +1,147 @@
+/* Pillar presentation framework. Semantic tokens only; no hex, no legacy tokens. */
+
+.pil-page-frame { display: flex; flex-direction: column; gap: var(--sp-4); }
+.pil-frame__title { margin: 0; }
+
+/* --- 1. Answer: the conclusion, first ----------------------------------- */
+.pil-answer {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  padding: var(--sp-4);
+  border: 2px solid var(--border-strong);
+  border-radius: var(--r-card);
+  background: var(--surface-raised);
+}
+.pil-answer--positive { border-color: var(--success); }
+.pil-answer--caution { border-color: var(--warning); }
+
+.pil-answer__hero { display: flex; flex-direction: column; flex: 0 0 auto; }
+.pil-answer__hero-value {
+  font-family: var(--font-display);
+  font-size: var(--fs-2xl);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.pil-answer__hero-unit {
+  font-family: var(--font-body);
+  font-size: var(--fs-md);
+  font-weight: 400;
+  color: var(--text-muted);
+  margin-left: var(--sp-1);
+}
+.pil-answer__hero-caption {
+  margin-top: var(--sp-1);
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.pil-answer__sentence {
+  margin: 0;
+  flex: 1 1 18rem;
+  font-size: var(--fs-md);
+  line-height: 1.4;
+}
+
+/* --- 2. Figures --------------------------------------------------------- */
+.pil-frame__figures { display: flex; flex-direction: column; gap: var(--sp-3); }
+.pil-frame__chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+
+.pil-figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--sp-3);
+  margin: 0;
+}
+.pil-figure {
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+.pil-figure dt {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+.pil-figure dd { margin: var(--sp-1) 0 0; }
+.pil-figure__value { font-family: var(--font-data); font-size: var(--fs-lg); font-weight: 700; }
+.pil-figure__unit { font-size: var(--fs-sm); color: var(--text-muted); }
+.pil-figure__na { color: var(--text-muted); font-style: italic; }
+.pil-figure__note { margin: var(--sp-1) 0 0; font-size: var(--fs-xs); color: var(--text-muted); }
+
+/* --- 3. Visual ---------------------------------------------------------- */
+.pil-frame__visual { display: flex; flex-direction: column; gap: var(--sp-2); }
+
+.pil-bars { margin: 0; }
+.pil-bars__list { margin: 0; display: flex; flex-direction: column; gap: var(--sp-2); }
+.pil-bars__row {
+  display: grid;
+  grid-template-columns: minmax(8rem, 14rem) 1fr;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2);
+  border-radius: var(--r-input);
+}
+.pil-bars__row.is-top { background: var(--surface-sunken); }
+
+.pil-bars__label { display: flex; flex-direction: column; font-size: var(--fs-sm); font-weight: 600; }
+.pil-bars__detail { font-weight: 400; font-size: var(--fs-xs); color: var(--text-muted); }
+
+.pil-bars__value { display: flex; align-items: center; gap: var(--sp-3); margin: 0; }
+.pil-bars__track {
+  flex: 1;
+  height: 10px;
+  border-radius: var(--r-chip);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.pil-bars__fill { display: block; height: 100%; background: var(--accent); }
+.pil-bars__row.is-top .pil-bars__fill { background: var(--action); }
+.pil-bars__number { flex: 0 0 auto; font-family: var(--font-data); font-weight: 700; }
+.pil-bars__caption { margin-top: var(--sp-2); font-size: var(--fs-xs); color: var(--text-muted); }
+
+/* --- 4/5/6. Folded sections --------------------------------------------- */
+.pil-frame__folds { display: flex; flex-direction: column; gap: var(--sp-2); }
+
+.pil-fold {
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+.pil-fold--limits { border-color: var(--warning); background: var(--warning-quiet); }
+.pil-fold--method { border-style: dashed; }
+
+.pil-fold__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  min-height: var(--touch-min);
+  padding: var(--sp-3);
+  cursor: pointer;
+  font-weight: 600;
+  list-style: none;
+}
+.pil-fold__summary::-webkit-details-marker { display: none; }
+.pil-fold__summary::after {
+  content: '+';
+  font-family: var(--font-data);
+  font-size: var(--fs-md);
+  color: var(--text-muted);
+}
+.pil-fold[open] > .pil-fold__summary::after { content: '\2212'; }
+.pil-fold__summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.pil-fold__hint { font-weight: 400; font-size: var(--fs-sm); color: var(--text-muted); margin-left: auto; }
+.pil-fold__body { padding: 0 var(--sp-3) var(--sp-3); }
+.pil-fold__body > :first-child { margin-top: 0; }
+
+/* Sunlight: flatten the decorative fill so the number carries alone. */
+:root[data-theme='sunlight'] .pil-bars__fill { background: var(--text); }

@@ -436,5 +436,19 @@
   "tourism.state.rough": "Azite",
   "tourism.state.very rough": "Bien azite",
   "tourism.state.high": "Ot",
-  "tourism.state.unknown": "Pa kone"
+  "tourism.state.unknown": "Pa kone",
+  "energy.answerLead": "{site} se pli bon kandida zordi, avek enn densite pwisans vag indike {value} kW/m.",
+  "energy.answerNoData": "Pena okenn chif pwisans vag ki ti kapav prodwir pou okenn sit kandida — bann done previzion pa ti disponib.",
+  "energy.heroCaption": "pli bon kandida, pwisans vag",
+  "energy.figureBestSite": "kot sit pli bien klase",
+  "energy.figureAt10m": "divan mezire a 10 m, pa oter mwaye",
+  "energy.figureNearshore": "formil dilo profon exazere isi",
+  "energy.distanceFromShore": "Distans depi lakot",
+  "energy.swellPeriod": "Peryod roulman",
+  "energy.barCaption": "Longer bar la relatif ar sit pli for ki montre, pa enn lesel absoli. Densite pwisans vag an kW par met kret.",
+  "energy.detailTitle": "Detay par sit",
+  "energy.detailHint": "{n} sit kandida",
+  "energy.limitsTitle": "Seki sa pa pran an kont",
+  "energy.limitNearshore": "Tou bann pwen kandida pre kot. Formil dilo profon exazer pwisans vag dan dilo bas, alor sa bann chif la pa konparab ar bann atlas resours dilo profon pibliye.",
+  "energy.unavailableShort": "pa disponib"
 }
