@@ -50,11 +50,11 @@ function AccessibilityMark({ size = 20 }: { size?: number }) {
       stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
       aria-hidden="true">
       <circle cx="12" cy="12" r="10" />
-      <circle cx="12" cy="7.5" r="1.5" fill="currentColor" stroke="none" />
-      <path d="M12 10v5" />
-      <path d="M7 10.5h10" />
-      <path d="M12 15l-3.5 4.5" />
-      <path d="M12 15l3.5 4.5" />
+      <circle cx="12" cy="6" r="2" fill="currentColor" stroke="none" />
+      <path d="M12 8.5v6" />
+      <path d="M4.5 9h15" />
+      <path d="M12 14.5l-5 5.5" />
+      <path d="M12 14.5l5 5.5" />
     </svg>
   )
 }
