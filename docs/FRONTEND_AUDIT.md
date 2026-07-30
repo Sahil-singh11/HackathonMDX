@@ -29,16 +29,71 @@ Coverage: 9 routes × 4 theme states (Day / Night / Night-vision / Sunlight)
 Sunlight now has **zero** contrast failures. Dashboard has **zero** overflow at
 every width × text-scale combination.
 
+### Pillar surfaces added since (transport, tourism)
+
+Both audited across all four theme states at 1920 and 390, plus 125/150 % text
+scale. **Zero** contrast, heading, touch, typography or overflow failures inside
+`pillars/transport/*` and `pillars/tourism/*`. Both are Canvas 2D, no tile
+server, no CDN, no new dependency — a tile map would be dead in airplane mode,
+which is the state this app is built for. Both render **no canvas at all** in
+Sunlight and one static frame under reduced motion.
+
+Four bugs found by screenshotting rather than reading, all fixed:
+
+| Where | Bug |
+|---|---|
+| transport | 118 px overflow at 390 px — grid children defaulting to `min-width: auto` (same trap as `.lk-onboard__inner`) |
+| transport | a full sentence inside a `Badge`, which does not wrap: 458 px wide on its own |
+| transport | vessel names on the canvas collided into an unreadable smear at **every** width including 1920 px |
+| transport | the approach ray pointed WSW, running parallel to the west coast and drawing arrivals **on the beach** — Port Louis faces NW |
+
+Harness fix in passing: `design-audit.mjs` used `waitUntil: 'networkidle'`,
+which can never fire on a route whose API takes 60 s (transport waits on hosted
+Gemma before falling back). It died on a navigation timeout and measured
+nothing. Now `domcontentloaded` + a `--settle` window:
+
+```bash
+node scripts/design-audit.mjs --routes=/pillars/transport --settle=66000
+```
+
 ---
+
+## Open — BACKEND, Lane B (Dhanesh): a model response is reaching the page
+
+`GET /api/pillars/tourism/brief` returns the **router's chat-intent envelope**
+in `interpretation` instead of a written brief:
+
+```
+```json
+{"intent": "other", "reply": "I am the Lamer Konekte assistant. I can h…"}
+```
+```
+
+Measured live on **2 of 8 sites** — Trou aux Biches and Belle Mare. Rendered
+as-is, that puts a chatbot refusal on screen labelled as a tourism
+interpretation: an honesty failure, and the most visible thing on the page in a
+demo.
+
+- **Where:** `backend/app/pillars/tourism/module.py` → `_interpret()`, which
+  hands the chat-intent response through instead of the brief prompt's output.
+  The module's own docstring already says *"a missing sentence is honest; a
+  fabricated one is not"* — a chat refusal presented as analysis is the
+  fabricated case.
+- **Frontend, already shipped:** `TourismSurface` refuses to present a
+  malformed payload as content and falls into its existing "no interpretation"
+  state. That is a guard, **not the fix** — the backend still emits it, and any
+  other consumer of the endpoint still gets it.
 
 ## Open — Lane A (Yadhav), `frontend/src/pillars/`
 
 Your CSS is clean on tokens (64 semantic uses, **zero** hex literals, zero
 legacy tokens — nicely done). These are contrast/structure only:
 
-1. **Two `<h1>` on `/pillars`.** The shell wordmark is already the page `h1`, so
-   your page title makes a second one. Seven other pages use `h2` for the page
-   title — matching that is the one-line fix.
+1. **Two `<h1>` on every `/pillars/*` route.** The shell wordmark is already the
+   page `h1`, so `PillarDetail`'s `<h1>{pillar.pillar_name}</h1>` makes a second
+   one — this now affects all five live pillar surfaces, not just the index.
+   Seven other pages use `h2` for the page title; matching that is the one-line
+   fix, in `PillarDetail.tsx`.
    *(Worth noting: wordmark-as-`h1` is arguably the weaker convention. If the
    redesign flips it so the page title is the `h1`, that would suit your page
    better. Until then, consistency wins.)*
