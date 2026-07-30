@@ -35,6 +35,11 @@ def _location_key(lat: float, lon: float) -> str:
 
 
 def _summarise(payload: dict) -> dict:
+    """Includes grid_latitude/grid_longitude — the point the wave model actually
+    answered for, which Open-Meteo echoes back and which is NOT the point we
+    asked about. At Mauritius the marine grid snaps requests by up to ~11 km, far
+    enough to move a lagoon site into open water, so a caller that compares a
+    reading against site-specific thresholds has to know how far off it is."""
     hourly = payload.get("hourly", {})
     times = hourly.get("time", [])
     if not times:
@@ -50,6 +55,8 @@ def _summarise(payload: dict) -> dict:
 
     return {
         "time": times[idx],
+        "grid_latitude": payload.get("latitude"),
+        "grid_longitude": payload.get("longitude"),
         "wave_height_m": val("wave_height"),
         "wave_direction_deg": val("wave_direction"),
         "wave_period_s": val("wave_period"),
