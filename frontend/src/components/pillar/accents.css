@@ -1,0 +1,97 @@
+/* ============================================================================
+   PILLAR ACCENTS — local to this module. Derived from the semantic tokens only.
+   ----------------------------------------------------------------------------
+   Six pillars, six hues:
+     fisheries lagoon teal · shipping steel-indigo · tourism turquoise
+     energy amber · finance deep green · biotech violet
+
+   Three of those ARE semantic tokens already (--accent is lagoon teal, --warning
+   is amber, --success is deep green). The other three are mixed from semantic
+   tokens in oklch, so they follow every theme repoint instead of pinning a hex.
+   No raw palette value and no hex literal appears in this file.
+
+   WHY THE RECIPES DIFFER PER THEME. Hue interpolation between two tokens depends
+   on where those tokens sit, and the themes move them. Measured (oklch hue, and
+   WCAG against that theme's --surface and --bg):
+
+     Night:  --text is achromatic foam, so mixing --accent with it cannot bend a
+             hue at all — shipping came out pale teal, indistinguishable from
+             fisheries. --border-strong IS a steel blue in Night, so it is the
+             partner there instead.
+
+   WHY SUNLIGHT AND NIGHT VISION COLLAPSE TO ONE ACCENT. Not a shortcut — two
+   measured findings:
+
+     Night vision deliberately removes blue light so a fisher's dark adaptation
+     survives. Deriving biotech violet there produced #00BEE0, a bright cyan:
+     the single most hostile colour that theme could emit. Six hues actively
+     defeat the theme's purpose.
+
+     Sunlight is flat, maximal-contrast, no decoration, because glare eats
+     mid-tones. It also has no violet-ish token to mix from, and the biotech
+     recipe landed on #4E5E00 olive, colliding with finance green.
+
+   In both, pillar identity comes from the title, the icon and the status chip.
+   Colour is never the only signal here, so nothing is lost but decoration.
+
+   ACCENT USE IS RESTRICTED TO NON-TEXT: rules, bars, dots, borders, and tinted
+   backgrounds. All body copy stays --text / --text-muted. That is what keeps the
+   4.5:1 body floor a property of the design system rather than of these mixes —
+   the accents only ever have to clear 3:1, and all twelve do.
+   ========================================================================= */
+
+/* Fallback first, and NOT via a second declaration: a custom property holding an
+   unsupported function is not invalid at parse time, only at use time, so the
+   usual two-declaration trick does not work for --custom-props. @supports is the
+   honest gate. Without color-mix every pillar simply gets --accent. */
+.lkp-page {
+  --lkp-accent: var(--accent);
+  --lkp-accent-quiet: var(--accent-quiet);
+}
+
+@supports (color: color-mix(in oklch, red 50%, blue)) {
+  /* ---- Day (and the :root default) ------------------------------------- */
+  .lkp-page[data-pillar='fisheries'] { --lkp-accent: var(--accent); }
+  .lkp-page[data-pillar='energy']    { --lkp-accent: var(--warning); }
+  .lkp-page[data-pillar='finance']   { --lkp-accent: var(--success); }
+
+  /* teal 205deg toward navy 250deg -> 225deg steel-indigo */
+  .lkp-page[data-pillar='shipping'] {
+    --lkp-accent: color-mix(in oklch, var(--accent) 55%, var(--text));
+  }
+  /* teal 205deg toward green 156deg -> 186deg turquoise */
+  .lkp-page[data-pillar='tourism'] {
+    --lkp-accent: color-mix(in oklch, var(--accent) 62%, var(--success));
+  }
+  /* teal 205deg and red 29deg are near antipodes; the LONG way round the hue
+     circle passes through 297deg violet. Verified in Day and Night; the two
+     themes that cannot take it are overridden below. */
+  .lkp-page[data-pillar='biotech'] {
+    --lkp-accent: color-mix(in oklch longer hue, var(--accent) 50%, var(--danger));
+  }
+
+  /* A tint of the pillar's own hue, for the answer panel and figure wells.
+     12% keeps --text above 9.8:1 on it in every theme that uses these. */
+  .lkp-page {
+    --lkp-accent-quiet: color-mix(in oklch, var(--lkp-accent) 12%, var(--surface));
+  }
+
+  /* ---- Night: only shipping needs a different partner ------------------ */
+  [data-theme='night'] .lkp-page[data-pillar='shipping'] {
+    --lkp-accent: color-mix(in oklch, var(--accent) 40%, var(--border-strong));
+  }
+
+  /* ---- Night vision: one accent, by design (see header) ---------------- */
+  [data-theme='night'][data-night-vision='on'] .lkp-page,
+  [data-theme='night'][data-night-vision='on'] .lkp-page[data-pillar] {
+    --lkp-accent: var(--accent);
+    --lkp-accent-quiet: var(--accent-quiet);
+  }
+
+  /* ---- Sunlight: one accent, by design (see header) -------------------- */
+  [data-theme='sunlight'] .lkp-page,
+  [data-theme='sunlight'] .lkp-page[data-pillar] {
+    --lkp-accent: var(--accent);
+    --lkp-accent-quiet: var(--surface);
+  }
+}
