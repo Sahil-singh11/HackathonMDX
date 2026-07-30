@@ -15,6 +15,7 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, Request
 
 from app.core.ratelimit import InMemoryRateLimiter
+from app.pillars import numeric_guard
 from app.pillars.registry import PillarRegistry, pillar_registry
 
 log = logging.getLogger(__name__)
@@ -26,6 +27,7 @@ _pillars_limiter = InMemoryRateLimiter(limit=30, window_seconds=60.0)
 def reset_limiters() -> None:
     """Called by /api/demo/reset alongside the analyse limiter."""
     _pillars_limiter.reset()
+    numeric_guard.stats.reset()
 
 
 def _client_ip(request: Request) -> str:
@@ -82,6 +84,28 @@ def build_pillar_router(registry: Optional[PillarRegistry] = None,
                 "inference provider, and what the data does not cover."
             ),
         }
+
+    @router.get(
+        "/api/pillars/diagnostics/numeric-guard",
+        tags=["pillars"],
+        summary="Number-firewall counters: narratives checked, rejected, and why",
+        description=(
+            "Every model-written pillar narrative (energy, tourism, transport) is "
+            "checked against the figures it was actually given before being shown to "
+            "anyone; a number that cannot be traced back to those figures is dropped "
+            "and the pillar falls back to a figures-only or mechanical summary. "
+            "In-memory since the last restart or /api/demo/reset — a demo counter, "
+            "not a durability guarantee."
+        ),
+    )
+    def numeric_guard_stats(request: Request) -> dict:
+        if not lim.allow(_client_ip(request)):
+            raise HTTPException(
+                429,
+                "Too many pillar requests from this address — please wait a minute and try again.",
+                headers={"Retry-After": "60"},
+            )
+        return numeric_guard.stats.snapshot()
 
     # NOTE for future pillar owners: fisheries deliberately does NOT get a
     # /provenance route here. It predates the PillarModule contract (Task 4a

@@ -31,6 +31,7 @@ from app.core.limitations import MARINE_DISCLAIMER
 import app.inference.registry as inference_registry
 from app.pillars.base import RawBundle, SourceDescriptor
 from app.pillars.narrative import prose_or_empty
+from app.pillars import numeric_guard
 from app.pillars.provenance import DataProvenance
 from app.pillars.tourism import wind as wind_client
 from app.pillars.tourism.schema import (ActivitySuitability, SiteBrief,
@@ -302,7 +303,19 @@ class TourismPillar:
                     "Tourism interpretation for %s was not prose (envelope or JSON); "
                     "dropping it rather than rendering it", brief.site_id,
                 )
-            return text
+                return text
+            # Number firewall: prose_or_empty only catches a refusal wearing a
+            # JSON costume, not a fabricated FIGURE inside otherwise-ordinary
+            # prose. Check every number the model wrote against the FACTS block
+            # it was actually given, not the full prompt (which also contains
+            # instructional numbers like "two or three sentences").
+            grounded = numeric_guard.guarded(text, "\n".join(facts), pillar_id=PILLAR_ID)
+            if text and not grounded:
+                log.warning(
+                    "Tourism interpretation for %s stated a number not traceable to the "
+                    "supplied figures; dropping it rather than rendering it", brief.site_id,
+                )
+            return grounded
         except Exception:  # noqa: BLE001
             log.warning("Interpretation failed for %s", brief.site_id, exc_info=True)
             return ""

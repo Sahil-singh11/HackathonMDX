@@ -170,12 +170,21 @@ def _run(monkeypatch, provider, site_ids=None):
 
 
 def test_model_output_cannot_substitute_for_the_computed_figures(monkeypatch, client):
-    """The acceptance test for this pillar: prose cannot become a number."""
+    """The acceptance test for this pillar: prose cannot become a number.
+
+    Historically the lie survived into `interpretation` (prose_or_empty only
+    catches a refusal wearing a JSON costume, not fabricated prose) and this
+    test's job was to prove it never contaminated the COMPUTED figures. The
+    number firewall (app.pillars.numeric_guard) now closes that remaining gap
+    too: a narrative citing a figure that traces to nothing it was given is
+    rejected outright, so the lie does not survive into interpretation either.
+    """
     result = _run(monkeypatch, _LyingProvider(), ["se_coast_offshore"])
     site = result.sites[0]
 
-    # The fabricated figures appear only in the prose field.
-    assert "9999" in site.interpretation
+    # The fabricated figures are rejected entirely — the numeric firewall
+    # cannot trace 9999/88888 to anything in the FACTS the model was given.
+    assert site.interpretation == ""
     assert site.resource.wave_power_kw_per_m != 9999
     assert site.resource.wind_power_w_per_m2 != 88888
 

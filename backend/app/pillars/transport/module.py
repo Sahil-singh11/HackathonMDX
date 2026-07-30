@@ -31,6 +31,7 @@ from app.core.config import get_settings
 from app.db.session import get_engine
 from app.inference.registry import select as select_provider
 from app.pillars.base import PillarResult, RawBundle, SourceDescriptor
+from app.pillars import numeric_guard
 from app.pillars.provenance import DataProvenance
 from app.pillars.transport import ais, brief, store
 from app.services.marine.client import get_marine_conditions
@@ -304,6 +305,23 @@ class TransportPillar:
         if not ok:
             log.warning("transport: narrative rejected — %s", reason)
             return fallback, fallback, "deterministic_fallback", f"model output rejected: {reason}", provider_name
+
+        # Second guard, layered on top rather than merged into
+        # narrative_is_grounded (which predates this module and is left alone
+        # mid-hackathon, per app/pillars/narrative.py's docstring): that check
+        # catches refusals-as-JSON and invented MMSIs, but its own docstring
+        # says plainly it "cannot verify the prose itself" for an ordinary-
+        # looking fabricated FIGURE. `prompt` is everything the model was
+        # actually given (facts and rules both) — using the whole prompt as the
+        # source of truth is deliberately generous (it also allow-lists the
+        # instructional numbers "three"/"ninety"), which only makes this guard
+        # slightly less strict, never stricter than warranted.
+        grounding = numeric_guard.check_numeric_grounding(text, prompt)
+        numeric_guard.stats.record(grounding, pillar_id=PILLAR_ID)
+        if not grounding.ok:
+            log.warning("transport: narrative rejected — %s", grounding.reason)
+            return (fallback, fallback, "deterministic_fallback",
+                    f"model output rejected: {grounding.reason}", provider_name)
 
         paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
         narrative = paragraphs[0] if paragraphs else text

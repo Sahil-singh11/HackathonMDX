@@ -128,12 +128,19 @@ def _brief_with_provider(monkeypatch, provider):
 
 
 def test_model_output_cannot_overwrite_measurements_or_ratings(monkeypatch, client):
-    """The interpretation field may contain anything; the figures may not move."""
+    """The interpretation field may contain anything; the figures may not move.
+
+    The number firewall (app.pillars.numeric_guard) now rejects this lie
+    outright — 9.99/200 trace to nothing in the FACTS the model was given —
+    so the interpretation is empty rather than containing the fabricated
+    figures. Confirmed separately in test_numeric_guard.py; this test's job
+    stays proving the computed measurements/ratings never move regardless.
+    """
     result = _brief_with_provider(monkeypatch, _LyingProvider())
     site = result.sites[0]
 
-    # The lie is confined to the prose field.
-    assert "9.99" in site.interpretation
+    # The fabricated figures are rejected entirely, not merely confined to prose.
+    assert site.interpretation == ""
     # Measurements come from the deterministic fallback, not the model.
     assert site.measurements.wave_height_m != 9.99
     assert site.measurements.wind_speed_kmh != 200
