@@ -224,6 +224,44 @@ def test_interpretation_is_capped(monkeypatch, client):
     assert all(s.resource.wave_power_kw_per_m is not None for s in result.sites)
 
 
+def test_interpretation_calls_run_concurrently_not_sequentially(monkeypatch, client):
+    """Regression test: analyse() used to call _interpret() in a plain for-loop,
+    so wall time was sum(per-site latency) — measured ~3-4 min end-to-end against
+    the live hosted model with 3 interpreted sites. Each call is now dispatched via
+    asyncio.gather(*asyncio.to_thread(...)), so wall time should track the SLOWEST
+    single call, not their sum. A slow, blocking, thread-safe fake provider proves
+    the difference: sequential would take MAX_INTERPRETED_SITES x SLEEP_S; parallel
+    takes roughly SLEEP_S regardless of MAX_INTERPRETED_SITES."""
+    import time
+
+    SLEEP_S = 0.3
+
+    class _Slow:
+        name = "slow"
+
+        def chat(self, prompt: str, language: str = "en",
+                 system_instruction: str | None = None,
+                 timeout_seconds: int | None = None) -> str:
+            time.sleep(SLEEP_S)
+            return "prose"
+
+    start = time.monotonic()
+    result = _run(monkeypatch, _Slow())
+    elapsed = time.monotonic() - start
+
+    # to_interpret is chosen by comparison rank (best wave power first), not
+    # catalogue order, so check the COUNT of interpreted sites, not a slice —
+    # same reasoning as test_interpretation_is_capped's call-count assertion.
+    interpreted = [s for s in result.sites if s.interpretation == "prose"]
+    assert len(interpreted) == MAX_INTERPRETED_SITES
+    # Generous ceiling: well under the sequential bound (MAX_INTERPRETED_SITES * SLEEP_S
+    # = 0.9s) but comfortably above a single call, so this can't pass by accident.
+    assert elapsed < MAX_INTERPRETED_SITES * SLEEP_S * 0.75, (
+        f"took {elapsed:.2f}s for {MAX_INTERPRETED_SITES} sites at {SLEEP_S}s each — "
+        "looks sequential, not concurrent"
+    )
+
+
 # --- provenance and caveats ----------------------------------------------
 
 def test_coverage_note_carries_every_required_caveat(client):

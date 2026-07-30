@@ -27,7 +27,7 @@ import { useTheme } from '../../theme'
 import ProvenanceBadge from '../ProvenanceBadge'
 import type { DataProvenance } from '../types'
 import BandGlyph, { ProtectedGlyph } from './BandGlyph'
-import SiteChart, { type ChartSite } from './SiteChart'
+import TourismMap, { type ChartSite } from './TourismMap'
 import { bandOf, type Band } from './chartGeometry'
 import { briefKey, getBrief, putBrief } from './briefCache'
 import './tourism.css'
@@ -134,7 +134,8 @@ function Figure({ label, value, unit }: { label: string; value: number | null; u
 export default function TourismSurface() {
   const t = useT()
   const announce = useAnnounce()
-  const { theme, reduceMotion } = useTheme()
+  // ChartMap owns the Sunlight case now, so this surface no longer needs `theme`.
+  const { reduceMotion } = useTheme()
   const { online } = useOffline()
   const [activity, setActivity] = useState<string>('snorkelling')
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -284,9 +285,7 @@ export default function TourismSurface() {
 
             <div className="tou-chart-layout">
               <div>
-                {theme === 'sunlight'
-                  ? <p className="tou-chart-off" role="note">{t('tourism.chartHidden')}</p>
-                  : <SiteChart sites={rows} selectedId={selectedId} onSelect={select} />}
+                <TourismMap sites={rows} selectedId={selectedId} onSelect={select} />
 
                 <h3 className="tou-section">{t('tourism.markerKey')}</h3>
                 <ul className="tou-legend">

@@ -1,55 +1,32 @@
 /**
- * Port Louis approach map — MapLibre GL over the self-hosted coastline.
+ * Port Louis approach map — now an adapter over the shared ChartMap.
  *
- * Replaces the hand-rolled canvas chart. Same honesty constraint, unchanged:
+ * THE HONESTY CONSTRAINT IS UNCHANGED, and is why this file still exists rather
+ * than calling ChartMap inline:
  *
  *   AIS GIVES US A DISTANCE, NOT A BEARING.
  *
- * A real map makes it very tempting to drop vessel pins around the port. That
- * would be inventing positions, which honesty rule 4 forbids outright. So what
- * the map draws is exactly what the data supports:
+ * A map makes it very tempting to scatter vessel pins around the port. That
+ * would be inventing positions, which honesty rule 4 forbids. So the map draws
+ * exactly what the data supports:
  *
  *   - the port, at its true published coordinate
- *   - TRUE-RADIUS range circles (the approach radius, plus 5 nm steps), computed
- *     as real geodesic circles rather than screen-space ellipses, so the scale
- *     bar and the rings agree
- *   - each vessel at its TRUE RANGE along ONE clearly-labelled bearing line
+ *   - true-radius range rings (the approach radius plus 5 nm steps)
+ *   - each vessel at its TRUE RANGE along ONE bearing, drawn dashed so it reads
+ *     as a construction line, with the caveat stated in HTML under the map
  *
- * The gain over the old canvas is real: correct Mercator projection, pan/zoom,
- * a live scale bar, and the coastline at Natural Earth resolution instead of a
- * hand-traced outline. What it deliberately does NOT gain is fake positions.
+ * WHAT THE MIGRATION DELETED. The hand-rolled geodesic-circle helper is gone:
+ * Leaflet's L.circle takes a radius in METRES and draws a real circle, so the
+ * rings cannot drift out of agreement with the scale bar. The manual
+ * above/below label alternation is gone too — ChartMap's de-collision pass now
+ * solves that for every map in the app instead of this file solving it once for
+ * itself. ~120 lines of MapLibre layer plumbing became a props object.
  */
-import { useCallback } from 'react'
-import MauritiusMap, { type MapLayerApi } from '../../components/map/LazyMauritiusMap'
+import ChartMap, { type MapLine, type MapMarker, type MapRing } from '../../components/map/LazyChartMap'
+import { useT } from '../../i18n'
 import type { ArrivalsBrief } from './types'
 
-const NM_TO_KM = 1.852
-
-/**
- * A geodesic circle as a GeoJSON polygon. Drawn as real geography rather than a
- * fixed pixel radius so it stays true under pan and zoom — a screen-space circle
- * would silently disagree with the scale bar the moment the user zoomed.
- */
-function circle(lon: number, lat: number, radiusNm: number, steps = 96): number[][] {
-  const km = radiusNm * NM_TO_KM
-  const dLat = km / 110.574
-  const dLon = km / (111.320 * Math.cos((lat * Math.PI) / 180))
-  const ring: number[][] = []
-  for (let i = 0; i <= steps; i++) {
-    const a = (i / steps) * Math.PI * 2
-    ring.push([lon + dLon * Math.cos(a), lat + dLat * Math.sin(a)])
-  }
-  return ring
-}
-
-/** Destination point at `distanceNm` from (lon,lat) on a compass bearing. */
-function along(lon: number, lat: number, distanceNm: number, bearingDeg: number): [number, number] {
-  const km = distanceNm * NM_TO_KM
-  const br = (bearingDeg * Math.PI) / 180
-  const dLat = (km * Math.cos(br)) / 110.574
-  const dLon = (km * Math.sin(br)) / (111.320 * Math.cos((lat * Math.PI) / 180))
-  return [lon + dLon, lat + dLat]
-}
+const NM_TO_M = 1852
 
 /**
  * The schematic approach bearing: 315° (NW) out of Port Louis.
@@ -57,117 +34,78 @@ function along(lon: number, lat: number, distanceNm: number, bearingDeg: number)
  * Chosen because it is open water for the whole ring extent — Mauritius lies
  * south and east of the port, so a westerly or south-westerly line would run
  * along the coast and put the further arrivals on land. This is a PRESENTATION
- * axis, not a claim: the legend says so, in HTML, right under the map.
+ * axis, not a claim: the caveat below the map says so.
  */
 const APPROACH_BEARING = 315
 
+/** Destination point at `distanceNm` on a compass bearing, as [lat, lng]. */
+function along(lat: number, lon: number, distanceNm: number, bearingDeg: number): [number, number] {
+  const km = (distanceNm * NM_TO_M) / 1000
+  const rad = (bearingDeg * Math.PI) / 180
+  const dLat = (km * Math.cos(rad)) / 110.574
+  const dLon = (km * Math.sin(rad)) / (111.32 * Math.cos((lat * Math.PI) / 180))
+  return [lat + dLat, lon + dLon]
+}
+
 export default function ApproachMap({ brief }: { brief: ArrivalsBrief }) {
+  const t = useT()
   const { port, congestion, expected_arrivals: arrivals } = brief
+  const { latitude: lat, longitude: lon } = port
 
-  const layers = useCallback(({ map, reduceMotion, addMarker, fit }: MapLayerApi) => {
-    const { latitude: lat, longitude: lon } = port
-    const approach = congestion.approach_radius_nm
-    const furthest = arrivals.reduce((m, a) => Math.max(m, a.distance_nm), 0)
-    const maxRing = Math.max(15, Math.ceil(Math.max(approach, furthest) / 5) * 5)
+  const approach = congestion.approach_radius_nm
+  const furthest = arrivals.reduce((m, a) => Math.max(m, a.distance_nm), 0)
+  const maxRing = Math.max(15, Math.ceil(Math.max(approach, furthest) / 5) * 5)
 
-    const rings = []
-    for (let r = 5; r <= maxRing; r += 5) {
-      if (Math.abs(r - approach) < 2.5) continue   // the approach ring is drawn separately
-      rings.push({
-        type: 'Feature' as const, properties: { nm: r },
-        geometry: { type: 'Polygon' as const, coordinates: [circle(lon, lat, r)] },
-      })
-    }
+  const rings: MapRing[] = [{ centre: [lat, lon], radiusMetres: approach * NM_TO_M }]
+  for (let r = 5; r <= maxRing; r += 5) {
+    if (Math.abs(r - approach) < 2.5) continue // the approach ring is already in
+    rings.push({ centre: [lat, lon], radiusMetres: r * NM_TO_M })
+  }
 
-    map.addSource('rings', { type: 'geojson', data: { type: 'FeatureCollection', features: rings } })
-    map.addLayer({
-      id: 'rings-line', type: 'line', source: 'rings',
-      paint: {
-        'line-color': getComputedStyle(document.documentElement).getPropertyValue('--border-strong').trim() || '#5F7B82',
-        'line-width': 1, 'line-dasharray': [2, 3], 'line-opacity': 0.55,
-      },
-    })
+  const lines: MapLine[] = [{
+    points: [[lat, lon], along(lat, lon, maxRing, APPROACH_BEARING)],
+    dashed: true,
+  }]
 
-    // The approach radius is the one ring that means something operationally
-    // (congestion is counted inside it), so it gets the accent and a solid line.
-    const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#0E7C86'
-    map.addSource('approach', {
-      type: 'geojson',
-      data: {
-        type: 'Feature', properties: {},
-        geometry: { type: 'Polygon', coordinates: [circle(lon, lat, approach)] },
-      },
-    })
-    map.addLayer({
-      id: 'approach-fill', type: 'fill', source: 'approach',
-      paint: { 'fill-color': accent, 'fill-opacity': 0.07 },
-    })
-    map.addLayer({
-      id: 'approach-line', type: 'line', source: 'approach',
-      paint: { 'line-color': accent, 'line-width': 2 },
-    })
+  const ordered = [...arrivals].sort((a, b) => a.distance_nm - b.distance_nm)
 
-    // The bearing line the vessels sit on. Dotted, so it reads as a construction
-    // line rather than a surveyed track.
-    const end = along(lon, lat, maxRing, APPROACH_BEARING)
-    map.addSource('axis', {
-      type: 'geojson',
-      data: {
-        type: 'Feature', properties: {},
-        geometry: { type: 'LineString', coordinates: [[lon, lat], end] },
-      },
-    })
-    map.addLayer({
-      id: 'axis-line', type: 'line', source: 'axis',
-      paint: {
-        'line-color': getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim() || '#4C6076',
-        'line-width': 1, 'line-dasharray': [1, 3], 'line-opacity': 0.8,
-      },
-    })
+  const markers: MapMarker[] = [
+    {
+      id: 'port',
+      position: [lat, lon],
+      label: port.name,
+      status: 'info',
+      shape: 'circle',
+      detail: t('transport.portDetail'),
+    },
+    ...ordered.map((v, i) => ({
+      id: `vessel-${i}`,
+      // TRUE range, schematic bearing.
+      position: along(lat, lon, v.distance_nm, APPROACH_BEARING),
+      // Range is the label, because range is what AIS actually gave us.
+      label: `${v.distance_nm.toFixed(1)} nm`,
+      status: 'caution' as const,
+      shape: 'diamond' as const,
+      detail: v.vessel_name ?? t('transport.vesselUnnamed'),
+    })),
+  ]
 
-    // Port marker.
-    const portEl = document.createElement('div')
-    portEl.className = 'lk-mk'
-    portEl.innerHTML =
-      `<span class="lk-mk__dot" style="background:${accent}"></span>` +
-      `<span class="lk-mk__label">${port.name}</span>`
-    addMarker(portEl, [lon, lat])
-
-    // Vessels, nearest first, at TRUE range along the labelled bearing.
-    const ink = getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#0A2540'
-    ;[...arrivals]
-      .sort((a, b) => a.distance_nm - b.distance_nm)
-      .forEach((v, i) => {
-        const [vlon, vlat] = along(lon, lat, v.distance_nm, APPROACH_BEARING)
-        const el = document.createElement('div')
-        el.className = 'lk-mk' + (reduceMotion ? '' : ' lk-mk--animate')
-        if (!reduceMotion) el.style.animationDelay = `${120 + i * 70}ms`
-        // Range only — the name lives in the table, and five names inside 11 nm
-        // collide at every zoom that fits the island.
-        //
-        // Labels ALTERNATE side. Arrivals cluster: 2.4 and 3.5 nm are ~1 nm
-        // apart, so with every label below its dot the closer pairs overlapped
-        // and partly hid each other (measured on the Night crop: "6.4 nm" and
-        // "2.4 nm" were both half-covered). Odd-indexed labels flip above.
-        el.classList.add(i % 2 === 0 ? 'lk-mk--below' : 'lk-mk--above')
-        el.innerHTML =
-          `<span class="lk-mk__dot" style="background:transparent;border-color:${ink}"></span>` +
-          `<span class="lk-mk__label">${v.distance_nm.toFixed(1)} nm</span>`
-        addMarker(el, [vlon, vlat])
-      })
-
-    // Frame the outermost ring so the whole approach is visible without the user
-    // having to zoom out first.
-    const sw = along(lon, lat, maxRing * 1.15, 225)
-    const ne = along(lon, lat, maxRing * 1.15, 45)
-    fit(sw, ne)
-  }, [port, congestion, arrivals])
+  // Frame the outermost ring so the whole approach is visible without zooming.
+  const pad = maxRing * 1.2
+  const [nLat, eLon] = along(lat, lon, pad, 45)
+  const [sLat, wLon] = along(lat, lon, pad, 225)
 
   return (
-    <MauritiusMap
-      label={`Approach map for ${port.name}`}
-      layers={layers}
-      height={420}
-    />
+    <>
+      <ChartMap
+        markers={markers}
+        rings={rings}
+        lines={lines}
+        bounds={[sLat, wLon, nLat, eLon]}
+        height={420}
+        listLabel={t('transport.approachListLabel')}
+      />
+      <p className="lkmap__disclaimer">{t('transport.bearingCaveat')}</p>
+    </>
   )
 }
