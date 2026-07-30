@@ -24,6 +24,10 @@ class Settings(BaseSettings):
     media_retention: str = "delete_after_analysis"
     log_level: str = "INFO"
 
+    # Extra browser origins for the shared-backend team mode. Loopback is always
+    # allowed, so this is only needed for a deployed front-end origin.
+    cors_extra_origins: str = ""
+
     marine_api_base: str = "https://marine-api.open-meteo.com/v1/marine"
     marine_cache_minutes: int = 30
     marine_prewarm_on_startup: bool = True  # off in tests (conftest.py) — no network in the suite
@@ -101,6 +105,15 @@ class Settings(BaseSettings):
     @property
     def hosted_available(self) -> bool:
         return bool(self.gemini_api_key)
+
+    @property
+    def cors_extra_origins_list(self) -> list[str]:
+        """Additional browser origins allowed to call this deployment.
+
+        Loopback origins are always allowed (see main.py), so this is only for deployed
+        front-ends — e.g. a preview URL — added without editing code. Comma-separated.
+        """
+        return [o.strip() for o in self.cors_extra_origins.split(",") if o.strip()]
 
 
 @lru_cache
