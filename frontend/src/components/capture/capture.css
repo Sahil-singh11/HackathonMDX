@@ -281,3 +281,46 @@
   top: 50%;
   transform: translateY(-50%);
 }
+
+/* --- in-page camera (desktop "Take a photo") ------------------------------ */
+.cam-backdrop {
+  position: fixed; inset: 0; z-index: 80;
+  display: flex; align-items: center; justify-content: center;
+  padding: var(--space-4);
+  background: rgb(0 0 0 / 70%);
+}
+.cam-panel {
+  display: flex; flex-direction: column; gap: var(--space-3);
+  width: min(720px, 100%);
+  padding: var(--space-4);
+  background: var(--surface-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+.cam-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.cam-title { font-weight: 700; }
+.cam-close {
+  width: 56px; height: 56px; min-height: 56px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);
+  background: none; color: inherit; cursor: pointer;
+}
+
+.cam-stage {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: var(--primary-navy);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.cam-video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cam-starting {
+  position: absolute; inset: 0; margin: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff;
+}
+
+.cam-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+/* Two classes: the legacy `button.primary/.secondary { min-height: 48px }` is
+   (0,1,1) and would otherwise win. Same trap as elsewhere in this file. */
+.cam-panel .cam-actions > * { flex: 1 1 12rem; min-height: 56px; }
