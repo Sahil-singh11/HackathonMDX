@@ -60,9 +60,16 @@ def test_worse_of_wave_and_wind_governs_calm_activities():
 
 
 def test_big_sea_is_poor_for_swimming():
-    # 1.60 m > 1.00 fair_max -> poor
-    r = rate_activity("swimming", Conditions(wave_height_m=1.60, wind_speed_kmh=10.0))
-    assert r.rating == "poor"
+    """Offshore bands: swimming is poor only in a ROUGH sea (WMO state 5+).
+
+    Recalibrated 2026-07-30. The old thresholds were lagoon numbers
+    (swimming fair_max 1.00 m) applied to offshore data, which made 1.60 m —
+    an ordinary moderate sea — read as poor.
+    """
+    # 2.80 m > 2.50 fair_max (WMO "rough") -> poor
+    assert rate_activity("swimming", Conditions(wave_height_m=2.80, wind_speed_kmh=10.0)).rating == "poor"
+    # 1.60 m is a moderate sea offshore: workable, not poor
+    assert rate_activity("swimming", Conditions(wave_height_m=1.60, wind_speed_kmh=10.0)).rating == "fair"
 
 
 def test_wind_sports_invert_the_wind_rule():
@@ -307,3 +314,77 @@ def test_capped_interpretation_follows_ranking_order(monkeypatch, client):
     top_ids = [r["site_id"] for r in result.ranking[:MAX_INTERPRETED_SITES]]
     with_prose = {s.site_id for s in result.sites if s.interpretation}
     assert with_prose == set(top_ids), f"prose went to {with_prose}, expected {set(top_ids)}"
+
+
+# --- regression: the all-Poor bug -----------------------------------------
+
+def test_calm_offshore_day_is_not_poor_everywhere():
+    """THE BUG THIS PILLAR SHIPPED WITH.
+
+    Wave input is OFFSHORE significant wave height read from a grid point up to
+    11 km away, outside the reef. It was being judged against lagoon thresholds
+    (snorkelling fair_max 0.8 m), so every site in the catalogue rated poor for
+    snorkelling — the calmest reading available, 0.98 m, still failed. A rating
+    that cannot vary is not an assessment.
+
+    A slight sea (WMO state 3) with light wind must not read poor.
+    """
+    slight = Conditions(wave_height_m=0.98, wind_speed_kmh=12.0)
+    for activity in ("swimming", "snorkelling", "diving"):
+        assert rate_activity(activity, slight).rating != "poor",             f"{activity} rated poor in a slight sea with light wind"
+
+
+def test_ratings_still_vary_across_the_real_catalogue_range():
+    """Guards against a future recalibration collapsing the scale again, in
+    either direction. Uses the observed 2026-07-30 spread (0.98-2.22 m)."""
+    from app.pillars.tourism.suitability import rate_all
+    observed = [0.98, 1.10, 1.38, 1.72, 1.94, 1.98, 2.22]
+    seen = set()
+    for h in observed:
+        for r in rate_all(Conditions(wave_height_m=h, wind_speed_kmh=15.0)):
+            seen.add(r.rating)
+    assert len(seen) >= 2, f"every rating collapsed to {seen} across a real 0.98-2.22 m spread"
+
+
+def test_sea_state_names_follow_the_wmo_scale():
+    from app.pillars.tourism.suitability import sea_state
+    assert sea_state(0.05) == "calm"
+    assert sea_state(0.30) == "smooth"
+    assert sea_state(1.00) == "slight"
+    assert sea_state(2.00) == "moderate"
+    assert sea_state(3.00) == "rough"
+    assert sea_state(None) == "unknown"
+
+
+def test_reasons_say_the_wave_reading_is_offshore():
+    """A reader must not think this was measured in the lagoon."""
+    r = rate_activity("snorkelling", Conditions(wave_height_m=1.0, wind_speed_kmh=12.0))
+    assert any("offshore" in reason.lower() for reason in r.reasons), r.reasons
+
+
+def test_result_states_what_a_rating_is_derived_from(client):
+    """The one plain sentence the surface is required to show."""
+    from sqlmodel import Session
+    from app.db.session import get_engine
+    pillar = TourismPillar()
+    with Session(get_engine()) as session:
+        bundle = asyncio.run(pillar.fetch({
+            "session": session, "site_ids": ["blue_bay"], "allow_network": False}))
+        result = asyncio.run(pillar.analyse(bundle))
+    basis = result.rating_basis.lower()
+    assert "offshore" in basis
+    assert "lagoon" in basis
+    assert "wmo" in basis
+
+
+def test_coverage_note_explains_the_offshore_grid_offset(client):
+    from sqlmodel import Session
+    from app.db.session import get_engine
+    pillar = TourismPillar()
+    with Session(get_engine()) as session:
+        bundle = asyncio.run(pillar.fetch({
+            "session": session, "site_ids": ["blue_bay"], "allow_network": False}))
+    note = bundle.coverage_note.lower()
+    assert "offshore" in note
+    assert "lagoon" in note
+    assert "grid" in note

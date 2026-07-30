@@ -58,6 +58,9 @@ def _summarise(payload: dict) -> dict:
 
     return {
         "time": times[idx],
+        # The grid point the forecast model answered for; see the marine client.
+        "grid_latitude": payload.get("latitude"),
+        "grid_longitude": payload.get("longitude"),
         "wind_speed_kmh": val("wind_speed_10m"),
         "wind_direction_deg": val("wind_direction_10m"),
         "wind_gusts_kmh": val("wind_gusts_10m"),

@@ -1,109 +1,199 @@
-/* MauritiusMap — semantic tokens only, no hex literals.
-   MapLibre's own stylesheet is imported by the component; everything here either
-   frames the map or re-skins MapLibre's controls to match the app's themes. */
+/* Shared map styling — hairline nautical chart, not a consumer map.
+ * Semantic tokens only. Static: no animation anywhere, in any theme.
+ */
 
-.lk-map {
-  position: relative;
-  border: 1px solid var(--border);
-  border-radius: var(--r-card);
-  overflow: hidden;
-  background: var(--surface-sunken);
-}
-.lk-map__canvas { position: absolute; inset: 0; }
+.lkmap { display: flex; flex-direction: column; gap: var(--sp-3); }
 
-.lk-map__failed {
-  margin: 0;
-  padding: var(--sp-4);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--warning);
-  border-radius: var(--r-input);
-  background: var(--surface-sunken);
-  color: var(--text-muted);
-  font-size: calc(var(--fs-sm) * var(--text-scale));
-}
-
-/* ------------------------------------------------- MapLibre control re-skin
-   MapLibre ships light-mode controls with hard-coded colours; untouched they
-   are a white box on a dark map in Night. Re-pointed at semantic tokens so all
-   three themes stay coherent. */
-.lk-map .maplibregl-ctrl-group {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r-input);
-  box-shadow: var(--elev-1);
-}
-.lk-map .maplibregl-ctrl-group button + button { border-top: 1px solid var(--border); }
-.lk-map .maplibregl-ctrl-group button { width: 34px; height: 34px; background: transparent; }
-.lk-map .maplibregl-ctrl-group button:hover { background: var(--accent-quiet); }
-.lk-map .maplibregl-ctrl-group button:focus-visible {
-  outline: var(--focus-ring-width) solid var(--accent);
-  outline-offset: -2px;
-}
-/* The +/- glyphs are inline SVG data-URIs coloured for a light background;
-   invert them when the surface is dark so they do not vanish. */
-[data-theme='night'] .lk-map .maplibregl-ctrl-group button .maplibregl-ctrl-icon {
-  filter: invert(1) brightness(1.6);
-}
-
-.lk-map .maplibregl-ctrl-scale {
-  background: color-mix(in srgb, var(--surface) 82%, transparent);
+/* The sea. Our own surface token — there is no tile layer behind this. */
+.lkmap__canvas {
+  width: 100%;
   border: 1px solid var(--border-strong);
-  border-top: none;
-  color: var(--text);
-  font-family: var(--font-data);
-  font-size: calc(var(--fs-xs) * var(--text-scale));
-  padding: 1px var(--sp-2);
+  border-radius: var(--r-card);
+  background: var(--surface-sunken);
+  overflow: hidden;
 }
 
-/* ------------------------------------------------------------- HTML markers
-   Markers are DOM, not sprites: no glyph/sprite fetch (which would be network),
-   and the labels stay translatable and inspectable. */
-.lk-mk {
-  display: grid;
-  place-items: center;
-  cursor: default;
+/* Leaflet paints its own backdrop; force ours through. */
+.lkmap__canvas .leaflet-container {
+  background: var(--surface-sunken);
+  font-family: var(--font-body);
+  outline: none;
 }
-.lk-mk__dot {
-  width: 14px; height: 14px;
-  border-radius: 50%;
-  border: 2px solid var(--surface);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+.lkmap__canvas .leaflet-container:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
-/* Label placement. Callers alternate --below/--above on clustered markers so
-   nearby labels do not cover each other; the default (no modifier) is below. */
-.lk-mk--above { flex-direction: column-reverse; display: flex; align-items: center; }
-.lk-mk--above .lk-mk__label { margin: 0 0 2px; }
 
-.lk-mk__label {
-  margin-top: 2px;
-  padding: 1px var(--sp-1);
-  border-radius: var(--r-input);
-  background: color-mix(in srgb, var(--surface) 88%, transparent);
-  color: var(--text);
+/* Land: thin stroke, low-opacity fill — chart, not satellite. */
+.lkmap-land {
+  fill: var(--surface-raised);
+  fill-opacity: 0.55;
+  stroke: var(--text);
+  stroke-width: 1;
+  stroke-opacity: 0.75;
+}
+
+.lkmap-ring {
+  fill: var(--accent);
+  fill-opacity: 0.05;
+  stroke: var(--accent);
+  stroke-width: 1;
+  stroke-opacity: 0.5;
+  stroke-dasharray: 4 4;
+}
+
+/* --- markers ------------------------------------------------------------ */
+/* divIcon strips Leaflet's default white box. */
+.lkmap-divicon { background: none; border: 0; }
+
+.lkmap-marker { position: relative; display: block; width: 28px; height: 28px; }
+.lkmap-marker svg { display: block; overflow: visible; }
+.lkmap-marker svg > * {
+  fill: var(--surface);
+  stroke: currentColor;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Colour REINFORCES shape, never carries meaning alone. */
+.lkmap-marker--good { color: var(--success); }
+.lkmap-marker--caution { color: var(--warning); }
+.lkmap-marker--poor { color: var(--danger); }
+.lkmap-marker--info { color: var(--accent); }
+
+.lkmap-marker.is-selected svg > * { fill: currentColor; }
+.lkmap-marker.is-selected .lkmap-marker__badge { color: var(--surface); }
+
+.lkmap-marker__badge {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-family: var(--font-data);
-  font-size: calc(var(--fs-xs) * var(--text-scale));
-  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
   pointer-events: none;
 }
 
-/* A marker the user has selected: bigger, ringed, and lifted above its
-   neighbours so overlapping sites can still be told apart. */
-.lk-mk--on .lk-mk__dot {
-  width: 20px; height: 20px;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 30%, transparent);
+.lkmap-tooltip {
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  background: var(--surface-raised);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  box-shadow: none;
 }
-.lk-mk--on .lk-mk__label { font-weight: 700; }
+.lkmap-tooltip::before { display: none; }
 
-/* Entry: markers fade and settle in once, staggered by the caller via
-   animation-delay. Never loops — a pulsing map is noise, not information. */
-@keyframes lk-mk-in {
-  from { opacity: 0; transform: translateY(-6px) scale(0.85); }
-  to   { opacity: 1; transform: none; }
+/* --- controls ----------------------------------------------------------- */
+.lkmap__canvas .leaflet-control-scale-line {
+  font-family: var(--font-data);
+  font-size: var(--fs-xs);
+  background: var(--surface-raised);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-top: none;
+  box-shadow: none;
 }
-.lk-mk--animate { animation: lk-mk-in 320ms var(--ease-out) both; }
+.lkmap__canvas .leaflet-bar,
+.lkmap__canvas .leaflet-bar a {
+  background: var(--surface-raised);
+  color: var(--text);
+  border-color: var(--border-strong);
+  box-shadow: none;
+}
+.lkmap__canvas .leaflet-bar a:hover { background: var(--surface); }
 
+.lkmap-north-control { margin: var(--sp-2); }
+.lkmap-north {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--text-muted);
+}
+.lkmap-north svg > * {
+  fill: var(--text-muted);
+  stroke: var(--text-muted);
+  stroke-width: 1.5;
+}
+.lkmap-north__n {
+  font-family: var(--font-data);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* --- the non-map equivalent --------------------------------------------- */
+.lkmap__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-1); }
+
+.lkmap__list-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  min-height: var(--touch-min);
+  padding: var(--sp-2) var(--sp-3);
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.lkmap__list-item:hover { border-color: var(--accent); }
+.lkmap__list-item.is-selected { border-color: var(--accent); border-width: 2px; }
+
+.lkmap__list-badge {
+  flex: 0 0 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-chip);
+  border: 2px solid currentColor;
+  font-family: var(--font-data);
+  font-size: 12px;
+  font-weight: 700;
+}
+.lkmap__list-badge--good { color: var(--success); }
+.lkmap__list-badge--caution { color: var(--warning); }
+.lkmap__list-badge--poor { color: var(--danger); }
+.lkmap__list-badge--info { color: var(--accent); }
+
+.lkmap__list-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.lkmap__list-label { font-weight: 600; }
+.lkmap__list-detail { font-size: var(--fs-sm); color: var(--text-muted); }
+.lkmap__list-status { font-size: var(--fs-xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+
+.lkmap__sunlight-note,
+.lkmap__disclaimer {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+.lkmap__sunlight-note {
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface-sunken);
+}
+
+/* Static in every theme, and under reduced motion. */
 @media (prefers-reduced-motion: reduce) {
-  .lk-mk--animate { animation: none; }
+  .lkmap__canvas .leaflet-fade-anim .leaflet-tile,
+  .lkmap__canvas .leaflet-zoom-anim .leaflet-zoom-animated { transition: none !important; }
 }
-html[data-reduce-motion='on'] .lk-mk--animate { animation: none; }
+
+/* Construction lines (e.g. an AIS bearing axis) read as dashed so they are not
+   mistaken for a surveyed track. */
+.lkmap-line {
+  fill: none;
+  stroke: var(--text-muted);
+  stroke-width: 1.5;
+  stroke-opacity: 0.8;
+}
+.lkmap-line--dashed { stroke-dasharray: 2 5; }

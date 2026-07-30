@@ -27,7 +27,7 @@ import { useTheme } from '../../theme'
 import ProvenanceBadge from '../ProvenanceBadge'
 import type { DataProvenance } from '../types'
 import BandGlyph, { ProtectedGlyph } from './BandGlyph'
-import SiteChart, { type ChartSite } from './SiteChart'
+import TourismMap, { type ChartSite } from './TourismMap'
 import { bandOf, type Band } from './chartGeometry'
 import { briefKey, getBrief, putBrief } from './briefCache'
 import './tourism.css'
@@ -41,6 +41,9 @@ interface Measurements {
   visibility_m: number | null
   sea_surface_temperature_c: number | null
   observed_at: string | null
+  sea_state: string | null
+  reading_offset_km: number | null
+  shares_grid_cell_with: string[]
 }
 interface Rating { activity: string; rating: string; score: number; reasons: string[] }
 interface SiteBrief {
@@ -54,6 +57,7 @@ interface TourismBrief {
   ranked_for_activity: string | null
   ranking: Array<{ site_id: string; rating: string; score: number; reasons: string[] }>
   ranking_basis: string
+  rating_basis: string
 }
 
 /** GET /api/pillars/tourism/sites — the versioned catalogue on disk. */
@@ -134,7 +138,8 @@ function Figure({ label, value, unit }: { label: string; value: number | null; u
 export default function TourismSurface() {
   const t = useT()
   const announce = useAnnounce()
-  const { theme, reduceMotion } = useTheme()
+  // ChartMap owns the Sunlight case now, so this surface no longer needs `theme`.
+  const { reduceMotion } = useTheme()
   const { online } = useOffline()
   const [activity, setActivity] = useState<string>('snorkelling')
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -258,6 +263,9 @@ export default function TourismSurface() {
         </label>
 
         {/* The caveat lives here, next to the ranking it qualifies. */}
+        <p className="tou-rating-basis" role="note">
+          <Info size={16} aria-hidden="true" /> {brief.rating_basis}
+        </p>
         <p className="tou-ranking-basis" role="note">
           <Info size={16} aria-hidden="true" /> {brief.ranking_basis}
         </p>
@@ -284,9 +292,7 @@ export default function TourismSurface() {
 
             <div className="tou-chart-layout">
               <div>
-                {theme === 'sunlight'
-                  ? <p className="tou-chart-off" role="note">{t('tourism.chartHidden')}</p>
-                  : <SiteChart sites={rows} selectedId={selectedId} onSelect={select} />}
+                <TourismMap sites={rows} selectedId={selectedId} onSelect={select} />
 
                 <h3 className="tou-section">{t('tourism.markerKey')}</h3>
                 <ul className="tou-legend">
@@ -393,7 +399,7 @@ export default function TourismSurface() {
 
               <h3 className="tou-section"><Waves size={16} aria-hidden="true" /> {t('tourism.measured')}</h3>
               <dl className="tou-figures">
-                <Figure label={t('tourism.waveHeight')} value={site.measurements.wave_height_m} unit="m" />
+                <Figure label={t('tourism.waveHeightOffshore')} value={site.measurements.wave_height_m} unit="m" />
                 <Figure label={t('tourism.wavePeriod')} value={site.measurements.wave_period_s} unit="s" />
                 <Figure label={t('tourism.swell')} value={site.measurements.swell_height_m} unit="m" />
                 <Figure label={t('tourism.wind')} value={site.measurements.wind_speed_kmh} unit="km/h" />

@@ -29,6 +29,14 @@ class SiteMeasurements(BaseModel):
     visibility_m: Optional[float] = None
     sea_surface_temperature_c: Optional[float] = None
     observed_at: Optional[str] = None
+    #: WMO sea state name for wave_height_m (calm/smooth/slight/moderate/rough).
+    sea_state: Optional[str] = None
+    #: How far the wave model's grid point is from the site. The reading is
+    #: taken THERE, not at the site — at Mauritius this reaches ~11 km.
+    reading_offset_km: Optional[float] = None
+    #: True when another site in the same request shares this grid cell, so the
+    #: two readings are identical by construction rather than by coincidence.
+    shares_grid_cell_with: list[str] = Field(default_factory=list)
 
 
 class ActivitySuitability(BaseModel):
@@ -68,4 +76,11 @@ class TourismBrief(PillarResult):
     ranking_basis: str = (
         "Ranking reflects forecast sea and wind conditions only. It uses NO "
         "visitor-count, crowding or occupancy data — none exists in this system."
+    )
+    #: The one plain sentence every surface must show, so nobody has to infer
+    #: what a rating means or where it came from.
+    rating_basis: str = (
+        "Each rating is calculated in code from the forecast OFFSHORE sea state "
+        "and wind near the site — not measured in the lagoon, which is calmer — "
+        "using fixed thresholds anchored to the WMO sea state scale."
     )

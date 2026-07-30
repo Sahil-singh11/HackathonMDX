@@ -116,13 +116,26 @@ if [ "$NEED_INSTALL" -eq 1 ]; then
   cp "$REQ_FILE" "$STAMP"
 fi
 
-# Frontend node_modules — install on first run, same trigger logic via npm's own
-# lockfile check (npm ci/install is fast and safe to call when nothing changed).
+# Frontend node_modules — install on first run. Checking that the directory EXISTS
+# is not enough: an install interrupted by a dropped connection, a Ctrl+C, or a
+# teammate running `npm install` by hand before this script ever ran can leave
+# node_modules present but missing individual packages. That surfaces later as an
+# opaque Vite config error ("Cannot find module '@litert-lm/core/package.json'")
+# that looks like a code problem, not a setup problem — so probe that the one
+# package vite.config.ts resolves at config-load time is actually there, the same
+# way the backend probes `import fastapi, uvicorn, sqlmodel` before trusting its venv.
 command -v npm >/dev/null 2>&1 || die "npm not found on PATH. Install Node.js 20+, then re-run."
+NEED_FE_INSTALL=0
 if [ ! -d "$ROOT/frontend/node_modules" ]; then
+  NEED_FE_INSTALL=1
+elif ! ( cd "$ROOT/frontend" && node -e "require.resolve('@litert-lm/core/package.json')" ) >/dev/null 2>&1; then
+  say "frontend" "node_modules present but incomplete (a previous install was interrupted) — reinstalling"
+  NEED_FE_INSTALL=1
+fi
+if [ "$NEED_FE_INSTALL" -eq 1 ]; then
   say "frontend" "installing node_modules (first run only, ~1 min)"
   ( cd "$ROOT/frontend" && npm install --no-audit --no-fund ) \
-    || die "npm install failed."
+    || die "npm install failed. Try by hand: rm -rf frontend/node_modules && cd frontend && npm install"
 fi
 
 for p in "$BACKEND_PORT" "$FRONTEND_PORT"; do
