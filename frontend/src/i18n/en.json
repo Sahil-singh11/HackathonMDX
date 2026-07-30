@@ -477,5 +477,19 @@
   "tourism.state.rough": "Rough",
   "tourism.state.very rough": "Very rough",
   "tourism.state.high": "High",
-  "tourism.state.unknown": "Unknown"
+  "tourism.state.unknown": "Unknown",
+  "energy.answerLead": "{site} is the strongest candidate today, with an indicated wave power density of {value} kW/m.",
+  "energy.answerNoData": "No wave power figure could be produced for any candidate site — the forecast inputs were unavailable.",
+  "energy.heroCaption": "best candidate, wave power",
+  "energy.figureBestSite": "at the best-ranked site",
+  "energy.figureAt10m": "wind measured at 10 m, not hub height",
+  "energy.figureNearshore": "deep-water formula overstates here",
+  "energy.distanceFromShore": "Distance from shore",
+  "energy.swellPeriod": "Swell period",
+  "energy.barCaption": "Bar length is relative to the strongest site shown, not an absolute scale. Wave power density in kW per metre of crest.",
+  "energy.detailTitle": "Per-site breakdown",
+  "energy.detailHint": "{n} candidate sites",
+  "energy.limitsTitle": "What this does not account for",
+  "energy.limitNearshore": "All candidate points are nearshore. The deep-water formula overstates wave power in shallow water, so these figures are not comparable with published deep-water resource atlases.",
+  "energy.unavailableShort": "unavailable"
 }
