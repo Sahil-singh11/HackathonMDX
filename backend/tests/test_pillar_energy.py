@@ -229,7 +229,16 @@ def test_interpretation_is_capped(monkeypatch, client):
             return "prose"
 
     result = _run(monkeypatch, _Counting())
-    assert _Counting.calls == MAX_INTERPRETED_SITES
+    # <=, not ==: two of the top-ranked sites can coincidentally share IDENTICAL
+    # deterministic-mock figures (the mock seeds on `% 7` of lat/lon across only
+    # 5 candidate sites), in which case the second legitimately gets served
+    # from app.pillars.narrative_cache instead of a second identical model call
+    # (Task 3) — the cap on MODEL CALLS still holds, it just is not always the
+    # same number as sites interpreted once caching exists.
+    assert _Counting.calls <= MAX_INTERPRETED_SITES
+    assert _Counting.calls >= 1
+    interpreted = [s for s in result.sites if s.interpretation]
+    assert len(interpreted) == MAX_INTERPRETED_SITES
     assert all(s.resource.wave_power_kw_per_m is not None for s in result.sites)
 
 
@@ -314,3 +323,52 @@ def test_pillar_listed_with_government_naming(client):
     assert energy["pillar_name"] == "Ocean-Based Renewable Energy"
     assert energy["implemented"] is True
     assert energy["enabled"] is False
+
+
+# --- narrative cache (Task 3) ----------------------------------------------
+
+def test_second_request_for_the_same_site_serves_from_cache_without_a_second_model_call(monkeypatch, client):
+    """The actual behavioural promise of Task 3: a repeat request for the same
+    figures is instant and never re-invokes the provider."""
+    class _Counting:
+        name = "counter"
+        calls = 0
+
+        def chat(self, prompt: str, language: str = "en",
+                 system_instruction: str | None = None,
+                 timeout_seconds: int | None = None) -> str:
+            type(self).calls += 1
+            # No digits at all, so this is trivially grounded regardless of the
+            # site's actual (deterministic-mock-derived) figures — the point of
+            # this test is the cache, not the numeric guard.
+            return "This site shows a solid wave resource relative to the other candidates."
+
+    first = _run(monkeypatch, _Counting(), ["se_coast_offshore"])
+    assert _Counting.calls == 1
+    assert first.sites[0].interpretation_source == "model"
+    assert first.sites[0].interpretation != ""
+
+    second = _run(monkeypatch, _Counting(), ["se_coast_offshore"])
+    assert _Counting.calls == 1  # NOT called again
+    assert second.sites[0].interpretation_source == "cached"
+    assert second.sites[0].interpretation == first.sites[0].interpretation
+
+
+def test_demo_mode_never_calls_the_model(monkeypatch, client):
+    from app.core.config import get_settings
+
+    class _Boom:
+        name = "should-not-be-called"
+
+        def chat(self, *a, **k) -> str:  # noqa: ANN002, ANN003
+            raise AssertionError("demo_mode must never call the model")
+
+    get_settings.cache_clear()
+    monkeypatch.setenv("DEMO_MODE", "true")
+    try:
+        result = _run(monkeypatch, _Boom(), ["se_coast_offshore"])
+        assert result.sites[0].interpretation == ""
+        assert result.sites[0].interpretation_source == ""
+    finally:
+        monkeypatch.delenv("DEMO_MODE", raising=False)
+        get_settings.cache_clear()

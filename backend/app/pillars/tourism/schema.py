@@ -50,6 +50,10 @@ class SiteBrief(BaseModel):
     #: Model-written prose. Empty string when no provider was available — an
     #: empty brief is honest, an invented one is not.
     interpretation: str = ""
+    #: "model" (fresh call), "cached" (served from narrative_cache without a
+    #: model call), or "" (no interpretation — no provider, rejected output, or
+    #: demo_mode with no cache entry yet).
+    interpretation_source: str = ""
 
 
 class TourismBrief(PillarResult):

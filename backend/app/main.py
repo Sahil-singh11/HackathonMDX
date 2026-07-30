@@ -15,9 +15,13 @@ from app.core.config import get_settings
 from app.core.logging import configure, new_request_id
 from app.db.session import get_engine, init_db
 from app.pillars.energy import register_energy
+from app.pillars.energy.module import energy_pillar
 from app.pillars.finance import register_finance_pillar
+from app.pillars.registry import pillar_registry
 from app.pillars.routes import build_pillar_router
 from app.pillars.tourism import prewarm_tourism_sites, register_tourism
+from app.pillars.tourism.module import tourism_pillar
+from app.pillars.transport.module import transport_pillar
 from app.services.marine.client import prewarm_demo_locations
 
 log = logging.getLogger(__name__)
@@ -38,6 +42,59 @@ def _run_tourism_prewarm() -> None:
     """
     prewarm_tourism_sites()
     log.info("Tourism cache pre-warm finished")
+
+
+async def _prewarm_energy_narrative() -> None:
+    if not pillar_registry.is_enabled("energy"):
+        return
+    try:
+        with Session(get_engine()) as session:
+            bundle = await energy_pillar.fetch({"session": session})
+            await energy_pillar.analyse(bundle)
+        log.info("Narrative cache pre-warmed for energy")
+    except Exception:  # noqa: BLE001 — startup must never crash on this
+        log.warning("Narrative cache pre-warm failed for energy", exc_info=True)
+
+
+async def _prewarm_tourism_narrative() -> None:
+    if not pillar_registry.is_enabled("tourism"):
+        return
+    try:
+        with Session(get_engine()) as session:
+            bundle = await tourism_pillar.fetch({"session": session})
+            await tourism_pillar.analyse(bundle)
+        log.info("Narrative cache pre-warmed for tourism")
+    except Exception:  # noqa: BLE001 — startup must never crash on this
+        log.warning("Narrative cache pre-warm failed for tourism", exc_info=True)
+
+
+async def _prewarm_transport_narrative() -> None:
+    if not pillar_registry.is_enabled("transport"):
+        return
+    try:
+        bundle = await transport_pillar.fetch({})
+        await transport_pillar.analyse(bundle)
+        log.info("Narrative cache pre-warmed for transport")
+    except Exception:  # noqa: BLE001 — startup must never crash on this
+        log.warning("Narrative cache pre-warm failed for transport", exc_info=True)
+
+
+async def _run_narrative_prewarm() -> None:
+    """Warms app.pillars.narrative_cache (Task 3) by running each enabled
+    pillar's OWN default fetch()+analyse() once — the exact path a real first
+    request takes, so the cache holds what a demo viewer would actually see,
+    not a synthetic stand-in. Each pillar gets its own DB session (fetch()'s
+    Open-Meteo layer is not coroutine-safe to share one across concurrent
+    tasks — same reasoning as energy/module.py not parallelising its own
+    fetch() loop), and the three pillars run concurrently so total wall time
+    tracks the slowest one, not their sum. A pillar already interprets its own
+    top sites concurrently (Task 3's earlier latency fix), so this is one
+    round of calls per pillar, not one per site.
+    """
+    await asyncio.gather(
+        _prewarm_energy_narrative(), _prewarm_tourism_narrative(), _prewarm_transport_narrative(),
+    )
+    log.info("Narrative cache pre-warm finished")
 
 
 def create_app() -> FastAPI:
@@ -81,6 +138,14 @@ def create_app() -> FastAPI:
             # down/slow) previously blocked boot for up to ~60s here.
             asyncio.create_task(asyncio.to_thread(_run_marine_prewarm))
             asyncio.create_task(asyncio.to_thread(_run_tourism_prewarm))
+        if settings.narrative_prewarm_on_startup:
+            # Natively async (unlike the two above) — no to_thread wrapper
+            # needed, since it only awaits coroutines and each pillar's own
+            # per-site model calls already run on worker threads internally.
+            # Fire-and-forget, same readiness contract: this can take up to a
+            # single pillar's worth of real model latency (tens of seconds),
+            # and /health must not wait on it.
+            asyncio.create_task(_run_narrative_prewarm())
         log.info("Lamer Konekte backend started (provider default: %s)", settings.provider_mode)
 
     app.include_router(router)

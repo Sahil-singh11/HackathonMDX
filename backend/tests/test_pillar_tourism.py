@@ -261,7 +261,14 @@ def test_interpretation_is_capped_so_a_full_brief_stays_usable(monkeypatch, clie
         result = asyncio.run(pillar.analyse(bundle))
 
     assert len(result.sites) >= 5, "expected the whole catalogue"
-    assert len(calls) == MAX_INTERPRETED_SITES, f"expected {MAX_INTERPRETED_SITES} calls, got {len(calls)}"
+    # <=, not ==: two of the top-ranked sites can coincidentally share IDENTICAL
+    # deterministic-mock figures (the mock seeds on `% 7` of lat/lon, and there
+    # are only 8 sites), in which case the second legitimately gets served from
+    # app.pillars.narrative_cache instead of paying for a second identical model
+    # call (Task 3). The cap on MODEL CALLS is still enforced — it just isn't
+    # always the same number as sites interpreted once caching exists.
+    assert len(calls) <= MAX_INTERPRETED_SITES, f"expected at most {MAX_INTERPRETED_SITES} calls, got {len(calls)}"
+    assert len(calls) >= 1, "expected at least one real model call"
 
     # Every site still carries full deterministic figures and ratings.
     for site in result.sites:

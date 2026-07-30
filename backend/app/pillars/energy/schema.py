@@ -46,6 +46,11 @@ class SiteAssessment(BaseModel):
     resource: SiteResource
     #: Model-written prose. Empty when no provider was reachable.
     interpretation: str = ""
+    #: "model" (fresh call), "cached" (served from narrative_cache without a
+    #: model call), or "" (no interpretation — no provider, rejected output, or
+    #: demo_mode with no cache entry yet). Same honesty extended to model rungs
+    #: that the UI already gives a mechanical-summary badge (Task 3).
+    interpretation_source: str = ""
 
 
 class EnergyBrief(PillarResult):

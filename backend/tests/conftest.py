@@ -20,6 +20,7 @@ os.environ["PROVIDER_MODE"] = "mock"
 os.environ.setdefault("GEMINI_API_KEY_LIVE", os.environ.get("GEMINI_API_KEY", ""))
 os.environ["GEMINI_API_KEY"] = ""
 os.environ["MARINE_PREWARM_ON_STARTUP"] = "false"  # suite must not depend on live network
+os.environ["NARRATIVE_PREWARM_ON_STARTUP"] = "false"  # ditto — no model calls at test collection
 
 
 @pytest.fixture(autouse=True)

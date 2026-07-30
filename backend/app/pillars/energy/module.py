@@ -33,7 +33,7 @@ from app.pillars.energy.schema import (EnergyBrief, SiteAssessment,
                                        SiteMeasurements, SiteResource)
 from app.pillars.energy.sites import CandidateSite, load_sites
 from app.pillars.narrative import prose_or_empty
-from app.pillars import numeric_guard
+from app.pillars import narrative_cache, numeric_guard
 from app.pillars.provenance import DataProvenance
 from app.pillars.tourism.wind import get_wind_conditions
 from app.services.marine.client import get_marine_conditions
@@ -208,7 +208,7 @@ class EnergyPillar:
                 if isinstance(result, BaseException):
                     log.warning("Interpretation failed for %s", assessment.site_id, exc_info=result)
                     continue
-                assessment.interpretation = result
+                assessment.interpretation, assessment.interpretation_source = result
         except Exception:  # noqa: BLE001 — figures without prose are still valid
             log.warning("Energy interpretation unavailable; returning figures only", exc_info=True)
 
@@ -233,13 +233,35 @@ class EnergyPillar:
         )
 
     @staticmethod
-    def _interpret(provider, assessment: SiteAssessment, comparison: list[dict]) -> str:
+    def _interpret(provider, assessment: SiteAssessment, comparison: list[dict]) -> tuple[str, str]:
         """Prose about figures that are already computed. The model is told not to
-        produce numbers; even if it does, its text lands in `interpretation` only."""
+        produce numbers; even if it does, its text lands in `interpretation` only.
+
+        Returns (text, source) where source is "model", "cached" or "" (no
+        provider, rejected output, or demo_mode with nothing cached yet) — the
+        same honesty the UI already gives a mechanical-summary badge, extended
+        to which model rung actually produced this prose (Task 3).
+        """
         r, m = assessment.resource, assessment.measurements
         ranked = ", ".join(
             f"{c['site_id']}={c['wave_power_kw_per_m']} kW/m" for c in comparison[:5]
         )
+        figures = {
+            "wave_height_m": m.wave_height_m, "wave_period_s": m.wave_period_s,
+            "wind_speed_kmh": m.wind_speed_kmh,
+            "wave_power_kw_per_m": r.wave_power_kw_per_m,
+            "wind_power_w_per_m2": r.wind_power_w_per_m2,
+            "ranked": ranked,
+        }
+        key = narrative_cache.cache_key(PILLAR_ID, figures, provider_name=provider.name)
+        cached_text = narrative_cache.get(key)
+        if cached_text:
+            return cached_text, "cached"
+        if narrative_cache.demo_mode_active():
+            # Never call a model in demo mode — a cache miss here means
+            # figures-only, not a live call the venue's connectivity might not
+            # support.
+            return "", ""
         facts = [
             f"Site: {assessment.name} ({assessment.region}). {assessment.exposure}",
             f"Nearshore: {assessment.nearshore}, about {assessment.approx_distance_from_shore_km} km offshore",
@@ -281,7 +303,7 @@ class EnergyPillar:
                     "Energy interpretation for %s was not prose (envelope or JSON); "
                     "dropping it rather than rendering it", assessment.site_id,
                 )
-                return text
+                return "", ""
             # Number firewall: prose_or_empty only catches a refusal wearing a
             # JSON costume, not a fabricated FIGURE inside otherwise-ordinary
             # prose ("Wave power here is actually 9999 kW/m" is syntactically
@@ -294,10 +316,12 @@ class EnergyPillar:
                     "Energy interpretation for %s stated a number not traceable to the "
                     "supplied figures; dropping it rather than rendering it", assessment.site_id,
                 )
-            return grounded
+                return "", ""
+            narrative_cache.put(key, grounded, pillar_id=PILLAR_ID, provider_name=provider.name)
+            return grounded, "model"
         except Exception:  # noqa: BLE001
             log.warning("Interpretation failed for %s", assessment.site_id, exc_info=True)
-            return ""
+            return "", ""
 
 
 energy_pillar = EnergyPillar()

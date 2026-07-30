@@ -31,7 +31,7 @@ from app.core.limitations import MARINE_DISCLAIMER
 import app.inference.registry as inference_registry
 from app.pillars.base import RawBundle, SourceDescriptor
 from app.pillars.narrative import prose_or_empty
-from app.pillars import numeric_guard
+from app.pillars import narrative_cache, numeric_guard
 from app.pillars.provenance import DataProvenance
 from app.pillars.tourism import wind as wind_client
 from app.pillars.tourism.schema import (ActivitySuitability, SiteBrief,
@@ -236,7 +236,7 @@ class TourismPillar:
                 if isinstance(result, BaseException):
                     log.warning("Interpretation failed for %s", brief.site_id, exc_info=result)
                     continue
-                brief.interpretation = result
+                brief.interpretation, brief.interpretation_source = result
         except Exception:  # noqa: BLE001 — a brief without prose is still valid
             log.warning("Tourism interpretation unavailable; returning figures only", exc_info=True)
 
@@ -258,14 +258,30 @@ class TourismPillar:
 
     # -- the model's only job ----------------------------------------------
     @staticmethod
-    def _interpret(provider, brief: SiteBrief) -> str:
+    def _interpret(provider, brief: SiteBrief) -> tuple[str, str]:
         """Ask for prose about figures that are already decided.
 
         The prompt hands over the computed ratings and forbids new numbers. Even
         if the model ignores that, its text lands in `interpretation` only — no
         code path copies it into a measurement or a rating.
+
+        Returns (text, source) — see energy/module.py's _interpret for the same
+        contract and the Task 3 reasoning (cache-first, demo_mode never calls a
+        model).
         """
         m = brief.measurements
+        figures = {
+            "wave_height_m": m.wave_height_m, "wave_period_s": m.wave_period_s,
+            "wind_speed_kmh": m.wind_speed_kmh, "wind_gusts_kmh": m.wind_gusts_kmh,
+            "visibility_m": m.visibility_m, "sea_surface_temperature_c": m.sea_surface_temperature_c,
+            "ratings": {r.activity: r.rating for r in brief.ratings},
+        }
+        key = narrative_cache.cache_key(PILLAR_ID, figures, provider_name=provider.name)
+        cached_text = narrative_cache.get(key)
+        if cached_text:
+            return cached_text, "cached"
+        if narrative_cache.demo_mode_active():
+            return "", ""
         facts = [
             f"Site: {brief.name} ({brief.region}). {brief.character}",
             f"Wave height: {m.wave_height_m} m" if m.wave_height_m is not None else "Wave height: unavailable",
@@ -303,7 +319,7 @@ class TourismPillar:
                     "Tourism interpretation for %s was not prose (envelope or JSON); "
                     "dropping it rather than rendering it", brief.site_id,
                 )
-                return text
+                return "", ""
             # Number firewall: prose_or_empty only catches a refusal wearing a
             # JSON costume, not a fabricated FIGURE inside otherwise-ordinary
             # prose. Check every number the model wrote against the FACTS block
@@ -315,10 +331,12 @@ class TourismPillar:
                     "Tourism interpretation for %s stated a number not traceable to the "
                     "supplied figures; dropping it rather than rendering it", brief.site_id,
                 )
-            return grounded
+                return "", ""
+            narrative_cache.put(key, grounded, pillar_id=PILLAR_ID, provider_name=provider.name)
+            return grounded, "model"
         except Exception:  # noqa: BLE001
             log.warning("Interpretation failed for %s", brief.site_id, exc_info=True)
-            return ""
+            return "", ""
 
 
 tourism_pillar = TourismPillar()

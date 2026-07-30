@@ -89,6 +89,21 @@ class MarineForecastCache(SQLModel, table=True):
     source: str = "open-meteo"
 
 
+class NarrativeCacheEntry(SQLModel, table=True):
+    """Cached model prose for a pillar narrative (Task 3, demo reliability).
+
+    Keyed on a hash of (pillar_id, rounded input figures, language, provider) —
+    see app/pillars/narrative_cache.py for how the key is built. Persisted to
+    the same on-disk SQLite database as everything else (not memory-only), so
+    a restart does not cold-start the demo the way an in-process dict would.
+    """
+    cache_key: str = Field(primary_key=True)
+    pillar_id: str = Field(index=True)
+    provider_name: str
+    text: str
+    stored_at: datetime = Field(default_factory=_now)
+
+
 class Declaration(SQLModel, table=True):
     id: str = Field(default_factory=_uuid, primary_key=True)
     created_at: datetime = Field(default_factory=_now)
