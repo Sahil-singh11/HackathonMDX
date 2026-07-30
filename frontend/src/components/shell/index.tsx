@@ -70,7 +70,7 @@ function ShellHeader({ onOpenA11y }: { onOpenA11y: () => void }) {
           onClick={() => setLanguage(language === 'en' ? 'mfe' : 'en')}
           aria-label={t('common.language')}
         >
-          {language === 'en' ? 'MFE' : 'EN'}
+          {language === 'en' ? 'KR' : 'EN'}
         </button>
       </div>
     </header>
