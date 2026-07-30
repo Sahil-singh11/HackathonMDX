@@ -496,8 +496,91 @@ textarea { resize: vertical; }
 .catch-card { margin: 0; }
 .catch-card .list-row { flex-direction: column; align-items: flex-start; gap: var(--space-2); }
 
-.declaration-layout { display: flex; flex-direction: column; gap: var(--space-3); }
-.declaration-empty { display: flex; align-items: center; justify-content: center; min-height: 120px; }
+/* ---------- Declaration (single-column workflow) ----------
+   Replaces .declaration-layout / .declaration-preview / .declaration-empty.
+   The old right-hand column held a preview and, before a draft existed, simply
+   repeated decl.subtitle in a 429x144 box. */
+.decl-page { display: block; }
+.decl-card { display: flex; flex-direction: column; gap: var(--space-3); }
+.decl-head h2 { margin: 0; }
+.decl-sub { margin: var(--space-1) 0 0; }
+.decl-mock { margin: 0; }
+
+/* Period row: both dates and the action on one line. Date inputs are sized to
+   their content instead of stretching to the full card width. */
+.decl-period {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+.decl-field { display: flex; flex-direction: column; gap: var(--space-1); flex: 0 1 13rem; min-width: 0; }
+.decl-field > span { font-size: 14px; font-weight: 600; color: var(--text-label); }
+.decl-field input {
+  width: 100%; min-height: 56px;   /* a11y floor, same as every other control */
+  border: 1.5px solid var(--border-subtle); border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3); font-size: 1rem; font-family: inherit;
+  background: var(--surface-input); color: var(--text-primary);
+}
+.decl-field input:focus-visible { outline: 2px solid var(--accent-teal); outline-offset: 2px; }
+/* Overrides the legacy `button.primary { width: 100% }` so the action sits on
+   the row rather than forcing a third line. */
+.decl-period .decl-prepare { width: auto; flex: 0 0 auto; min-height: 56px; padding-inline: var(--space-5); }
+
+/* --- draft review --- */
+.decl-draft { display: flex; flex-direction: column; gap: var(--space-3); }
+.decl-draft__head {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: var(--space-3);
+}
+.decl-draft__head h3 { margin: 0; }
+
+.decl-figures { display: flex; gap: var(--space-4); margin: 0; }
+.decl-figures dt { font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); }
+.decl-figures dd { margin: 2px 0 0; font-size: 1.125rem; font-weight: 700; color: var(--text-heading); }
+
+/* Capped so the page height does not depend on how many catches the period
+   holds. The record count sits in the figures above, so the cap never hides
+   how much is there. */
+.decl-table-wrap {
+  max-height: 210px; overflow-y: auto;
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
+}
+.decl-table-wrap:focus-visible { outline: 2px solid var(--accent-teal); outline-offset: 2px; }
+/* Once submitted the receipt is the outcome that matters and it adds ~170px,
+   which took the page to 983px — 71px past a 1080p viewport. The row table
+   folds at that point rather than shrinking: every row stays one click away
+   instead of being squeezed into a shorter scroller. */
+.decl-rows { border: 1px solid var(--border-subtle); border-radius: var(--radius-md); }
+.decl-rows[open] { border-color: transparent; }
+.decl-rows__summary {
+  min-height: 56px; display: flex; align-items: center;
+  padding: var(--space-2) var(--space-3); cursor: pointer;
+  font-size: 14px; font-weight: 600; color: var(--text-secondary);
+}
+.decl-rows[open] > .decl-rows__summary { padding-left: 0; padding-bottom: var(--space-1); }
+.decl-rows__summary:focus-visible { outline: 2px solid var(--accent-teal); outline-offset: 2px; }
+.decl-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.decl-table th, .decl-table td { padding: var(--space-2) var(--space-3); text-align: left; }
+.decl-table thead th {
+  position: sticky; top: 0; z-index: 1;
+  background: var(--surface-stat); color: var(--text-secondary);
+  font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.decl-table tbody tr + tr td { border-top: 1px solid var(--border-subtle); }
+
+.decl-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+/* TWO classes in the selector on purpose. `.decl-actions > *` is (0,1,0) and
+   LOSES to the legacy `a.primary` / `button.secondary` (0,1,1), which pin
+   min-height to 48px — the same trap already documented in
+   components/capture/capture.css. Do not simplify this back. */
+.decl-actions > * { flex: 1 1 12rem; }
+.decl-card .decl-actions > * { min-height: 56px; }
+
+.decl-receipt { display: flex; flex-direction: column; gap: var(--space-2); padding-top: var(--space-3); border-top: 1px solid var(--border-subtle); }
+.decl-receipt h3 { margin: 0; }
+.decl-receipt__id { font-size: 1.2rem; margin: 0; }
 
 /* ---------- Home dashboard (bento redesign) ---------- */
 .hero-banner {
@@ -803,9 +886,6 @@ textarea { resize: vertical; }
   .bottom-nav { display: none; }
   main { padding-bottom: var(--space-6); }
 
-  .declaration-layout { flex-direction: row; align-items: flex-start; }
-  .declaration-layout > .card:first-child { flex: 1; min-width: 0; }
-  .declaration-preview { flex: 1; min-width: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
