@@ -168,44 +168,53 @@ export default function CatchFlow() {
         <h2>{t('catch.title')}</h2>
 
         {step === 'photo' && (
-          <>
-            <PhotoCapture preview={preview} busy={analyseMut.isPending}
-              preCheck={preCheck} onFile={onFile} />
+          /* Two columns from 900px up: photo left, note/context/analyse right.
+             Stacked, this step ran well past a laptop viewport and the fisher
+             had to scroll before seeing the Analyse button at all. One grid with
+             a single gap also replaces the ad-hoc margins that made the spacing
+             between sections uneven. */
+          <div className="catch-step catch-step--capture">
+            <div className="catch-step__col">
+              <PhotoCapture preview={preview} busy={analyseMut.isPending}
+                preCheck={preCheck} onFile={onFile} />
+            </div>
 
-            <NoteField note={note} onNote={setNote} audioBlob={audioBlob}
-              onAudio={setAudioBlob} announce={announce} />
+            <div className="catch-step__col">
+              <NoteField note={note} onNote={setNote} audioBlob={audioBlob}
+                onAudio={setAudioBlob} announce={announce} />
 
-            <ContextChips selected={contextTags} onChange={setContextTags} />
+              <ContextChips selected={contextTags} onChange={setContextTags} />
 
-            <button className="primary analyse-btn"
-              disabled={analyseMut.isPending || (!file && !note.trim())}
-              onClick={startAnalysis}>
-              {analyseMut.isPending ? (
-                <><span className="btn-spinner" aria-hidden="true" />{t('catch.identifying')}</>
-              ) : t('catch.analyse')}
-            </button>
-            {missingReason && !analyseMut.isPending && (
-              <p className="small disabled-reason">{missingReason}</p>
-            )}
+              <button className="primary analyse-btn"
+                disabled={analyseMut.isPending || (!file && !note.trim())}
+                onClick={startAnalysis}>
+                {analyseMut.isPending ? (
+                  <><span className="btn-spinner" aria-hidden="true" />{t('catch.identifying')}</>
+                ) : t('catch.analyse')}
+              </button>
+              {missingReason && !analyseMut.isPending && (
+                <p className="small disabled-reason">{missingReason}</p>
+              )}
 
-            {analyseMut.isPending && (
-              <AnalyseProgress stage={progressStage} onCancel={cancelAnalysis} />
-            )}
+              {analyseMut.isPending && (
+                <AnalyseProgress stage={progressStage} onCancel={cancelAnalysis} />
+              )}
 
-            {analyseMut.isError && <p className="banner danger">{t('common.error')}</p>}
+              {analyseMut.isError && <p className="banner danger">{t('common.error')}</p>}
 
-            {analysis?.image_quality.status === 'invalid' && (
-              <>
-                <p className="banner danger">
-                  <strong>{t('catch.quality.invalid')}</strong><br />
-                  {analysis.image_quality.warnings.join(', ')}
-                </p>
-                <button className="secondary" onClick={() => { setAnalysis(null); onFile(null) }}>
-                  {t('catch.retake')}
-                </button>
-              </>
-            )}
-          </>
+              {analysis?.image_quality.status === 'invalid' && (
+                <>
+                  <p className="banner danger">
+                    <strong>{t('catch.quality.invalid')}</strong><br />
+                    {analysis.image_quality.warnings.join(', ')}
+                  </p>
+                  <button className="secondary" onClick={() => { setAnalysis(null); onFile(null) }}>
+                    {t('catch.retake')}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
         )}
 
         {step === 'suggestion' && analysis && (
@@ -313,7 +322,13 @@ export default function CatchFlow() {
           </>
         )}
       </div>
-      <p className="banner info">{t('limitation.permanent')}</p>
+      {/* Replaces the old full-width info banner. Same job, less furniture, and
+          the wording is the stricter AI disclaimer. The backend's own
+          PERMANENT_LIMITATION is untouched and still rides on every analysis
+          response, so the result step continues to show it verbatim. */}
+      <p className="catch-ai-disclaimer">
+        <strong>{t('catch.aiDisclaimerTitle')}</strong> {t('catch.aiDisclaimerBody')}
+      </p>
     </>
   )
 }

@@ -47,11 +47,14 @@ export default function PhotoCapture({ preview, busy, preCheck, onFile }: Props)
             <h2>{t('catch.takePhoto')}</h2>
 
             {/* Shot guidance the fisher acts on — each line says why it matters. */}
+            {/* 2x2 grid rather than four stacked full-width sentences: the
+                guidance is the same, but it stops the upload zone from being
+                taller than the rest of the form put together. */}
             <ul className="photo-guidance">
-              <li><strong>{t('catch.tip.goodLight')}</strong> — {t('catch.tip.goodLightWhy')}</li>
-              <li><strong>{t('catch.tip.wholeFish')}</strong> — {t('catch.tip.wholeFishWhy')}</li>
-              <li><strong>{t('catch.tip.addRuler')}</strong> — {t('catch.tip.addRulerWhy')}</li>
-              <li><strong>{t('catch.tip.avoidFaces')}</strong> — {t('catch.tip.avoidFacesWhy')}</li>
+              <li><strong>{t('catch.tip.goodLight')}</strong><span>{t('catch.tip.goodLightWhy')}</span></li>
+              <li><strong>{t('catch.tip.wholeFish')}</strong><span>{t('catch.tip.wholeFishWhy')}</span></li>
+              <li><strong>{t('catch.tip.addRuler')}</strong><span>{t('catch.tip.addRulerWhy')}</span></li>
+              <li><strong>{t('catch.tip.avoidFaces')}</strong><span>{t('catch.tip.avoidFacesWhy')}</span></li>
             </ul>
 
             <div className="capture-actions">
