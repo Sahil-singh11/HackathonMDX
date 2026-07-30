@@ -503,5 +503,12 @@
   "decl.colDate": "Date",
   "decl.colLength": "Length",
   "decl.colStatus": "Rule status",
-  "decl.reviewRows": "Records in this draft ({n})"
+  "decl.reviewRows": "Records in this draft ({n})",
+  "catch.cameraTitle": "Take a photo",
+  "catch.cameraLive": "Live camera view",
+  "catch.cameraStarting": "Starting the camera…",
+  "catch.cameraShoot": "Capture",
+  "catch.cameraCancel": "Cancel",
+  "catch.cameraDenied": "Camera permission was refused, so the photo cannot be taken here. Allow camera access in your browser, or choose an existing photo instead.",
+  "catch.cameraNone": "No camera is available on this device. Choose an existing photo instead."
 }
