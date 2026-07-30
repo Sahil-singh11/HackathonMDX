@@ -82,8 +82,14 @@ function ShellHeader({ onOpenA11y }: { onOpenA11y: () => void }) {
  * @param narrow  caps the content column at 720px for form-heavy pages
  *                (Record a catch, Demo, Queue, Privacy, About) instead of the
  *                960px dashboard width.
+ *   wide       — data-dense pages that need the whole viewport rather than the
+ *                960px reading column. Sea conditions is seven metric tiles plus
+ *                a compass; at 960px they wrap into a ragged 2-up grid with an
+ *                orphan tile and a large dead area to its right.
+ *                `narrow` wins if both are passed.
  */
-export function FisherShell({ narrow, children }: { narrow?: boolean; children: ReactNode }) {
+export function FisherShell({ narrow, wide, children }:
+  { narrow?: boolean; wide?: boolean; children: ReactNode }) {
   const t = useT()
   const [a11yOpen, setA11yOpen] = useState(false)
 
@@ -137,7 +143,7 @@ export function FisherShell({ narrow, children }: { narrow?: boolean; children: 
             ))}
           </nav>
 
-          <main id="main" className={narrow ? 'narrow' : undefined}>{children}</main>
+          <main id="main" className={narrow ? 'narrow' : wide ? 'wide' : undefined}>{children}</main>
         </div>
 
         <nav className="bottom-nav" aria-label="Main">

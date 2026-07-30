@@ -59,13 +59,16 @@ import { useAppStore } from './store/app'
  * in sync or those pages silently stretch to full dashboard width.
  */
 const NARROW_ROUTES = ['/record', '/demo', '/queue', '/privacy', '/about']
+/** Data-dense pages that use the full viewport instead of the reading column. */
+const WIDE_ROUTES = ['/sea']
 
 /** Fisher-side routes, wrapped in the full shell. */
 function FisherRoutes() {
   const location = useLocation()
   const isNarrow = NARROW_ROUTES.includes(location.pathname)
+  const isWide = WIDE_ROUTES.includes(location.pathname)
   return (
-    <FisherShell narrow={isNarrow}>
+    <FisherShell narrow={isNarrow} wide={isWide}>
       <div key={location.pathname} className="page-transition">
         <Routes>
           <Route path="/" element={<Dashboard />} />
