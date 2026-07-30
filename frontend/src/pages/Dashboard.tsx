@@ -6,6 +6,7 @@ import {
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api, type SpeciesCandidate } from '../api/client'
+import AssistantBot from '../components/assistantbot/AssistantBot'
 import { useT } from '../i18n'
 import { useAppStore } from '../store/app'
 
@@ -222,6 +223,12 @@ export default function Dashboard() {
       </div>
 
       <p className="banner info">{t('limitation.permanent')}</p>
+
+      {/* Nemo. Fixed to the viewport corner, so it sits outside the bento grid
+          rather than at the end of it. `autoOpen` is honoured only here: Home is
+          where a fisher lands, so it is the one place a greeting is not an
+          interruption of a task already in progress. */}
+      <AssistantBot autoOpen />
     </>
   )
 }
