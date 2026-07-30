@@ -9,6 +9,22 @@
  * prefers-reduced-motion both flatten to 0ms.
  */
 
+/* ------------------------------------------------------------- shape scale
+   Nemo is deliberately rounder than the rest of the app: it is the one
+   conversational surface, and the soft shape is what separates "someone you
+   are talking to" from the rectangular forms and tables around it.
+   --r-card (12px) stays the app's card radius and is untouched; these are
+   local names, scoped to this component, exactly as CLAUDE.md prescribes for
+   a lane that needs a variant of a frozen token.
+--------------------------------------------------------------------------- */
+.lkbot-launcher,
+.lkbot-scrim {
+  --lkbot-r-panel: 24px;
+  --lkbot-r-bubble: 18px;
+  --lkbot-r-control: 14px;
+  --lkbot-r-inner: 12px;
+}
+
 /* ---------------------------------------------------------------- launcher */
 
 .lkbot-launcher {
@@ -42,12 +58,73 @@
 .lkbot-launcher:active { transform: scale(0.98); }
 .lkbot-launcher:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
+/* One quiet ring on first paint — discoverability without becoming a nagging
+   loop. Duration runs through --motion-slow, so reduced motion and the a11y
+   panel's motion toggle both remove it automatically (0ms = no animation). */
+.lkbot-launcher::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  border: 2px solid var(--accent);
+  opacity: 0;
+  pointer-events: none;
+  animation: lkbot-invite 2.4s var(--ease-out) 1;
+  animation-delay: 900ms;
+}
+
+@keyframes lkbot-invite {
+  0% { opacity: 0; transform: scale(1); }
+  15% { opacity: 0.55; }
+  100% { opacity: 0; transform: scale(1.12); }
+}
+
+.lkbot-launcher--open::before { display: none; }
+
+.lkbot-launcher__mark-wrap { position: relative; flex-shrink: 0; }
+
+/* Fully round: the mark is the one place Nemo reads as a character rather than
+   a control, and a circle is what sells that against the square app icon. */
 .lkbot-launcher__mark {
   width: 40px;
   height: 40px;
-  border-radius: var(--r-card);
+  border-radius: 50%;
+  display: block;
+}
+
+.lkbot-launcher__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  color: var(--text);
+  background: var(--surface-sunken);
+  border-radius: 50%;
   flex-shrink: 0;
 }
+
+/* Live/offline presence, echoing the subtitle text under the panel title —
+   never the only signal, since the words "No signal" / "Answers from this
+   app's data" say the same thing. Neutral, not red, when offline: offline is
+   the expected state for this app. */
+.lkbot-status-dot {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  border: 2px solid var(--surface-raised);
+}
+
+.lkbot-status-dot--online { background: var(--success); }
+
+/* The dot's ring matches whatever surface it sits on, so it reads as a cutout
+   rather than a mismatched halo — the launcher pill and the panel header are
+   different surface tokens. */
+.lkbot-header__mark-wrap .lkbot-status-dot { border-color: var(--surface); }
 
 @media (min-width: 1024px) {
   .lkbot-launcher { bottom: var(--sp-5); right: var(--sp-5); }
@@ -79,6 +156,17 @@
   padding: 0;
 }
 
+/* Non-modal (the Home greeting). No dimming, and — critically —
+   pointer-events:none so the whole page stays clickable through the layer
+   that is only there to position the panel. The panel itself takes its
+   pointer events back. */
+.lkbot-scrim--quiet {
+  background: none;
+  pointer-events: none;
+}
+
+.lkbot-scrim--quiet .lkbot-panel { pointer-events: auto; }
+
 .lkbot-panel {
   display: flex;
   flex-direction: column;
@@ -87,9 +175,20 @@
   background: var(--surface);
   color: var(--text);
   border: 1px solid var(--border);
-  border-radius: var(--r-card) var(--r-card) 0 0;
+  border-radius: var(--lkbot-r-panel) var(--lkbot-r-panel) 0 0;
   box-shadow: 0 -8px 40px rgb(0 0 0 / 28%);
   animation: lkbot-rise var(--motion-base) var(--ease-out);
+  overflow: hidden;
+}
+
+/* A quiet institutional touch rather than a chat-toy one: a thin accent bar
+   reading as letterhead, not a gradient effect. */
+.lkbot-panel::before {
+  content: '';
+  display: block;
+  height: 3px;
+  flex-shrink: 0;
+  background: var(--accent);
 }
 
 .lkbot-panel:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; }
@@ -111,7 +210,7 @@
   .lkbot-panel {
     width: 420px;
     height: min(640px, 80vh);
-    border-radius: var(--r-card);
+    border-radius: var(--lkbot-r-panel);
   }
 }
 
@@ -126,7 +225,8 @@
   flex-shrink: 0;
 }
 
-.lkbot-header__mark { width: 40px; height: 40px; border-radius: var(--r-input); flex-shrink: 0; }
+.lkbot-header__mark-wrap { position: relative; flex-shrink: 0; }
+.lkbot-header__mark { width: 40px; height: 40px; border-radius: 50%; display: block; }
 .lkbot-header__text { min-width: 0; flex: 1; }
 
 .lkbot-header__text h2 {
@@ -152,7 +252,7 @@
   color: var(--text);
   background: none;
   border: none;
-  border-radius: var(--r-input);
+  border-radius: 50%;
   cursor: pointer;
 }
 
@@ -185,6 +285,9 @@
 .lkbot-suggestion {
   width: 100%;
   min-height: var(--touch-min);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
   padding: var(--sp-2) var(--sp-3);
   text-align: left;
   font-family: var(--font-body);
@@ -192,11 +295,14 @@
   color: var(--text);
   background: var(--surface-sunken);
   border: 1px solid var(--border-strong);
-  border-radius: var(--r-input);
+  border-radius: var(--lkbot-r-control);
   cursor: pointer;
+  transition: background-color var(--motion-fast) var(--ease-out),
+              border-color var(--motion-fast) var(--ease-out);
 }
 
-.lkbot-suggestion:hover { background: var(--accent-quiet); }
+.lkbot-suggestion svg { flex-shrink: 0; color: var(--accent); }
+.lkbot-suggestion:hover { background: var(--accent-quiet); border-color: var(--accent); }
 .lkbot-suggestion:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* ------------------------------------------------------------------- turns */
@@ -207,14 +313,17 @@
 .lkbot-bubble {
   max-width: 92%;
   padding: var(--sp-3);
-  border-radius: var(--r-card);
+  border-radius: var(--lkbot-r-bubble);
   background: var(--surface-raised);
   border: 1px solid var(--border);
+  box-shadow: var(--elev-1);
 }
 
 .lkbot-turn--user .lkbot-bubble {
+  max-width: 85%;
   background: var(--accent-quiet);
   border-color: var(--accent);
+  box-shadow: none;
 }
 
 .lkbot-bubble__text {
@@ -247,24 +356,11 @@
   50% { opacity: 1; }
 }
 
-/* ------------------------------------------------- provenance + attribution */
+/* --------------------------------------------- provenance + attribution
+   The chip itself is the frozen ui/Badge — no bespoke chip styling here.
+   Only its placement inside a bubble is this component's concern. */
 
-.lkbot-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: var(--sp-2);
-  padding: 2px var(--sp-2);
-  font-size: var(--fs-xs);
-  font-weight: 600;
-  border-radius: var(--r-chip);
-  border: 1px solid var(--border-strong);
-  color: var(--text);
-}
-
-.lkbot-chip--model { background: var(--accent-quiet); }
-.lkbot-chip--grounded { background: var(--surface-sunken); }
-.lkbot-chip--offline { background: var(--surface-sunken); }
+.lkbot-bubble > .lk-badge { margin-bottom: var(--sp-2); }
 
 .lkbot-data {
   font-family: var(--font-data);
@@ -305,7 +401,7 @@
   padding: var(--sp-2);
   background: var(--surface-sunken);
   border: 1px solid var(--border);
-  border-radius: var(--r-input);
+  border-radius: var(--lkbot-r-control);
 }
 
 .lkbot-fact__species {
@@ -336,7 +432,7 @@
   color: var(--text);
   background: var(--warning-quiet);
   border-left: 3px solid var(--warning);
-  border-radius: var(--r-input);
+  border-radius: var(--lkbot-r-control);
 }
 
 .lkbot-fact__warn svg { flex-shrink: 0; margin-top: 2px; }
@@ -371,7 +467,7 @@
   color: var(--text);
   background: var(--surface);
   border: 2px solid var(--border-strong);
-  border-radius: var(--r-input);
+  border-radius: var(--r-chip);
 }
 
 .lkbot-composer input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -389,7 +485,7 @@
   color: var(--action-contrast);
   background: var(--action);
   border: none;
-  border-radius: var(--r-input);
+  border-radius: var(--r-chip);
   cursor: pointer;
 }
 

@@ -495,6 +495,36 @@
   "tourism.activityPending": "Still loading the {wanted} ranking. The ratings below are for {shown} until it arrives.",
   "catch.aiDisclaimerTitle": "AI Disclaimer:",
   "catch.aiDisclaimerBody": "AI-generated information is provided for decision support only and may contain errors. Users must verify species, measurements, regulations, and marine conditions with official sources. AI does not replace the judgement of authorised officers or guarantee safety or legal compliance.",
+<<<<<<< HEAD
+
+  "bot.launch": "Ask Nemo",
+  "bot.title": "Nemo",
+  "bot.subtitle.online": "Fishing assistant · answers from this app's data",
+  "bot.subtitle.offline": "Fishing assistant · no signal, using rules saved on this phone",
+  "bot.close": "Close Nemo",
+  "bot.clear": "Start a new conversation",
+  "bot.intro": "Hello. I'm Nemo. Ask me about species, sizes, closed seasons, declarations or the sea.",
+  "bot.scope": "My answers come from this app's own rules and data, never from the model's memory. Every answer shows where it came from.",
+  "bot.suggest.size": "What size can I keep an ourite?",
+  "bot.suggest.season": "When is octopus closed?",
+  "bot.suggest.declaration": "How do I submit my catches?",
+  "bot.placeholder": "Type your question…",
+  "bot.inputLabel": "Your question for Nemo",
+  "bot.send": "Send",
+  "bot.thinking": "Working on it…",
+  "bot.you": "You",
+  "bot.assistant": "Nemo",
+  "bot.source.model": "Gemma, grounded in app data",
+  "bot.source.grounded": "App rules data",
+  "bot.source.offline": "Offline — rules on this phone",
+  "bot.basedOn": "Based on rule",
+  "bot.openRules": "Open Fishing rules",
+  "bot.offline.covered": "You have no signal, so no model was used. Here is what the rules saved on this phone say.",
+  "bot.offline.uncovered": "You have no signal, and the rules saved on this phone do not cover that. Open Fishing rules to read everything the app holds — it works with no connection.",
+  "bot.failed": "I could not reach the assistant, and the rules saved on this phone do not cover that. Open Fishing rules to see everything the app holds.",
+  "bot.disclaimer": "Advisory only. Nemo can read this app's data but cannot record a catch, change your log or send anything to any authority. Confirm rules against the latest official fisheries notice.",
+  "bot.a11y.answered": "Nemo has replied."
+=======
   "decl.records": "Records",
   "decl.totalFish": "Total fish",
   "decl.speciesCount": "Species",
@@ -511,4 +541,5 @@
   "catch.cameraCancel": "Cancel",
   "catch.cameraDenied": "Camera permission was refused, so the photo cannot be taken here. Allow camera access in your browser, or choose an existing photo instead.",
   "catch.cameraNone": "No camera is available on this device. Choose an existing photo instead."
+>>>>>>> 5bc39e9b35c6bf27d4de874af39a3a2ce1d1cb2b
 }
