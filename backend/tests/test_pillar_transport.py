@@ -408,6 +408,31 @@ def test_arrivals_route_serves_when_enabled(client, enabled):
     assert body["narrative_source"] in {"model", "deterministic_fallback"}
 
 
+def test_provenance_route_is_503_while_the_pillar_is_disabled(client):
+    assert client.get("/api/pillars/transport/provenance").status_code == 503
+
+
+def test_provenance_probe_is_cheap_and_never_claims_inference(client, enabled):
+    """Same convention as tourism/energy (test_pillar_probe.py): fetch() only,
+    no narrative call. Fills a gap the /pillars index previously rendered as
+    "not reported" for transport specifically."""
+    import time
+
+    from app.pillars.probe import NOT_INVOKED
+
+    start = time.monotonic()
+    r = client.get("/api/pillars/transport/provenance")
+    elapsed = time.monotonic() - start
+
+    assert r.status_code == 200
+    body = r.json()
+    assert body["pillar_id"] == "transport"
+    assert body["probe"] is True
+    assert body["provenance"]["data_kind"] == "synthetic"
+    assert body["provenance"]["model_provider"] == NOT_INVOKED
+    assert elapsed < 5.0, f"probe took {elapsed:.2f}s — has a model call crept in?"
+
+
 def test_listing_reports_transport_as_implemented(client):
     body = client.get("/api/pillars").json()
     transport = {p["pillar_id"]: p for p in body["pillars"]}["transport"]

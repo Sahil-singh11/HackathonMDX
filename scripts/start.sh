@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
-# Start the Lamer Konekte backend and frontend with one command.
+# Start the Lamer Konekte backend and frontend with one command — for Linux, WSL,
+# and Git Bash on Windows. This is the bash equivalent of run.ps1.
 #
 #   ./scripts/start.sh          dev mode:  uvicorn --reload (:8000) + Vite dev server (:5173)
 #   ./scripts/start.sh --prod   prod mode: npm run build, then uvicorn serves the PWA from :8000
 #   ./scripts/start.sh --fg     run in the foreground; Ctrl+C stops everything
+#
+# On a fresh clone this creates the Python venv, installs backend + frontend
+# dependencies, and copies .env.example -> .env if missing — same promise as
+# run.ps1 on Windows. Re-run any time; every step is a no-op once already done.
 #
 # Env overrides: BACKEND_PORT (8000), FRONTEND_PORT (5173), HOST (127.0.0.1)
 # Stop everything again with ./scripts/stop.sh
@@ -24,18 +29,13 @@ for arg in "$@"; do
     --prod) MODE="prod" ;;
     --dev)  MODE="dev" ;;
     --fg|--foreground) FOREGROUND=1 ;;
-    -h|--help) sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,16p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "start.sh: unknown option '$arg' (try --help)" >&2; exit 2 ;;
   esac
 done
 
 die() { echo "ERROR: $*" >&2; exit 1; }
 say() { printf '%-24s %s\n' "$1" "$2"; }
-
-# --- Locate the venv interpreter (Linux/WSL uses bin/, Git Bash on Windows uses Scripts/)
-if   [ -x "$ROOT/backend/.venv/bin/python" ];        then PY="$ROOT/backend/.venv/bin/python"
-elif [ -x "$ROOT/backend/.venv/Scripts/python.exe" ]; then PY="$ROOT/backend/.venv/Scripts/python.exe"
-else die "backend venv missing. Run: cd backend && python3.12 -m venv .venv && .venv/bin/pip install -r requirements.txt"; fi
 
 # --- PIDs listening on a TCP port, one per line
 port_pids() {
@@ -64,11 +64,79 @@ wait_for_http() {  # url, seconds
   return 1
 }
 
-# --- Preflight -------------------------------------------------------------
+# --- Preflight / self-setup -------------------------------------------------
 echo "=== Lamer Konekte — starting ($MODE mode) ==="
 
-[ -d "$ROOT/frontend/node_modules" ] || die "frontend/node_modules missing. Run: cd frontend && npm install"
-command -v npm >/dev/null 2>&1 || die "npm not found on PATH."
+# .env (repo root, backend-only secrets). Never overwritten if it already exists —
+# a teammate's key must survive a re-run of this script.
+if [ ! -f "$ROOT/.env" ]; then
+  if [ -f "$ROOT/.env.example" ]; then
+    cp "$ROOT/.env.example" "$ROOT/.env"
+    say ".env" "created from .env.example (no key yet — app runs in mock mode)"
+  else
+    say ".env" "missing, and .env.example not found — continuing without one"
+  fi
+fi
+
+# Python interpreter for creating the venv, if needed.
+PY_BOOTSTRAP=""
+for cand in python3.12 python3 python; do
+  command -v "$cand" >/dev/null 2>&1 && { PY_BOOTSTRAP="$cand"; break; }
+done
+
+# Backend venv — create + install on first run. Detect Linux/WSL (bin/) vs a
+# Windows-created venv opened in Git Bash (Scripts/), same as stop.sh's WINDOWS check.
+if [ -x "$ROOT/backend/.venv/bin/python" ]; then
+  PY="$ROOT/backend/.venv/bin/python"
+elif [ -x "$ROOT/backend/.venv/Scripts/python.exe" ]; then
+  PY="$ROOT/backend/.venv/Scripts/python.exe"
+else
+  [ -n "$PY_BOOTSTRAP" ] || die "no python3.12/python3/python found on PATH to create the venv."
+  say "backend" "no venv found — creating one (first run only, ~1-2 min)"
+  ( cd "$ROOT/backend" && "$PY_BOOTSTRAP" -m venv .venv ) \
+    || die "could not create backend/.venv. Try: cd backend && python3.12 -m venv .venv"
+  if [ -x "$ROOT/backend/.venv/bin/python" ]; then PY="$ROOT/backend/.venv/bin/python"
+  elif [ -x "$ROOT/backend/.venv/Scripts/python.exe" ]; then PY="$ROOT/backend/.venv/Scripts/python.exe"
+  else die "venv created but no interpreter found inside it."; fi
+fi
+
+# Install/sync backend deps whenever requirements.txt is newer than the last
+# recorded install — catches "teammate added a dependency, I never re-installed"
+# without re-running pip on every single start.
+REQ_FILE="$ROOT/backend/requirements.txt"
+STAMP="$ROOT/backend/.venv/.requirements.stamp"
+NEED_INSTALL=0
+if [ -f "$REQ_FILE" ]; then
+  if [ ! -f "$STAMP" ] || [ "$REQ_FILE" -nt "$STAMP" ]; then NEED_INSTALL=1; fi
+fi
+if [ "$NEED_INSTALL" -eq 1 ]; then
+  say "backend" "installing/syncing Python dependencies..."
+  "$PY" -m pip install --disable-pip-version-check -q -r "$REQ_FILE" \
+    || die "pip install failed. Try by hand: $PY -m pip install -r $REQ_FILE"
+  cp "$REQ_FILE" "$STAMP"
+fi
+
+# Frontend node_modules — install on first run. Checking that the directory EXISTS
+# is not enough: an install interrupted by a dropped connection, a Ctrl+C, or a
+# teammate running `npm install` by hand before this script ever ran can leave
+# node_modules present but missing individual packages. That surfaces later as an
+# opaque Vite config error ("Cannot find module '@litert-lm/core/package.json'")
+# that looks like a code problem, not a setup problem — so probe that the one
+# package vite.config.ts resolves at config-load time is actually there, the same
+# way the backend probes `import fastapi, uvicorn, sqlmodel` before trusting its venv.
+command -v npm >/dev/null 2>&1 || die "npm not found on PATH. Install Node.js 20+, then re-run."
+NEED_FE_INSTALL=0
+if [ ! -d "$ROOT/frontend/node_modules" ]; then
+  NEED_FE_INSTALL=1
+elif ! ( cd "$ROOT/frontend" && node -e "require.resolve('@litert-lm/core/package.json')" ) >/dev/null 2>&1; then
+  say "frontend" "node_modules present but incomplete (a previous install was interrupted) — reinstalling"
+  NEED_FE_INSTALL=1
+fi
+if [ "$NEED_FE_INSTALL" -eq 1 ]; then
+  say "frontend" "installing node_modules (first run only, ~1 min)"
+  ( cd "$ROOT/frontend" && npm install --no-audit --no-fund ) \
+    || die "npm install failed. Try by hand: rm -rf frontend/node_modules && cd frontend && npm install"
+fi
 
 for p in "$BACKEND_PORT" "$FRONTEND_PORT"; do
   [ "$MODE" = "prod" ] && [ "$p" = "$FRONTEND_PORT" ] && continue
@@ -80,13 +148,12 @@ done
 if [ -f "$ROOT/.env" ] && grep -qE '^GEMINI_API_KEY=.+' "$ROOT/.env"; then
   say "provider" "key present in .env (hosted Gemma)"
 else
-  say "provider" "no GEMINI_API_KEY — deterministic mock mode"
+  say "provider" "no GEMINI_API_KEY — deterministic mock mode (app fully usable)"
 fi
 
 mkdir -p "$RUN_DIR"
 
-# --- Frontend --------------------------------------------------------------
-FRONTEND_PID=""
+# --- Frontend build (prod mode only) ----------------------------------------
 if [ "$MODE" = "prod" ]; then
   say "frontend" "building (npm run build)..."
   ( cd "$ROOT/frontend" && npm run build ) >"$RUN_DIR/frontend.log" 2>&1 \
@@ -138,6 +205,7 @@ if [ "$MODE" = "dev" ]; then
 else
   echo "Open http://$HOST:$BACKEND_PORT   (backend serves the built PWA)"
 fi
+echo "Technical Proof: http://$HOST:${FRONTEND_PORT:-$BACKEND_PORT}/proof  (manual AI test console)"
 echo "API docs: http://$HOST:$BACKEND_PORT/docs"
 echo "Logs:     $RUN_DIR/backend.log, $RUN_DIR/frontend.log"
 echo "Stop:     ./scripts/stop.sh"

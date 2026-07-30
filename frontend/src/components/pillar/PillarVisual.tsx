@@ -28,18 +28,18 @@
  *      so the page does not jump when the visual arrives and a map does not have
  *      to re-measure after paint.
  *
- * VERIFIED WITH THE REAL MAP, not assumed. components/map/MauritiusMap takes
- * `height` as a NUMBER and applies it as an inline style, so it cannot be asked
- * to fill a parent and no stylesheet can outrank it — dropped in naively it sat
- * at 420px inside the frame. pillar.css overrides it (the one !important in this
- * module, commented there). Measured filling the frame with a painted canvas at
- * 1440px and 390px, in Day and Night. You do not need to pass a height; whatever
- * you pass is overruled.
+ * VERIFIED WITH THE REAL MAP, not assumed. components/map/ChartMap takes `height`
+ * as a NUMBER and applies it as an inline style (`style={{ height: '420px' }}`),
+ * so it cannot be asked to fill a parent and no stylesheet can outrank it —
+ * dropped in naively it sits at 420px inside the frame. pillar.css overrides it
+ * (the one !important in this module, commented there). You do not need to pass a
+ * height; whatever you pass is overruled by the frame.
  *
- * ONE THING TO KNOW WHEN YOU CONVERT: MauritiusMap renders NOTHING in Sunlight
- * (it returns its `sunlightFallback`), by its own design — glare destroys a
- * canvas. Pass that fallback, or pass `empty` in Sunlight, or the frame shows an
- * empty box in that theme.
+ * ONE THING TO KNOW WHEN YOU CONVERT: ChartMap draws NOTHING in Sunlight, by its
+ * own design — that theme is deliberately canvas-free because glare destroys soft
+ * edges, and its accessible list carries every location instead. So in Sunlight
+ * this frame would hold only that list. Give the slot `empty` in Sunlight, or let
+ * the list stand alone outside the frame.
  *
  * FIXED RATIO, THREE CHOICES, NOT A FREE NUMBER. An arbitrary ratio per page is
  * how six pages end up six different shapes, which is the problem this framework

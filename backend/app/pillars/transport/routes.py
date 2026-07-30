@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends
 from sqlmodel import Session
 
 from app.db.session import get_session
+from app.pillars.probe import probe_provenance
 from app.pillars.transport.module import (COVERAGE_NOTE, ApproachBrief, ArrivalsBrief,
                                           transport_pillar)
 
@@ -167,3 +168,16 @@ async def arrivals(session: Session = Depends(get_session)) -> ArrivalsBrief:
 async def approach(session: Session = Depends(get_session)) -> ApproachBrief:
     bundle = await transport_pillar.fetch_approach({"session": session})
     return await transport_pillar.analyse_approach(bundle)
+@router.get(
+    "/provenance",
+    summary="Cheap data-source probe for the pillar index (no model inference)",
+    description=(
+        "Runs fetch() only and reports data_kind, source and coverage_note. Used by "
+        "/pillars so the index can show at a glance which pillars are on live data "
+        "and which are on samples/synthetic seeds, without paying for a full "
+        "narrative call. No inference runs, so model_provider is reported as "
+        "'not-invoked'."
+    ),
+)
+async def provenance(session: Session = Depends(get_session)) -> dict:
+    return await probe_provenance(transport_pillar, {"session": session})

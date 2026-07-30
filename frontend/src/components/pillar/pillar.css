@@ -244,7 +244,7 @@
    its box is.
 
    THE ONLY !important IN THIS MODULE, AND IT IS THE POINT OF THE COMPONENT.
-   components/map/MauritiusMap sets its own height from a prop typed `number` and
+   components/map/ChartMap sets its own height from a prop typed `number` and
    applies it as an INLINE style, so it cannot be told to fill a parent and a
    stylesheet cannot outrank it. Without this the frame would keep its aspect
    ratio while the map sat at 420px inside it, leaving a dead strip — "fixed

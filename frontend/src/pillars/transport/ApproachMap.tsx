@@ -1,106 +1,91 @@
 /**
- * Port Louis approach map — MapLibre GL over the self-hosted coastline.
+ * Port Louis approach map — an adapter over the shared ChartMap.
  *
- * NOW FULLY HONEST BY CONSTRUCTION. The earlier version had to work around a
- * real problem: AIS gave a distance per vessel but no bearing, so vessels were
- * drawn along one schematic line with a legend admitting the direction was not
- * real. That whole compromise is gone, because the pillar no longer displays
- * synthetic vessels at all — every feature on this map is now a true position
- * or a true distance:
+ * MERGE RESOLUTION, and worth reading before changing either half.
+ *
+ * Two changes landed on this file in parallel and both are kept:
+ *
+ *   1. THE MAP LIBRARY IS THE SHARED ONE. MapLibre is gone from the app; there is
+ *      one Leaflet ChartMap now, and it is better for this file specifically:
+ *      L.circle takes a radius in METRES and draws a true circle, so the approach
+ *      ring cannot drift out of agreement with the scale bar. The hand-rolled
+ *      geodesic-polygon helper this file used to carry is deleted, and the marker
+ *      de-collision and the accessible side list come free.
+ *
+ *   2. THE HONESTY POSITION IS THE LATER FINDING, AND IT WINS. The earlier version
+ *      of this file plotted expected arrivals at true range along one schematic
+ *      315 degree bearing, with a caveat. That display is NOT restored, because
+ *      the vessels behind it are not real: terrestrial AIS needs a receiver within
+ *      roughly 40 nm and none covers Mauritius, so the arrivals feed can only ever
+ *      serve a committed synthetic capture. Drawing generated positions is what
+ *      honesty rule 4 forbids, and a caveat under the map does not convert
+ *      invented data into observed data.
+ *
+ *      This is also why the file still type-checks: TransportSurface now leads
+ *      with the sea-state ApproachBrief, which has no vessel list at all.
+ *
+ * So every feature drawn here is either a true position or a true distance:
  *
  *   - the port, at its published coordinate
- *   - a TRUE GEODESIC circle at the approach radius the assessment refers to,
- *     computed as real geography rather than a fixed pixel radius, so it still
- *     agrees with the scale bar at any zoom
- *   - nothing else. Sea state has no position beyond the point it was sampled
- *     at, so nothing pretends otherwise.
+ *   - the approach ring, true to scale
+ *   - nothing else. Sea state has no position beyond the point it was sampled at,
+ *     and nothing on this map pretends otherwise.
+ *
+ * If a real AIS feed for Mauritian waters is ever wired up, the vessel layer
+ * belongs back here — as MapMarkers with real bearings, not along one axis.
  */
-import { useCallback } from 'react'
-import MauritiusMap, { type MapLayerApi } from '../../components/map/LazyMauritiusMap'
+import ChartMap, { type MapMarker, type MapRing } from '../../components/map/LazyChartMap'
+import { useT } from '../../i18n'
 import type { ApproachBrief } from './types'
 
-const NM_TO_KM = 1.852
+const NM_TO_M = 1852
 
 /** The radius the transit assessment describes. Not from the payload: the
- *  approach brief carries no radius field, and inventing a smaller or larger
- *  one than the text implies would misstate the assessment's own scope. */
+ *  approach brief carries no radius field, and inventing a smaller or larger one
+ *  than the text implies would misstate the assessment's own scope. Kept in step
+ *  with `transport.mapLegend`, which names the same figure on the page. */
 const APPROACH_RADIUS_NM = 10
 
-/**
- * A geodesic circle as a GeoJSON polygon, so it stays true under pan and zoom.
- * A screen-space circle would silently disagree with the scale bar the moment
- * the user zoomed.
- */
-function circle(lon: number, lat: number, radiusNm: number, steps = 96): number[][] {
-  const km = radiusNm * NM_TO_KM
-  const dLat = km / 110.574
-  const dLon = km / (111.320 * Math.cos((lat * Math.PI) / 180))
-  const ring: number[][] = []
-  for (let i = 0; i <= steps; i++) {
-    const a = (i / steps) * Math.PI * 2
-    ring.push([lon + dLon * Math.cos(a), lat + dLat * Math.sin(a)])
-  }
-  return ring
+/** Destination point at `distanceNm` on a compass bearing, as [lat, lng].
+ *  Used ONLY to frame the camera, never to place a feature. */
+function along(lat: number, lon: number, distanceNm: number, bearingDeg: number): [number, number] {
+  const km = (distanceNm * NM_TO_M) / 1000
+  const rad = (bearingDeg * Math.PI) / 180
+  const dLat = (km * Math.cos(rad)) / 110.574
+  const dLon = (km * Math.sin(rad)) / (111.32 * Math.cos((lat * Math.PI) / 180))
+  return [lat + dLat, lon + dLon]
 }
-
-/** Destination point at `distanceNm` on a compass bearing — used only to frame
- *  the camera, never to place a feature. */
-function along(lon: number, lat: number, distanceNm: number, bearingDeg: number): [number, number] {
-  const km = distanceNm * NM_TO_KM
-  const br = (bearingDeg * Math.PI) / 180
-  const dLat = (km * Math.cos(br)) / 110.574
-  const dLon = (km * Math.sin(br)) / (111.320 * Math.cos((lat * Math.PI) / 180))
-  return [lon + dLon, lat + dLat]
-}
-
-const token = (name: string, fallback: string) =>
-  getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback
 
 export default function ApproachMap({ brief }: { brief: ApproachBrief }) {
-  const { port } = brief
+  const t = useT()
+  const { latitude: lat, longitude: lon, name } = brief.port
 
-  const layers = useCallback(({ map, addMarker, fit }: MapLayerApi) => {
-    const { latitude: lat, longitude: lon } = port
-    const accent = token('--accent', '#0E7C86')
+  const rings: MapRing[] = [
+    { centre: [lat, lon], radiusMetres: APPROACH_RADIUS_NM * NM_TO_M },
+  ]
 
-    // The approach zone the assessment applies to.
-    map.addSource('approach', {
-      type: 'geojson',
-      data: {
-        type: 'Feature', properties: {},
-        geometry: { type: 'Polygon', coordinates: [circle(lon, lat, APPROACH_RADIUS_NM)] },
-      },
-    })
-    map.addLayer({
-      id: 'approach-fill', type: 'fill', source: 'approach',
-      paint: { 'fill-color': accent, 'fill-opacity': 0.08 },
-    })
-    map.addLayer({
-      id: 'approach-line', type: 'line', source: 'approach',
-      paint: { 'line-color': accent, 'line-width': 2 },
-    })
+  const markers: MapMarker[] = [{
+    id: 'port',
+    position: [lat, lon],
+    label: name,
+    status: 'info',
+    shape: 'circle',
+    detail: t('transport.portDetail'),
+  }]
 
-    // Port marker — a true position.
-    const portEl = document.createElement('div')
-    portEl.className = 'lk-mk'
-    portEl.innerHTML =
-      `<span class="lk-mk__dot" style="background:${accent}"></span>` +
-      `<span class="lk-mk__label">${port.name}</span>`
-    addMarker(portEl, [lon, lat])
-
-    // Frame a little beyond the ring so the whole approach is visible without
-    // the user having to zoom out first.
-    fit(
-      along(lon, lat, APPROACH_RADIUS_NM * 1.6, 225),
-      along(lon, lat, APPROACH_RADIUS_NM * 1.6, 45),
-    )
-  }, [port])
+  // Frame a little outside the ring so the whole approach zone is visible
+  // without the reader having to zoom out.
+  const pad = APPROACH_RADIUS_NM * 1.6
+  const [nLat, eLon] = along(lat, lon, pad, 45)
+  const [sLat, wLon] = along(lat, lon, pad, 225)
 
   return (
-    <MauritiusMap
-      label={`Approach map for ${port.name}`}
-      layers={layers}
-      height={380}
+    <ChartMap
+      markers={markers}
+      rings={rings}
+      bounds={[sLat, wLon, nLat, eLon]}
+      height={420}
+      listLabel={t('transport.approachListLabel')}
     />
   )
 }

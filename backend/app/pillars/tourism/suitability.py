@@ -10,9 +10,14 @@ cannot be answered directly. What is answerable is "given today's forecast, whic
 sites suit this activity" — which distributes people as a side effect and is
 defensible under questioning. Every surface says so explicitly.
 
-Thresholds are conservative and sourced from ordinary recreational guidance
-(calm-lagoon snorkelling wants roughly sub-half-metre wave height and light
-wind); they are NOT a safety standard and are labelled as such everywhere.
+WHAT THE RATING IS ABOUT — read this before changing a threshold. The wave input
+is OFFSHORE significant wave height from a model grid that answers up to 11 km
+from the site, outside the reef. So a rating describes conditions OFFSHORE OF the
+site, which is what governs boat access and how much swell reaches the lagoon —
+it is NOT a measurement inside the lagoon, and the lagoon will be calmer. Bands
+are anchored to the published WMO sea state code for that reason; see WAVE_BANDS.
+
+Thresholds are NOT a safety standard and are labelled as such everywhere.
 """
 from __future__ import annotations
 
@@ -32,15 +37,59 @@ class Band:
     fair_max: float
 
 
-# Calm-water activities: lower is better. Wind-sport activities invert the wind
-# rule — a kitesurfer needs wind that would spoil snorkelling.
+# ---------------------------------------------------------------------------
+# WAVE BANDS — calibrated for OFFSHORE significant wave height.
+#
+# These were originally lagoon numbers (snorkelling good <= 0.4 m) and they were
+# wrong for the data they were fed. Open-Meteo's wave grid snaps a request by up
+# to 11.2 km at Mauritius and answers from a point 0.9-8.7 km OFFSHORE, outside
+# the fringing reef — measured 2026-07-30, with two sites collapsing into a
+# single grid cell. So the input is open-ocean Hs, not lagoon chop, and judging
+# open-ocean Hs against lagoon thresholds made every site "poor" regardless of
+# conditions: the calmest reading in the catalogue (0.98 m) still exceeded
+# snorkelling's old 0.8 m fair limit.
+#
+# The replacement is anchored to the WMO sea state code (Douglas scale), a
+# published standard, NOT to numbers chosen to spread the colours:
+#     state 2  smooth    0.10 - 0.50 m
+#     state 3  slight    0.50 - 1.25 m
+#     state 4  moderate  1.25 - 2.50 m
+#     state 5  rough     2.50 - 4.00 m
+#
+# good = the activity is comfortable at this sea state offshore
+# fair = workable for an experienced operator
+# poor = rough (state 5+), or beyond what the activity tolerates
+#
+# Differentiation between activities is only where it is defensible: a diver
+# descends below the chop, a snorkeller stays in it and needs surface visibility.
+# ---------------------------------------------------------------------------
 WAVE_BANDS: dict[str, Band] = {
-    "swimming": Band(good_max=0.5, fair_max=1.0),
-    "snorkelling": Band(good_max=0.4, fair_max=0.8),
-    "diving": Band(good_max=0.8, fair_max=1.5),
-    "windsurfing": Band(good_max=1.5, fair_max=2.5),
-    "kitesurfing": Band(good_max=1.8, fair_max=3.0),
+    # slight / moderate — a swimmer offshore is in the chop
+    "swimming": Band(good_max=1.25, fair_max=2.50),
+    # slightly tighter: surface swimming plus the visibility a snorkeller needs
+    "snorkelling": Band(good_max=1.25, fair_max=2.00),
+    # more tolerant: the dive itself is below the surface chop
+    "diving": Band(good_max=1.50, fair_max=2.50),
+    # wind sports want some sea; these are upper limits, not targets
+    "windsurfing": Band(good_max=2.50, fair_max=3.50),
+    "kitesurfing": Band(good_max=2.50, fair_max=4.00),
 }
+
+#: WMO sea state boundaries, for reporting the state alongside the number.
+WMO_SEA_STATE: list[tuple[float, str]] = [
+    (0.10, "calm"), (0.50, "smooth"), (1.25, "slight"),
+    (2.50, "moderate"), (4.00, "rough"), (6.00, "very rough"),
+]
+
+
+def sea_state(height_m: float | None) -> str:
+    """Name the WMO sea state for a significant wave height."""
+    if height_m is None:
+        return "unknown"
+    for limit, name in WMO_SEA_STATE:
+        if height_m < limit:
+            return name
+    return "high"
 
 WIND_BANDS_CALM: dict[str, Band] = {           # km/h, lower is better
     "swimming": Band(good_max=20.0, fair_max=32.0),
@@ -86,7 +135,7 @@ def _rate_calm(activity: str, c: Conditions) -> ActivityRating:
 
     if c.wave_height_m is None or c.wind_speed_kmh is None:
         return ActivityRating(activity, "unknown",
-                              ["Wave height or wind speed unavailable — not rated."], 0)
+                              ["Offshore wave height or wind speed unavailable — not rated."], 0)
 
     wave, wind = c.wave_height_m, c.wind_speed_kmh
     wave_rating: Rating = ("good" if wave <= wave_band.good_max
@@ -94,7 +143,9 @@ def _rate_calm(activity: str, c: Conditions) -> ActivityRating:
     wind_rating: Rating = ("good" if wind <= wind_band.good_max
                            else "fair" if wind <= wind_band.fair_max else "poor")
 
-    reasons.append(f"Wave height {wave:.2f} m ({wave_rating}; good ≤ {wave_band.good_max} m)")
+    reasons.append(
+        f"Offshore wave height {wave:.2f} m — {sea_state(wave)} sea "
+        f"({wave_rating}; good ≤ {wave_band.good_max} m)")
     reasons.append(f"Wind {wind:.0f} km/h ({wind_rating}; good ≤ {wind_band.good_max} km/h)")
 
     # The worse of the two governs: calm water is not calm if either is bad.
@@ -129,10 +180,14 @@ def _rate_wind_sport(activity: str, c: Conditions) -> ActivityRating:
     if c.wave_height_m is not None:
         band = WAVE_BANDS[activity]
         if c.wave_height_m > band.fair_max:
-            reasons.append(f"Wave height {c.wave_height_m:.2f} m above {band.fair_max} m — downgraded.")
+            reasons.append(
+            f"Offshore wave height {c.wave_height_m:.2f} m — {sea_state(c.wave_height_m)} sea, "
+            f"above {band.fair_max} m — downgraded.")
             rating = "poor"
         elif c.wave_height_m > band.good_max and rating == "good":
-            reasons.append(f"Wave height {c.wave_height_m:.2f} m above {band.good_max} m — downgraded to fair.")
+            reasons.append(
+                f"Offshore wave height {c.wave_height_m:.2f} m above {band.good_max} m "
+                f"— downgraded to fair.")
             rating = "fair"
 
     score = {"good": 100, "fair": 55, "poor": 10, "unknown": 0}[rating]

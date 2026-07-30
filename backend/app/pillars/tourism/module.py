@@ -36,7 +36,8 @@ from app.pillars.tourism import wind as wind_client
 from app.pillars.tourism.schema import (ActivitySuitability, SiteBrief,
                                         SiteMeasurements, TourismBrief)
 from app.pillars.tourism.sites import Site, load_sites
-from app.pillars.tourism.suitability import Conditions, rank_sites, rate_all
+from app.pillars.tourism.suitability import (Conditions, rank_sites, rate_all,
+                                             sea_state)
 from app.services.marine.client import get_marine_conditions
 
 log = logging.getLogger(__name__)
@@ -82,8 +83,22 @@ _FORECAST_SOURCE = SourceDescriptor(
 )
 
 
+def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Great-circle distance, for reporting how far a reading was taken from
+    the site it is attributed to."""
+    from math import asin, cos, radians, sin, sqrt
+    dlat, dlon = radians(lat2 - lat1), radians(lon2 - lon1)
+    a = sin(dlat / 2) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2) ** 2
+    return 2 * 6371.0 * asin(sqrt(a))
+
+
 def _coverage_note(has_protected: bool) -> str:
     note = (
+        "Ratings describe conditions OFFSHORE OF each site, not inside the lagoon. The wave "
+        "model answers from a grid point up to ~11 km away and outside the fringing reef, so "
+        "the lagoon itself will be calmer than the figure shown; two nearby sites can share "
+        "one grid cell and then return identical readings. Bands are anchored to the WMO sea "
+        "state scale. "
         "Forecast sea state and weather only. Carries NO information about visitor numbers, "
         "crowding or occupancy — no such data exists in this system, so the ranking reflects "
         "conditions alone. Also excludes water quality, pollution, jellyfish and other marine "
@@ -161,6 +176,16 @@ class TourismPillar:
         briefs: list[SiteBrief] = []
         site_conditions: list[tuple[str, Conditions]] = []
 
+        # Two sites can snap to the same wave-model grid cell, which makes their
+        # readings identical by construction. Say so rather than letting it look
+        # like an independent agreement between two measurements.
+        cell_members: dict[tuple, list[str]] = {}
+        for entry in readings:
+            m = entry["marine"]
+            key = (m.get("grid_latitude"), m.get("grid_longitude"))
+            if key != (None, None):
+                cell_members.setdefault(key, []).append(entry["site"].site_id)
+
         for entry in readings:
             site: Site = entry["site"]
             marine, breeze = entry["marine"], entry["wind"]
@@ -188,6 +213,15 @@ class TourismPillar:
                 protected_area=site.protected_area,
                 protected_area_note=site.protected_area_note,
                 measurements=SiteMeasurements(
+                    sea_state=sea_state(cond.wave_height_m),
+                    reading_offset_km=(
+                        round(_haversine_km(site.latitude, site.longitude,
+                                            marine["grid_latitude"], marine["grid_longitude"]), 1)
+                        if marine.get("grid_latitude") is not None else None),
+                    shares_grid_cell_with=[
+                        s for s in cell_members.get(
+                            (marine.get("grid_latitude"), marine.get("grid_longitude")), [])
+                        if s != site.site_id],
                     wave_height_m=cond.wave_height_m,
                     wave_period_s=cond.wave_period_s,
                     swell_height_m=cond.swell_height_m,
