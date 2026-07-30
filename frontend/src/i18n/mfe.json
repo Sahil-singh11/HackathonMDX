@@ -438,5 +438,7 @@
   "energy.detailHint": "{n} sit kandida",
   "energy.limitsTitle": "Seki sa pa pran an kont",
   "energy.limitNearshore": "Tou bann pwen kandida pre kot. Formil dilo profon exazer pwisans vag dan dilo bas, alor sa bann chif la pa konparab ar bann atlas resours dilo profon pibliye.",
-  "energy.unavailableShort": "pa disponib"
+  "energy.unavailableShort": "pa disponib",
+  "catch.aiDisclaimerTitle": "Avertisman AI:",
+  "catch.aiDisclaimerBody": "Lenformasion zenere par AI zis pou ed pran desizion ek kapav ena erer. Bizin verifie lespes, mezir, regleman ek kondision lamer avek sours ofisiel. AI pa ranplas zizman bann ofisie otorize ek pa garanti sekirite ouswa konformite legal."
 }

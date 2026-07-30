@@ -492,5 +492,7 @@
   "energy.detailHint": "{n} candidate sites",
   "energy.limitsTitle": "What this does not account for",
   "energy.limitNearshore": "All candidate points are nearshore. The deep-water formula overstates wave power in shallow water, so these figures are not comparable with published deep-water resource atlases.",
-  "energy.unavailableShort": "unavailable"
+  "energy.unavailableShort": "unavailable",
+  "catch.aiDisclaimerTitle": "AI Disclaimer:",
+  "catch.aiDisclaimerBody": "AI-generated information is provided for decision support only and may contain errors. Users must verify species, measurements, regulations, and marine conditions with official sources. AI does not replace the judgement of authorised officers or guarantee safety or legal compliance."
 }
