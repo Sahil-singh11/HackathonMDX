@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends
 from sqlmodel import Session
 
 from app.db.session import get_session
-from app.pillars.transport.module import (COVERAGE_NOTE, ArrivalsBrief,
+from app.pillars.transport.module import (COVERAGE_NOTE, ApproachBrief, ArrivalsBrief,
                                           transport_pillar)
 
 router = APIRouter()
@@ -138,3 +138,32 @@ ARRIVALS_EXAMPLE = {
 async def arrivals(session: Session = Depends(get_session)) -> ArrivalsBrief:
     bundle = await transport_pillar.fetch({"session": session})
     return await transport_pillar.analyse(bundle)
+
+
+@router.get(
+    "/approach",
+    response_model=ApproachBrief,
+    summary="Live transit conditions at the Port Louis approach",
+    description=(
+        "**This pillar's primary surface, and the one the UI leads with.** Live sea state at "
+        "the Port Louis approach from Open-Meteo, expressed as transit windows for two craft "
+        "classes.\n\n"
+        "**Why this exists alongside `/arrivals`.** Terrestrial AIS needs a receiver within "
+        "roughly 40 nm and Mauritius has none, so `/arrivals` can only serve schema-accurate "
+        "SYNTHETIC vessels (it says so, in `data_kind`). Satellite AIS covers the region but "
+        "is a paid product. This endpoint carries no vessel data at all and is therefore "
+        "genuinely `live` or `cached` — never synthetic.\n\n"
+        "**Split of responsibility.** Every band, threshold and figure is computed in Python "
+        "(`transport/transit.py`, unit-tested) from the reading shown beside it. The narrative "
+        "is model-written prose *about* those numbers and is never parsed back into data; "
+        "`narrative_source` reports which of the two served.\n\n"
+        "**Honesty.** Not a port authority clearance, not a forecast of our own, not safety "
+        "certification. The bands are conservative planning heuristics for transit "
+        "feasibility, not survival limits, and they know nothing about a specific hull, its "
+        "load or its crew. Full statement rides in `provenance.coverage_note`."
+    ),
+    responses={503: {"description": "Pillar registered but not enabled (PILLARS_ENABLED)."}},
+)
+async def approach(session: Session = Depends(get_session)) -> ApproachBrief:
+    bundle = await transport_pillar.fetch_approach({"session": session})
+    return await transport_pillar.analyse_approach(bundle)

@@ -169,10 +169,14 @@ def register_default_pillars(registry: PillarRegistry) -> None:
         pillar_id="transport",
         pillar_name="Marine Transport & Trade",
         owner="Yadhav (WS1)",
-        description=("Port Louis arrivals brief from recent AIS positions; Gemma narrates and "
-                     "reasons over risk, counts and ETAs stay deterministic (Task 4b)."),
+        description=("Live transit conditions at the Port Louis approach: Open-Meteo sea state "
+                     "turned into transit windows by fixed thresholds in Python, with Gemma "
+                     "writing the note. An AIS arrivals brief also exists but is not surfaced "
+                     "— no terrestrial receiver covers Mauritius, so it can only be synthetic."),
         sources=list(transport_pillar.sources()),
-        endpoints=["/api/pillars/transport/arrivals"],
+        # /approach first: it is what the UI leads with, and the only one of the
+        # two that returns genuinely live data.
+        endpoints=["/api/pillars/transport/approach", "/api/pillars/transport/arrivals"],
     ))
     registry.register_descriptor(PillarDescriptor(
         pillar_id="tourism",

@@ -32,7 +32,8 @@ from app.db.session import get_engine
 from app.inference.registry import select as select_provider
 from app.pillars.base import PillarResult, RawBundle, SourceDescriptor
 from app.pillars.provenance import DataProvenance
-from app.pillars.transport import ais, brief, store
+from app.pillars.narrative import prose_or_empty
+from app.pillars.transport import ais, brief, store, transit
 from app.services.marine.client import get_marine_conditions
 
 log = logging.getLogger(__name__)
@@ -135,6 +136,81 @@ class ArrivalsBrief(PillarResult):
     narrative_note: str = ""
     advisory: bool = True
     scope_note: str = SCOPE_NOTE
+
+
+class CraftWindow(BaseModel):
+    craft: str
+    wave_band: str
+    wind_band: str
+    overall: str
+    limiting_factor: str
+    thresholds_note: str
+
+
+APPROACH_COVERAGE_NOTE = (
+    "Live sea state at the Port Louis approach from Open-Meteo, re-expressed as transit "
+    "guidance. NOT a port authority clearance, NOT a forecast of our own, and NOT safety "
+    "certification. The bands are conservative planning heuristics for open-water transit "
+    "feasibility against fixed published thresholds; they are not survival limits and they "
+    "know nothing about a specific hull, its load or its crew. Marine forecasts are "
+    "informational and may be incomplete near the coast — confirm through official local "
+    "marine advisories before putting to sea. This assessment covers ONLY the approach "
+    "waypoint, not the whole passage, and carries no vessel traffic information: terrestrial "
+    "AIS has no receiver coverage for Mauritius, so no live vessel positions exist to report."
+)
+
+APPROACH_SCOPE_NOTE = (
+    "Advisory only. Every band and every figure on this page is computed deterministically "
+    "in Python from the Open-Meteo reading shown beside it, against thresholds printed on "
+    "the page. The narrative is model-written prose ABOUT those numbers and is never parsed "
+    "back into data — no band, threshold or measurement here was produced by a model."
+)
+
+
+class ApproachBrief(PillarResult):
+    """Transit conditions at the Port Louis approach, from LIVE marine data.
+
+    Replaces the arrivals brief as this pillar's primary surface. The arrivals
+    endpoint still exists and is still labelled `synthetic`, but it is no longer
+    what the pillar leads with, because presenting generated vessels as content
+    was the one genuinely dishonest thing on the page.
+    """
+
+    port: PortDescriptor
+    observed_at: Optional[str] = None
+    wave_height_m: Optional[float] = None
+    wave_period_s: Optional[float] = None
+    swell_height_m: Optional[float] = None
+    swell_period_s: Optional[float] = None
+    wind_speed_kmh: Optional[float] = None
+    wind_gusts_kmh: Optional[float] = None
+    sea_surface_temperature_c: Optional[float] = None
+    crafts: list[CraftWindow] = []
+    long_swell_flag: bool = False
+    long_swell_note: str = ""
+    incomplete: bool = False
+    narrative: str = ""
+    narrative_source: str = "deterministic_fallback"
+    narrative_note: str = ""
+    advisory: bool = True
+    scope_note: str = APPROACH_SCOPE_NOTE
+
+
+APPROACH_SYSTEM_INSTRUCTION = """You are a marine conditions analyst writing a short transit note for the Port Louis approach in Mauritius.
+
+WHAT YOU ARE GIVEN
+- One live sea-state reading at the approach, and transit bands for two craft classes that have ALREADY been computed in code from fixed published thresholds. The figures and the bands are correct. Your job is to explain them in plain language, never to recompute, change or dispute them.
+
+HARD RULES (never break)
+- Use ONLY the figures supplied in the message. Never add a number, a time, a location or a condition.
+- Never change a band. If a band looks surprising, explain which reading drives it.
+- NEVER say it is safe to put to sea, and never tell anyone to go or not to go. You describe conditions and their implications; a skipper decides.
+- This is not a port authority clearance and not a forecast of your own. Do not imply either.
+- Say nothing about vessel traffic, shipping, berths or arrivals — you have no such data.
+- Conditions are a forecast and may be wrong near the coast. Do not present them as certain.
+
+OUTPUT
+- Two or three sentences of plain prose. No JSON, no code fences, no bullet lists, no headings, no preamble. Return the sentences only."""
 
 
 # --------------------------------------------------------------------------
@@ -315,6 +391,173 @@ class TransportPillar:
                     "model returned a single paragraph; risk reasoning fell back to the "
                     "deterministic summary", provider_name)
         return narrative, risk, "model", "", provider_name
+
+    # ----------------------------------------------------------------------
+    # Approach transit conditions — the pillar's REAL-DATA primary surface.
+    #
+    # Deliberately a separate fetch/analyse pair rather than a rewrite of the
+    # arrivals path above: that path is Yadhav's, is tested, and is honest about
+    # being synthetic. What was wrong was leading the UI with it. This pair
+    # touches only live Open-Meteo readings, so its data_kind is genuinely
+    # live/cached and nothing here is generated.
+    # ----------------------------------------------------------------------
+    async def fetch_approach(self, params: dict) -> RawBundle:
+        session: Optional[Session] = params.get("session")
+        owns_session = session is None
+        if owns_session:
+            session = Session(get_engine())
+        try:
+            # DEFERRED IMPORT, deliberately not at module scope. registry.py
+            # imports transport.module FIRST, before it has defined
+            # PillarRegistry; a top-level `from app.pillars.tourism.wind import
+            # ...` therefore initialises the tourism PACKAGE, whose __init__
+            # imports registry, and the cycle fails with "cannot import name
+            # 'PillarRegistry' from partially initialized module". Energy gets
+            # away with the same top-level import only because registry reaches
+            # it later. Importing here runs at request time, long after every
+            # module is loaded.
+            from app.pillars.tourism.wind import get_wind_conditions
+
+            allow_network = params.get("allow_network", True)
+            marine = get_marine_conditions(
+                session, ais.PORT_LOUIS_LAT, ais.PORT_LOUIS_LON,
+                allow_network=allow_network,
+            )
+            wind = get_wind_conditions(
+                session, ais.PORT_LOUIS_LAT, ais.PORT_LOUIS_LON,
+                allow_network=allow_network,
+            )
+        finally:
+            if owns_session:
+                session.close()
+
+        # Weakest-link labelling, same rule the arrivals path uses: a reading is
+        # only "live" when nothing in it was degraded.
+        if marine.get("mock") or wind.get("mock"):
+            data_kind = "sample"
+            source = SourceDescriptor(
+                name="Deterministic demonstration values", url=None,
+                description="Open-Meteo unreachable and no cached reading available.",
+                status="none",
+            )
+        else:
+            data_kind = "cached" if (marine.get("cached") or wind.get("cached")) else "live"
+            source = SOURCE_MARINE
+
+        return RawBundle(
+            pillar_id=PILLAR_ID,
+            source=source,
+            retrieved_at=datetime.now(timezone.utc),
+            data_kind=data_kind,
+            coverage_note=APPROACH_COVERAGE_NOTE,
+            payload={"marine": marine, "wind": wind},
+        )
+
+    async def analyse_approach(self, bundle: RawBundle) -> ApproachBrief:
+        marine = bundle.payload["marine"]
+        wind = bundle.payload["wind"]
+        window = transit.assess(marine, wind)
+
+        narrative, source, note, provider_name = "", "deterministic_fallback", "", "none"
+        try:
+            provider, _events = select_provider()
+            provider_name = provider.name
+            raw = provider.chat(
+                _approach_prompt(window),
+                language="en",
+                system_instruction=APPROACH_SYSTEM_INSTRUCTION,
+                timeout_seconds=get_settings().transport_narrative_timeout_seconds,
+            )
+            text = prose_or_empty(raw)
+            if text:
+                narrative, source = text, "model"
+            else:
+                note = "model returned no usable prose"
+                if raw:
+                    log.warning("transport approach: model output was not prose; dropped")
+        except Exception as exc:  # noqa: BLE001 — a model outage degrades, never 500s
+            log.warning("transport approach: provider chat failed: %s", exc)
+            note = f"model call failed: {exc}"
+
+        if not narrative:
+            narrative = _approach_fallback(window)
+
+        return ApproachBrief(
+            pillar_id=PILLAR_ID,
+            generated_at=datetime.now(timezone.utc),
+            provenance=DataProvenance(
+                source_name=bundle.source.name,
+                source_url=bundle.source.url,
+                retrieved_at=bundle.retrieved_at,
+                data_kind=bundle.data_kind,
+                model_provider=provider_name,
+                coverage_note=bundle.coverage_note,
+            ),
+            port=PortDescriptor(
+                name="Port Louis", unlocode="MUPLU",
+                latitude=ais.PORT_LOUIS_LAT, longitude=ais.PORT_LOUIS_LON,
+            ),
+            observed_at=marine.get("time") or wind.get("time"),
+            wave_height_m=window.wave_height_m,
+            wave_period_s=window.wave_period_s,
+            swell_height_m=window.swell_height_m,
+            swell_period_s=window.swell_period_s,
+            wind_speed_kmh=window.wind_speed_kmh,
+            wind_gusts_kmh=window.wind_gusts_kmh,
+            sea_surface_temperature_c=window.sea_surface_temperature_c,
+            crafts=[CraftWindow(**vars(c)) for c in window.crafts],
+            long_swell_flag=window.long_swell_flag,
+            long_swell_note=window.long_swell_note,
+            incomplete=window.incomplete,
+            narrative=narrative,
+            narrative_source=source,
+            narrative_note=note,
+        )
+
+
+def _fmt(value: Optional[float], unit: str) -> str:
+    return f"{value} {unit}" if value is not None else "unavailable"
+
+
+def _approach_prompt(w: "transit.TransitWindow") -> str:
+    lines = [
+        "FACTS (live reading at the Port Louis approach):",
+        f"- Significant wave height: {_fmt(w.wave_height_m, 'm')}",
+        f"- Wave period: {_fmt(w.wave_period_s, 's')}",
+        f"- Swell: {_fmt(w.swell_height_m, 'm')} at {_fmt(w.swell_period_s, 's')}",
+        f"- Wind: {_fmt(w.wind_speed_kmh, 'km/h')}, gusts {_fmt(w.wind_gusts_kmh, 'km/h')}",
+        f"- Sea surface temperature: {_fmt(w.sea_surface_temperature_c, 'C')}",
+        "",
+        "COMPUTED TRANSIT BANDS (already decided — do not change these):",
+    ]
+    for c in w.crafts:
+        lines.append(f"- {c.craft}: {c.overall} (limited by {c.limiting_factor})")
+    if w.long_swell_flag:
+        lines.append(f"- Note: {w.long_swell_note}")
+    lines += ["", "Transit note:"]
+    return "\n".join(lines)
+
+
+def _approach_fallback(w: "transit.TransitWindow") -> str:
+    """Mechanical summary, used whenever the model did not supply usable prose.
+
+    Says plainly that no model was involved — the same rule the arrivals
+    narrative follows, so a reader never has to guess which they are reading.
+    """
+    parts = [
+        f"Reported sea state at the Port Louis approach: wave {_fmt(w.wave_height_m, 'm')}, "
+        f"swell {_fmt(w.swell_height_m, 'm')} at {_fmt(w.swell_period_s, 's')}, "
+        f"wind {_fmt(w.wind_speed_kmh, 'km/h')} with gusts {_fmt(w.wind_gusts_kmh, 'km/h')}."
+    ]
+    for c in w.crafts:
+        parts.append(f"{c.craft}: transit window rated {c.overall}, limited by {c.limiting_factor}.")
+    if w.long_swell_flag:
+        parts.append(w.long_swell_note)
+    parts.append(
+        "No model reasoned over these figures — this summary is assembled mechanically from "
+        "the readings and the computed bands above."
+    )
+    return " ".join(parts)
 
 
 transport_pillar = TransportPillar()
