@@ -191,11 +191,16 @@ def test_ungrounded_model_output_falls_back_and_says_why(session, monkeypatch):
 
 
 def test_grounded_model_output_is_used_and_labelled(session, monkeypatch):
+    # Deliberately number-free: this test is about labelling/grounding, not
+    # about the vessel count (covered elsewhere), and the numeric firewall
+    # (app.pillars.numeric_guard) would correctly reject a hardcoded count
+    # that drifts out of sync with the synthetic fixture — as a stale
+    # "Five vessels" here once did after the fixture's arrivals count changed.
     provider = _use(monkeypatch, _stub(
-        "stub_good", "Five vessels report Port Louis.\n\nSwell is moderate; berthing should hold."))
+        "stub_good", "Several vessels report Port Louis.\n\nSwell is moderate; berthing should hold."))
     result = _brief(session)
     assert result.narrative_source == "model"
-    assert result.narrative.startswith("Five vessels")
+    assert result.narrative.startswith("Several vessels")
     assert "berthing" in result.risk_reasoning
     assert result.provenance.model_provider == "stub_good"
     # The honesty rules live in the transport-scoped system instruction
