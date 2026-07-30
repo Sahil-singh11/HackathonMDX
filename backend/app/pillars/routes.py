@@ -83,5 +83,13 @@ def build_pillar_router(registry: Optional[PillarRegistry] = None,
             ),
         }
 
+    # NOTE for future pillar owners: fisheries deliberately does NOT get a
+    # /provenance route here. It predates the PillarModule contract (Task 4a
+    # §5) and has no fetch()/analyse() to probe — any signal built for it
+    # (e.g. proxying the marine cache) would be a guessed stand-in, not fisheries'
+    # own data_kind. test_pillar_probe.py::test_a_pillar_without_the_convention_...
+    # pins the resulting 404 as intentional: the index renders an absence
+    # rather than inventing a label. Tried and reverted — see decision log.
+
     reg.mount_all(router, lim, _client_ip)
     return router

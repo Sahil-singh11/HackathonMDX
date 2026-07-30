@@ -256,3 +256,38 @@ def test_finance_routes_serve_when_enabled_on_an_isolated_app():
     assert body["pillar_id"] == "finance"
     assert body["provenance"]["data_kind"] == "sample"
     assert len(body["findings"]) == len(load_criteria())
+
+
+def test_finance_provenance_probe_is_cheap_and_never_claims_inference():
+    """/provenance runs fetch() only (no PDF text extraction, no model call), same
+    convention as tourism/energy (see test_pillar_probe.py) — filling a gap the
+    /pillars index previously rendered as "not reported" for finance specifically."""
+    import time
+
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from app.core.ratelimit import InMemoryRateLimiter
+    from app.pillars.finance.routes import router as finance_router
+    from app.pillars.probe import NOT_INVOKED
+    from app.pillars.registry import PillarDescriptor, PillarRegistry
+    from app.pillars.routes import build_pillar_router
+
+    reg = PillarRegistry(enabled_ids=lambda: {"finance"})
+    reg.register_descriptor(PillarDescriptor(pillar_id="finance", pillar_name="Blue Finance"))
+    reg.register_module(BlueFinancePillar(), router=finance_router)
+    app = FastAPI()
+    app.include_router(build_pillar_router(registry=reg, limiter=InMemoryRateLimiter(limit=30, window_seconds=60.0)))
+    client = TestClient(app)
+
+    start = time.monotonic()
+    r = client.get("/api/pillars/finance/provenance")
+    elapsed = time.monotonic() - start
+
+    assert r.status_code == 200
+    body = r.json()
+    assert body["pillar_id"] == "finance"
+    assert body["probe"] is True
+    assert body["provenance"]["data_kind"] == "sample"  # no upload -> default sample corpus
+    assert body["provenance"]["model_provider"] == NOT_INVOKED
+    assert elapsed < 5.0, f"probe took {elapsed:.2f}s — has a model call crept in?"

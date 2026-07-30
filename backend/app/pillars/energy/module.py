@@ -15,6 +15,7 @@ Import boundary: reaches models via app.inference.registry only.
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 from datetime import datetime, timezone
 from typing import Optional
@@ -173,8 +174,18 @@ class EnergyPillar:
         try:
             provider, _events = inference_registry.select()
             provider_name = provider.name
-            for assessment in to_interpret:
-                assessment.interpretation = self._interpret(provider, assessment, comparison)
+            # _interpret() is a blocking network call (provider.chat()) with no
+            # shared state between sites, so the up-to-MAX_INTERPRETED_SITES
+            # calls run concurrently via to_thread rather than one after another
+            # — worst-case wall time drops from sum(latencies) to max(latency).
+            # (fetch()'s Open-Meteo loop is NOT parallelised this way: it shares
+            # one SQLAlchemy Session across sites, which is not thread-safe.)
+            interpretations = await asyncio.gather(
+                *(asyncio.to_thread(self._interpret, provider, assessment, comparison)
+                  for assessment in to_interpret)
+            )
+            for assessment, interpretation in zip(to_interpret, interpretations):
+                assessment.interpretation = interpretation
         except Exception:  # noqa: BLE001 — figures without prose are still valid
             log.warning("Energy interpretation unavailable; returning figures only", exc_info=True)
 
