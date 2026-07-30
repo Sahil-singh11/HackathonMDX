@@ -36,6 +36,7 @@
 import { useEffect } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import AssistantPage from './assistant/AssistantPage'
+import ExamplePillarPage from './components/pillar/ExamplePillarPage'
 import PillarDetail from './pillars/PillarDetail'
 import PillarsIndex from './pillars/PillarsIndex'
 import About from './pages/About'
@@ -74,6 +75,12 @@ function FisherRoutes() {
           <Route path="/log" element={<History />} />
           <Route path="/assistant" element={<AssistantPage />} />
           <Route path="/pillars" element={<PillarsIndex />} />
+          {/* Reference page for the pillar page framework (components/pillar).
+              Underscore-prefixed so it cannot collide with a real pillar id, and
+              declared BEFORE /pillars/:id so the dynamic route does not swallow
+              it. Not linked from anywhere in the UI — it is a developer surface
+              for whoever converts the real pillars against the framework. */}
+          <Route path="/pillars/_example" element={<ExamplePillarPage />} />
           <Route path="/pillars/:id" element={<PillarDetail />} />
           <Route path="/declaration" element={<Declaration />} />
           <Route path="/queue" element={<Queue />} />
