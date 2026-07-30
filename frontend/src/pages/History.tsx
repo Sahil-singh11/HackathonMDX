@@ -1,5 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
-import { BookOpen, Camera, CloudOff } from 'lucide-react'
+import {
+  BookOpen, CalendarDays, Camera, CheckCircle2, CircleHelp, CloudOff, Layers,
+  Ruler, ShieldAlert,
+} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
@@ -12,6 +16,17 @@ import { listQueue } from '../utils/idb'
 
 const PAGE_SIZE = 50
 const EMPTY_FILTERS: FilterState = { from: '', to: '', speciesId: '', sync: 'all' }
+
+/* Each legal status gets its own icon as well as its own colour, so the status
+   survives greyscale, colour-blindness and the Sunlight theme — colour is never
+   the only signal (CLAUDE.md). The wording itself stays exactly as the rules
+   engine phrases it; only the presentation changes. */
+const LEGAL_ICON: Record<string, LucideIcon> = {
+  allowed: CheckCircle2,
+  closed_season: ShieldAlert,
+  below_minimum_size: Ruler,
+  unknown: CircleHelp,
+}
 
 export default function History() {
   const t = useT()
@@ -86,19 +101,26 @@ export default function History() {
 
   return (
     <>
-      <div className="card">
+      <div className="card log-summary">
         <h2>{t('history.title')}</h2>
         <div className="stat-grid">
           <div className="stat">
+            <span className="stat-icon" aria-hidden="true"><CalendarDays size={18} /></span>
             <div className="label">{t('history.today')}</div>
             <div className="value mono">{String(report?.total_count ?? 0)}</div>
           </div>
           <div className="stat">
+            <span className="stat-icon" aria-hidden="true"><Layers size={18} /></span>
             <div className="label">{t('history.total')}</div>
             <div className="value mono">{allRows.length}</div>
           </div>
-          {/* Unsynced gets visual priority — it is the number that can cost a record. */}
+          {/* Unsynced gets visual priority — it is the number that can cost a
+              record. The icon flips with the state so "all clear" and "act on
+              this" are distinguishable without reading the number. */}
           <div className={`stat${pendingCount > 0 ? ' stat-priority' : ''}`}>
+            <span className="stat-icon" aria-hidden="true">
+              {pendingCount > 0 ? <CloudOff size={18} /> : <CheckCircle2 size={18} />}
+            </span>
             <div className="label">{t('log.unsynced')}</div>
             <div className="value mono">{pendingCount}</div>
             <div className="stat-sub">
@@ -137,34 +159,43 @@ export default function History() {
             <section key={day} className="log-day">
               <h3 className="log-day-head">
                 <span className="mono">{day}</span>
+                <span className="log-day-rule" aria-hidden="true" />
                 <span className="log-day-count">{rows.length} {t('log.records')}</span>
               </h3>
               <div className="log-rows">
-                {rows.map((row) => (
-                  <button key={row.id} type="button" className="log-row"
-                    onClick={() => setSelected(row)}>
-                    <span className={`log-thumb hue-${row.species_id.length % 3}`} aria-hidden="true">
-                      {speciesLabel(row.species_id).slice(0, 2).toUpperCase()}
-                    </span>
-                    <span className="log-row-main">
-                      <span className="log-species">{speciesLabel(row.species_id)}</span>
-                      <span className="log-meta mono">
-                        ×{row.count}
-                        {row.measured_length_cm != null && ` · ${row.measured_length_cm} cm`}
-                        {row.fishing_area && ` · ${row.fishing_area}`}
+                {rows.map((row) => {
+                  const LegalIcon = LEGAL_ICON[row.legal_status] ?? CircleHelp
+                  return (
+                    <button key={row.id} type="button"
+                      className={`log-row log-row--${row.legal_status}`}
+                      onClick={() => setSelected(row)}>
+                      <span className={`log-thumb hue-${row.species_id.length % 3}`} aria-hidden="true">
+                        {speciesLabel(row.species_id).slice(0, 2).toUpperCase()}
                       </span>
-                    </span>
-                    <span className="log-row-end">
-                      <span className={`badge ${row.pending ? 'sync-pending' : 'sync-synced'}`}>
-                        {row.pending && <CloudOff size={12} aria-hidden="true" />}
-                        {t(row.pending ? 'log.sync.pending' : 'log.sync.synced')}
+                      <span className="log-row-main">
+                        <span className="log-row-top">
+                          <span className="log-species">{speciesLabel(row.species_id)}</span>
+                          <span className={`badge ${row.pending ? 'sync-pending' : 'sync-synced'}`}>
+                            {row.pending && <CloudOff size={12} aria-hidden="true" />}
+                            {t(row.pending ? 'log.sync.pending' : 'log.sync.synced')}
+                          </span>
+                        </span>
+                        <span className="log-meta mono">
+                          ×{row.count}
+                          {row.measured_length_cm != null && ` · ${row.measured_length_cm} cm`}
+                          {row.fishing_area && ` · ${row.fishing_area}`}
+                        </span>
+                        {/* Rule status sits under the catch it describes rather
+                            than stacked in the right-hand corner, where a long
+                            sentence had to wrap against the sync badge. */}
+                        <span className={`log-legal legal-${row.legal_status}`}>
+                          <LegalIcon size={14} aria-hidden="true" />
+                          {t(`catch.rule.${row.legal_status}`)}
+                        </span>
                       </span>
-                      <span className={`legal-${row.legal_status} log-legal`}>
-                        {t(`catch.rule.${row.legal_status}`)}
-                      </span>
-                    </span>
-                  </button>
-                ))}
+                    </button>
+                  )
+                })}
               </div>
             </section>
           ))}

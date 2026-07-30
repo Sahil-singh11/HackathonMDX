@@ -1,18 +1,42 @@
 /* Lane B — catch log styles. Existing custom properties only, no raw colours. */
 
-/* --- summary ------------------------------------------------------------ */
+/* --- summary ------------------------------------------------------------
+   The shared .stat-grid is a fixed 1fr 1fr, which left the third tile alone on
+   a half-width second row. Overridden here only (styles.css is shared and this
+   page is the only three-tile user). */
+.log-summary .stat-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+
+.log-summary .stat {
+  position: relative;
+  padding-left: var(--space-4);
+}
+.stat-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  margin-bottom: var(--space-2);
+  border-radius: 999px;
+  background: var(--surface-mint);
+  color: var(--accent-teal-text);
+}
 .stat-priority {
   border: 2px solid var(--primary-coral);
   background: var(--surface-coral-tint);
 }
+.stat-priority .stat-icon { background: var(--primary-coral); color: #fff; }
 .stat-sub { font-size: 0.75rem; color: var(--text-secondary); margin-top: var(--space-1); }
 
 /* --- filters ------------------------------------------------------------ */
 .log-filters { margin-bottom: var(--space-4); }
+/* button.secondary is width:100% by default, which turned a four-word control
+   into a full-bleed empty bar. It sizes to its label here. */
 .filters-toggle {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
+  width: auto;
   min-height: 48px;
 }
 .filter-count {
@@ -43,25 +67,37 @@
 
 /* --- day groups --------------------------------------------------------- */
 .log-day { margin-bottom: var(--space-5); }
+/* The date, a hairline that fills the gap, then the count. The rule turns a
+   floating label into a section divider you can see at a glance. */
 .log-day-head {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-2);
+  align-items: center;
+  gap: var(--space-3);
   margin: 0 0 var(--space-2);
   font-size: 0.9375rem;
+}
+.log-day-rule {
+  flex: 1;
+  height: 1px;
+  background: var(--border-subtle);
 }
 .log-day-count { font-size: 0.8125rem; color: var(--text-secondary); font-weight: 400; }
 
 .log-rows { display: flex; flex-direction: column; gap: var(--space-2); }
 
+/* Each row carries a left stripe in its rule-status colour. It reads as
+   texture, but it is functional: it makes a page of records scannable for the
+   one that needs attention. The status TEXT and its icon are always present,
+   so the stripe is reinforcement, never the only signal. */
 .log-row {
+  position: relative;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-3);
   width: 100%;
   min-height: 56px;
   padding: var(--space-3);
+  padding-left: calc(var(--space-3) + 5px);
   text-align: left;
   background: var(--surface-card);
   border: 1px solid var(--border-subtle);
@@ -69,9 +105,28 @@
   color: inherit;
   font: inherit;
   cursor: pointer;
-  transition: border-color var(--transition-fast);
+  overflow: hidden;
+  transition: border-color var(--transition-fast), transform var(--transition-fast),
+              box-shadow var(--transition-fast);
 }
-.log-row:hover { border-color: var(--accent-teal); }
+.log-row::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--border-subtle);
+}
+.log-row--allowed::before { background: var(--ok); }
+.log-row--closed_season::before,
+.log-row--below_minimum_size::before { background: var(--bad); }
+.log-row--unknown::before { background: var(--warn); }
+
+.log-row:hover {
+  border-color: var(--accent-teal);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(27, 154, 170, 0.14);
+}
+.log-row:active { transform: translateY(0); }
 
 .log-thumb {
   display: inline-flex;
@@ -80,27 +135,37 @@
   flex: 0 0 44px;
   width: 44px;
   height: 44px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   font-size: 0.8125rem;
   font-weight: 700;
+  letter-spacing: 0.04em;
   color: var(--paper);
   background: var(--primary-navy);
 }
 .log-thumb.hue-1 { background: var(--accent-teal); }
 .log-thumb.hue-2 { background: var(--primary-coral-dark); }
 
-.log-row-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.log-row-main { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+/* Species name and sync badge share the top line; the badge no longer competes
+   with the rule sentence for the same right-hand column. */
+.log-row-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
 .log-species { font-weight: 600; }
 .log-meta { font-size: 0.8125rem; color: var(--text-secondary); }
 
-.log-row-end {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+.log-legal {
+  display: inline-flex;
+  align-items: center;
   gap: var(--space-1);
-  flex-shrink: 0;
+  margin-top: 2px;
+  font-size: 0.75rem;
 }
-.log-legal { font-size: 0.75rem; }
+.log-legal svg { flex: 0 0 auto; }
 
 .badge.sync-pending {
   display: inline-flex;
@@ -189,6 +254,13 @@
   .sheet-panel { border-radius: var(--radius-lg); }
 }
 
+/* The hover lift is motion too, not just its transition — killing the
+   transition alone would leave an instant jump. Both the OS setting and the
+   in-app a11y toggle are honoured; base.css's global reset only reaches
+   .lk-scope, and this page is legacy-scoped. */
 @media (prefers-reduced-motion: reduce) {
   .log-row { transition: none; }
+  .log-row:hover { transform: none; }
 }
+html[data-reduce-motion='on'] .log-row { transition: none; }
+html[data-reduce-motion='on'] .log-row:hover { transform: none; }
